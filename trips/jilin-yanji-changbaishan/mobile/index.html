@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>吉林延吉长白山旅行指南 · 手机版</title>
+    <link rel="stylesheet" href="../assets/base.css" />
+    <link rel="stylesheet" href="./mobile.css" />
+  </head>
+  <body data-mode="mobile">
+    <a class="skip-link" href="#overview">跳到正文</a>
+
+    <header class="mobile-hero">
+      <div class="mobile-shell hero-inner">
+        <p class="hero-kicker">旅行指南 (Mobile)</p>
+        <h1 id="page-title" class="hero-title">吉林延吉长白山</h1>
+        <div class="hero-meta" id="page-meta" aria-label="行程概览信息"></div>
+      </div>
+    </header>
+
+    <main class="mobile-shell" aria-label="指南正文">
+      <section id="overview" data-page="1"></section>
+      <section id="recommended" data-page="2"></section>
+      <section id="options" data-page="3"></section>
+      <section id="attractions" data-page="4"></section>
+      <section id="food" data-page="5"></section>
+      <section id="season" data-page="6"></section>
+      <section id="packing" data-page="7"></section>
+      <section id="transport" data-page="8"></section>
+      <section id="sources" data-page="9"></section>
+    </main>
+
+    <script src="../assets/guide-content.js"></script>
+    <script src="../assets/render-guide.js"></script>
+    <script>
+      (function () {
+        var root =
+          (typeof globalThis !== "undefined" && globalThis) ||
+          (typeof window !== "undefined" && window) ||
+          (typeof self !== "undefined" && self) ||
+          {};
+
+        var registry = root.__TRIP_GUIDES__;
+        var guide = registry && registry["jilin-yanji-changbaishan"];
+        var renderer = window.tripGuideRenderer;
+
+        function byId(id) {
+          return document.getElementById(id);
+        }
+
+        function setText(el, value) {
+          if (!el) return;
+          el.textContent = value == null ? "" : String(value);
+        }
+
+        function createEl(tag, className, text) {
+          var el = document.createElement(tag);
+          if (className) el.className = className;
+          if (text != null) el.textContent = String(text);
+          return el;
+        }
+
+        function renderMeta(meta) {
+          var target = byId("page-meta");
+          if (!target || !meta) return;
+          target.replaceChildren();
+
+          var rows = [
+            ["时间", meta.dateRange],
+            ["出发", meta.departure],
+            ["同行", meta.travelers],
+            ["节奏", meta.pace],
+            ["住宿", meta.stayPreference],
+            ["核对", meta.checkedAt]
+          ];
+
+          rows.forEach(function (row) {
+            if (!row[1]) return;
+            var item = createEl("div", "meta-item");
+            item.appendChild(createEl("span", "meta-label", row[0]));
+            item.appendChild(createEl("span", "meta-value", row[1]));
+            target.appendChild(item);
+          });
+        }
+
+        if (!guide || !renderer || typeof renderer.renderSection !== "function") {
+          setText(byId("page-title"), "未加载到指南数据");
+          return;
+        }
+
+        setText(byId("page-title"), guide.meta && guide.meta.title ? guide.meta.title : "旅行指南");
+        renderMeta(guide.meta || {});
+
+        var sectionDefs = [
+          {
+            id: "overview",
+            title: "每日安排",
+            lead: "先把每天怎么走讲清楚，再给推荐方案和替代方案，最后是深挖模块。"
+          },
+          {
+            id: "recommended",
+            title: "最推荐方案",
+            lead: "把“最稳”那条主线写成可执行清单，方便临出发复盘。"
+          },
+          {
+            id: "options",
+            title: "备选方案",
+            lead: "在住宿结构和机动日上做变体，保持整体可控。"
+          },
+          {
+            id: "attractions",
+            title: "玩法与景点",
+            lead: "延吉和长白山周边的关键点位，按“顺路”与“值得”排序。"
+          },
+          {
+            id: "food",
+            title: "美食清单",
+            lead: "把想吃的拆成具体菜品和适合安排在第几天。"
+          },
+          {
+            id: "season",
+            title: "天气与季节",
+            lead: "强调温差与风感，避免用市区穿法硬扛景区。"
+          },
+          {
+            id: "packing",
+            title: "打包清单",
+            lead: "按“进山刚需”和“城市日常”分组，避免过度携带。"
+          },
+          {
+            id: "transport",
+            title: "交通与落地",
+            lead: "把关键交通决策点写成“到哪一刻要确认什么”。"
+          },
+          {
+            id: "sources",
+            title: "信源",
+            lead: "只保留能复核规则和官方口径的链接，附最近核对时间。",
+            kind: "sources"
+          }
+        ];
+
+        sectionDefs.forEach(function (def) {
+          var el = byId(def.id);
+          if (!el) return;
+          var items = guide.sections && guide.sections[def.id] ? guide.sections[def.id] : [];
+          el.innerHTML = renderer.renderSection(def.title, items, { lead: def.lead, kind: def.kind });
+        });
+      })();
+    </script>
+  </body>
+</html>
