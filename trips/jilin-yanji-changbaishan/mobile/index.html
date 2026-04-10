@@ -34,7 +34,13 @@
     <script src="../assets/render-guide.js"></script>
     <script>
       (function () {
-        var registry = globalThis.__TRIP_GUIDES__;
+        var root =
+          (typeof globalThis !== "undefined" && globalThis) ||
+          (typeof window !== "undefined" && window) ||
+          (typeof self !== "undefined" && self) ||
+          {};
+
+        var registry = root.__TRIP_GUIDES__;
         var guide = registry && registry["jilin-yanji-changbaishan"];
         var renderer = window.tripGuideRenderer;
 
@@ -144,4 +150,3 @@
     </script>
   </body>
 </html>
-
