@@ -56,7 +56,8 @@ $headings = @(
 )
 
 foreach ($heading in $headings) {
-  Assert-Match -Content $playbookContent -Pattern [regex]::Escape($heading) -Label $heading
+  # Force method invocation in argument position (PowerShell 5.1 can otherwise pass the method group).
+  Assert-Match -Content $playbookContent -Pattern ([regex]::Escape($heading)) -Label $heading
 }
 
 $desktopContent = Get-Content -Raw -Encoding UTF8 $desktopPath
