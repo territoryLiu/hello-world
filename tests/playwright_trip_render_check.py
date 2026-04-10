@@ -6,9 +6,10 @@ import json
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
+GUIDE_ROOT = ROOT / "trips" / "jilin-yanji-changbaishan"
 PAGES = [
-    ROOT / "trips" / "jilin-yanji-changbaishan" / "desktop" / "index.html",
-    ROOT / "trips" / "jilin-yanji-changbaishan" / "mobile" / "index.html",
+    GUIDE_ROOT / "desktop" / "index.html",
+    GUIDE_ROOT / "mobile" / "index.html",
 ]
 VIEWPORTS = [
     ("desktop", {"width": 1440, "height": 1400}),
@@ -54,7 +55,8 @@ def inspect_page(page):
 
           const sections = [...document.querySelectorAll('section')].map((el) => ({
             id: el.id,
-            height: Math.round(el.getBoundingClientRect().height)
+            height: Math.round(el.getBoundingClientRect().height),
+            dataPage: el.getAttribute('data-page')
           }));
 
           const nav = document.querySelector('.navin');
@@ -70,6 +72,7 @@ def inspect_page(page):
             bodyScrollWidth: document.body.scrollWidth,
             docScrollWidth: document.documentElement.scrollWidth,
             viewportWidth: window.innerWidth,
+            mode: document.body ? document.body.getAttribute('data-mode') : null,
             navHeight: nav ? Math.round(nav.getBoundingClientRect().height) : null,
             heroHeight: hero ? Math.round(hero.getBoundingClientRect().height) : null,
             sections,
@@ -102,6 +105,25 @@ def verify_report(report):
                 failures.append(
                     f"{page_name} {label} reports {len(overs)} oversize elements: {sample}"
                 )
+
+            # Mobile guide uses explicit pagination markers on each section shell.
+            if result.get("mode") == "mobile":
+                pages = [sec.get("dataPage") for sec in sections if sec.get("id")]
+                missing_pages = [sec.get("id") for sec in sections if sec.get("id") and not sec.get("dataPage")]
+                if missing_pages:
+                    failures.append(f"{page_name} {label} missing data-page for sections: {missing_pages}")
+                page_ints = []
+                for value in pages:
+                    try:
+                        page_ints.append(int(value))
+                    except (TypeError, ValueError):
+                        failures.append(f"{page_name} {label} has non-numeric data-page: {value!r}")
+                if page_ints:
+                    expected = list(range(1, len(page_ints) + 1))
+                    if sorted(page_ints) != expected:
+                        failures.append(
+                            f"{page_name} {label} has non-sequential data-page values: {sorted(page_ints)} (expected {expected})"
+                        )
     if failures:
         raise AssertionError(" | ".join(failures))
 
@@ -114,14 +136,19 @@ with sync_playwright() as p:
     report = {}
     for path in PAGES:
         page_results = {}
+        try:
+            page_key = str(path.relative_to(GUIDE_ROOT))
+        except ValueError:
+            page_key = str(path)
         for label, viewport in VIEWPORTS:
             context = browser.new_context(viewport=viewport, device_scale_factor=1)
             page = context.new_page()
             page.goto(path.as_uri(), wait_until="load")
-            page.screenshot(path=str(OUTDIR / f"{path.stem}-{label}.png"), full_page=True)
+            safe_prefix = page_key.replace("\\", "_").replace("/", "_").replace(":", "")
+            page.screenshot(path=str(OUTDIR / f"{safe_prefix}-{label}.png"), full_page=True)
             page_results[label] = inspect_page(page)
             context.close()
-        report[path.name] = page_results
+        report[page_key] = page_results
     browser.close()
 
 (OUTDIR / "trip-render-report.json").write_text(
