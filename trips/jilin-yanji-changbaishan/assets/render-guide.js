@@ -17,8 +17,8 @@ function byId(id) {
   return document.getElementById(id);
 }
 
-function renderList(items = []) {
-  if (!items.length) {
+function renderList(items) {
+  if (!Array.isArray(items) || items.length === 0) {
     return "";
   }
   return items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
@@ -46,8 +46,12 @@ function renderCards(items = []) {
     .join("");
 }
 
-window.tripGuideRenderer = {
+const tripGuideRenderer = {
   byId,
   renderList,
   renderCards
 };
+
+if (typeof window !== "undefined") {
+  window.tripGuideRenderer = tripGuideRenderer;
+}
