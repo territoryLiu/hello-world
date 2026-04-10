@@ -5,8 +5,8 @@ import json
 
 ROOT = Path(r"d:\vscode\hello-world")
 PAGES = [
-    ROOT / "吉林延吉长白山trip.html",
-    ROOT / "吉林延吉长白山trip-专题版.html",
+    ROOT / "trips" / "jilin-yanji-changbaishan" / "desktop" / "index.html",
+    ROOT / "trips" / "jilin-yanji-changbaishan" / "mobile" / "index.html",
 ]
 VIEWPORTS = [
     ("desktop", {"width": 1440, "height": 1400}),
