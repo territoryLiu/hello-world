@@ -55,6 +55,29 @@
 10. 交通/联程提醒（机场/高铁/包车安排、路线图、落地联络人）。
 11. 信息来源与参考（列出官方/可靠来源、可引用链接）。
 
+所有主内容块必须以 `<section id="...">` 包裹，`id` 只能使用 ASCII 小写字母与破折号（不允许空格或大写），且在页内唯一。将 HTML 结构按本节列出的顺序写出，以便 Playwright 与 renderer 一一映射，任何重复或跳号都会让后续自动校验失败。
+
+| 中文标题 | 规范 `id` |
+| --- | --- |
+| 概览 | `overview` |
+| 推荐方案 | `recommended` |
+| 其他方案 | `options` |
+| 景点/体验 | `attractions` |
+| 餐食/休息 | `food` |
+| 季节提示 | `season` |
+| 打包/装备 | `packing` |
+| 交通/联程 | `transport` |
+| 来源与参考 | `sources` |
+
+务必先写中文标题再贴 `id`，例如：
+
+```
+<section id="overview">
+  <h2>概览</h2>
+  ...
+</section>
+```
+
 每一部分都要匹配 `id`（overview, recommended, options, attractions, food, season, packing, transport, sources）并按顺序命名。
 
 ## 图位方案规范
@@ -69,6 +92,14 @@
 - 维护图位负责人，对接摄影/设计，明确交付期限和版本号。
 - 最后附加「如果无图」的占位策略：调色背景、图标 + 口号、关键数据条。
 
+### 图位明细模板
+
+| 编号 | 对应区块 | 主题/场景 | 尺寸/比例 | 渠道 | 素材来源/授权 | 负责人 | 状态/截止日期 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| A1 | hero | 迎宾 + 长白山日出 | 2000×1200 / 16:9 | 桌面 hero | 公共素材库 / 待确认授权 | 设计小组 | 待拍摄 4/15 |
+| A2 | 概览卡片 | 延吉夜市 | 1200×900 / 4:3 | 移动 page header | 合作摄影师 | 内容小组 | 4/18 之前提 | 
+
+
 ## 交付检查清单
 
 - 确认文字稿：标题、摘要、推荐/备选方案、景点、交通等都有对应的结构化段落。
@@ -77,6 +108,7 @@
 - 资料来源：列出至少 3 个官方/本地/合作来源，并在 sources 部分标注。
 - 图片准备：高光图片、备用图片、如需补拍/采购的清单。
 - 交付前预览：桌面/移动样式都跑过一次（手动或 Playwright），记录主要差异。
+- Playwright 验证流程：`python tests/playwright_trip_render_check.py`，检查桌面/移动页面在常见断点（约 1280px、768px、360px）下是否返回所有 `section id`、无横向溢出并且分页标签存在，将 `travel guide regression checks passed` 视为接收信号。
 - 复用信息库：把本次调研的有用片段（数据、角度、素材）加入知识库。
 
 ## 可复用输出模板
@@ -92,10 +124,10 @@
 
 ### 输出清单
 
-- 桌面 HTML + CSS
-- 移动 HTML + CSS
-- shared content JS + renderer
-- sources note + image plan + research log
+- 桌面 HTML + CSS（路径 `trips/<trip-slug>/desktop/index.html` + `desktop.css`，命名保持 `desktop` 目录并加载 `assets` 共享样式/脚本）。
+- 移动 HTML + CSS（路径 `trips/<trip-slug>/mobile/index.html` + `mobile.css`，需设置 `data-page` 分页并与桌面共享 `assets`）。
+- Shared content JS + renderer：`trips/<trip-slug>/assets/guide-content.js`（导出 `tripGuide`，`meta` 与 `sections` 按照规范 `overview` 等顺序）和 `trips/<trip-slug>/assets/render-guide.js`（暴露 `renderCards`、`renderSection`、`byId` 等辅助函数）。命名须保持 `guide-content.js` / `render-guide.js`，永远在 `assets` 目录下。
+- Research/delivery notes：`trips/<trip-slug>/notes/sources.md`（按主题分组、注明来源/日期/联系人）、`trips/<trip-slug>/notes/image-plan.md`（包含图位表格）、`trips/<trip-slug>/notes/research-log.md`（或等效命名，须记录调研路径/日期/结论/待办）。头部需写明 slug、版本、审核人。
 
 ### 客户确认提示模板
 
