@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>五一旅游专题版｜长春 延吉 长白山</title>
+  <style>
+    :root{
+      --bg-warm:#efe7dc;
+      --bg-cream:#f8f2e9;
+      --surface:#fffaf3;
+      --surface-soft:#f3eadf;
+      --ink:#26262b;
+      --ink-soft:#655d54;
+      --accent:#f2cc78;
+      --sage:#7d8b71;
+      --pine:#272b33;
+      --line:rgba(38,38,43,.08);
+      --shadow:0 24px 60px rgba(42,34,28,.10);
+      --shadow-deep:0 28px 56px rgba(20,20,24,.22);
+      --radius-xl:36px;
+      --radius-lg:28px;
+      --radius-md:18px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      color:var(--ink);
+      font-family:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+      line-height:1.75;
+      background:
+        radial-gradient(circle at 12% 14%,rgba(242,204,120,.18),transparent 18%),
+        radial-gradient(circle at 86% 10%,rgba(125,139,113,.16),transparent 18%),
+        linear-gradient(180deg,#f4ede3 0%,var(--bg-warm) 42%,#f8f3ec 100%);
+    }
+    body:before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      opacity:.18;
+      background-image:
+        linear-gradient(rgba(38,38,43,.03) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(38,38,43,.03) 1px,transparent 1px);
+      background-size:28px 28px;
+    }
+    a{color:#44624d}
+    .wrap{width:min(calc(100% - 28px),1120px);margin:0 auto;position:relative;z-index:1}
+    .hero{padding:32px 0 18px}
+    .hero-shell{display:grid;grid-template-columns:1.12fr .88fr;gap:18px}
+    .hero-copy,.hero-summary,.paper,.dark-panel,.source{
+      border-radius:var(--radius-lg);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+    }
+    .hero-copy,.paper,.source{background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,249,242,.95))}
+    .hero-copy{padding:30px 32px}
+    .hero-summary,.dark-panel{
+      padding:24px;
+      background:linear-gradient(180deg,rgba(39,43,51,.98),rgba(31,35,42,.98));
+      box-shadow:var(--shadow-deep);
+      color:#f5ede3;
+    }
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 13px;
+      border-radius:999px;
+      background:rgba(242,204,120,.22);
+      color:#7f5a27;
+      font-size:12px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+    }
+    .page-title{
+      margin:18px 0 10px;
+      font-family:"STKaiti","KaiTi","FangSong","Times New Roman",serif;
+      font-size:clamp(36px,5.5vw,62px);
+      line-height:1.04;
+      letter-spacing:-.06em;
+    }
+    .hero-lead{margin:0;color:var(--ink-soft);font-size:17px}
+    .hero-meta,.navin,.summary-grid,.timeline-grid,.guide-grid,.sources{display:grid;gap:16px}
+    .hero-meta{
+      margin-top:18px;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    .mini-chip{
+      padding:12px 14px;
+      border-radius:var(--radius-md);
+      background:rgba(242,204,120,.14);
+      border:1px solid rgba(196,141,66,.16);
+      color:#725a35;
+      font-size:14px;
+    }
+    .hero-summary h3,.dark-panel h3,.paper h3,.source h3{
+      margin:0 0 10px;
+      font-family:"STKaiti","KaiTi","FangSong","Times New Roman",serif;
+      font-size:24px;
+      letter-spacing:-.03em;
+    }
+    .hero-summary p,.hero-summary li,.dark-panel p,.dark-panel li{color:rgba(245,237,227,.82)}
+    .hero-summary ul,.dark-panel ul{margin:12px 0 0;padding-left:18px}
+    .hero-summary li+li,.dark-panel li+li{margin-top:8px}
+    .nav{position:sticky;top:12px;z-index:8;padding:0 0 22px}
+    .navin{
+      grid-template-columns:repeat(7,minmax(0,1fr));
+      padding:12px;
+      border-radius:999px;
+      background:rgba(255,248,238,.82);
+      border:1px solid rgba(255,255,255,.66);
+      backdrop-filter:blur(14px);
+      box-shadow:0 18px 36px rgba(42,34,28,.10);
+      scrollbar-width:none;
+    }
+    .navin::-webkit-scrollbar{display:none}
+    .navin a{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 12px;
+      border-radius:999px;
+      text-decoration:none;
+      color:var(--ink);
+      background:rgba(255,250,243,.9);
+      border:1px solid rgba(38,38,43,.08);
+      font-weight:600;
+      font-size:14px;
+      white-space:nowrap;
+    }
+    section{padding:26px 0 0}
+    section[id]{scroll-margin-top:104px}
+    .feature-panel{display:grid;gap:16px}
+    .section-intro{
+      padding:20px 22px;
+      border-radius:var(--radius-lg);
+      background:linear-gradient(180deg,rgba(255,252,246,.94),rgba(247,240,231,.88));
+      border:1px solid rgba(255,255,255,.74);
+      box-shadow:var(--shadow);
+    }
+    .kicker{
+      margin:0 0 8px;
+      color:#8c806f;
+      font-size:12px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+    }
+    .section-intro h2{
+      margin:0;
+      font-family:"STKaiti","KaiTi","FangSong","Times New Roman",serif;
+      font-size:clamp(30px,4vw,46px);
+      line-height:1.05;
+      color:#2f3c33;
+      letter-spacing:-.04em;
+    }
+    .section-intro p{margin:10px 0 0;color:var(--ink-soft)}
+    .summary-grid{grid-template-columns:1.15fr .85fr .85fr .85fr}
+    .summary-grid .paper,.summary-grid .dark-panel,.timeline-card,.guide-grid .paper,.source{padding:20px}
+    .timeline-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .timeline-card{
+      border-radius:var(--radius-lg);
+      border:1px solid var(--line);
+      background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,249,242,.95));
+      box-shadow:var(--shadow);
+    }
+    .timeline-card strong,.paper strong{display:block;margin-bottom:6px}
+    .guide-grid{grid-template-columns:1fr 1fr}
+    .guide-grid .wide{grid-column:1 / -1}
+    .table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius:20px;
+      border:1px solid rgba(38,38,43,.07);
+      background:#fffcf7;
+      font-size:14px;
+    }
+    .table th,.table td{
+      padding:13px 12px;
+      text-align:left;
+      vertical-align:top;
+      border-bottom:1px solid rgba(38,38,43,.07);
+    }
+    .table thead th{
+      background:linear-gradient(90deg,rgba(242,204,120,.22),rgba(221,209,191,.34));
+      color:#51483d;
+    }
+    .table tbody tr:last-child td{border-bottom:none}
+    .transport-note{
+      padding:14px 16px;
+      border-radius:var(--radius-md);
+      background:rgba(242,204,120,.16);
+      border:1px solid rgba(196,141,66,.18);
+      color:#7a633d;
+      font-size:14px;
+    }
+    .sources{grid-template-columns:repeat(3,minmax(0,1fr));padding-bottom:40px}
+    .footer{padding:12px 0 36px;text-align:center;color:var(--ink-soft);font-size:13px}
+    @media (max-width:960px){
+      .hero-shell,
+      .summary-grid,
+      .timeline-grid,
+      .guide-grid,
+      .sources{grid-template-columns:1fr}
+    }
+    @media (max-width:720px){
+      .navin{
+        display:flex;
+        flex-wrap:nowrap;
+        overflow-x:auto;
+        gap:10px;
+        padding:10px;
+        border-radius:22px;
+      }
+      .navin a{flex:0 0 auto}
+      .page-title{font-size:clamp(34px,9vw,48px)}
+      .hero-copy,.hero-summary,.paper,.dark-panel,.source{padding:20px}
+      .table{display:block;overflow:auto}
+      .hero-meta{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap hero-shell">
+      <div class="hero-copy">
+        <span class="eyebrow">Story Edition</span>
+        <h1 class="page-title">长春 · 延吉 · 长白山<br>先照这版结论走</h1>
+        <p class="hero-lead">这版把答案放前面。你不需要先读完一整页表格，前两屏就能确定路线、穿衣、订票顺序和主要交通选择。</p>
+        <div class="hero-meta">
+          <div class="mini-chip">主线：长春 → 延吉 → 二道白河 → 北坡</div>
+          <div class="mini-chip">返程：先看延吉直飞，再看长春 / 沈阳中转</div>
+          <div class="mini-chip">穿衣：城市春装，进山按冬春交界准备</div>
+          <div class="mini-chip">预算：常规舒适档约 ¥3600 - ¥5400 / 人</div>
+        </div>
+      </div>
+      <aside class="hero-summary">
+        <h3>现在最值钱的判断</h3>
+        <ul>
+          <li>截至 2026 年 4 月 10 日最近可查，南京 ⇄ 长春和长春 ⇄ 延吉的主力高铁都还在；真正不稳定的是五一当天库存，不是线路本身。</li>
+          <li>延吉 ⇄ 二道白河更适合把预算留给拼车 / 旅游直通车，不要幻想这段还能像城际高铁一样丝滑。</li>
+          <li>长白山票先锁，二道白河住宿跟着锁，回程航班最后处理。</li>
+        </ul>
+      </aside>
+    </div>
+  </header>
+
+  <div class="wrap nav">
+    <nav class="navin">
+      <a href="#summary">先看结论</a>
+      <a href="#timeline">路线时间轴</a>
+      <a href="#packing">穿衣打包</a>
+      <a href="#booking">订票顺序</a>
+      <a href="#guide">完整展开攻略</a>
+      <a href="#tips">注意事项</a>
+      <a href="#sources">信息来源</a>
+    </nav>
+  </div>
+
+  <main class="wrap">
+    <section id="summary" class="feature-panel">
+      <div class="section-intro">
+        <p class="kicker">专题速览</p>
+        <h2>第一次去，先照这个节奏走</h2>
+        <p>路线优先级、穿衣判断、住宿落点和订票顺序都先放在前面，不让人一上来先掉进长表格里。</p>
+      </div>
+      <div class="summary-grid">
+        <article class="dark-panel">
+          <span class="kicker" style="color:rgba(245,237,227,.7)">路线</span>
+          <h3>长春 → 延吉 → 二道白河 → 北坡</h3>
+          <p>这是第一次去最稳的主方案。长春只拿历史感和烟火气，延吉给完整吃喝和夜景，北坡前夜固定住二道白河。</p>
+        </article>
+        <article class="paper">
+          <span class="kicker">穿衣</span>
+          <p>城市按春装，进山按冬春交界多备一层。真正容易失手的不是延吉白天，而是长白山风口和二道白河清晨。</p>
+        </article>
+        <article class="paper">
+          <span class="kicker">住宿</span>
+          <p>延吉住延边大学 / 西市场一线；北坡前夜住二道白河。这样夜里好逛，第二天也不必 4 点半在路上崩溃。</p>
+        </article>
+        <article class="paper">
+          <span class="kicker">顺序</span>
+          <p>先票后房，再补城市交通与返程。对这条线来说，订票顺序本身就是风险控制。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="timeline" class="feature-panel">
+      <div class="section-intro">
+        <p class="kicker">路线时间轴</p>
+        <h2>最推荐路线</h2>
+        <p>这一版默认你更想玩得稳，而不是每天都把时间压到分秒不差。</p>
+      </div>
+      <div class="timeline-grid">
+        <article class="timeline-card">
+          <strong>4 月 30 日</strong>
+          <h3>南京 → 长春</h3>
+          <p>白天去程，晚上住长春市区。到站后只安排一段轻松逛吃，不把首日体力用在景点上。</p>
+        </article>
+        <article class="timeline-card">
+          <strong>5 月 1 日 - 5 月 2 日</strong>
+          <h3>长春 → 延吉</h3>
+          <p>上午在长春收一个核心景点，下午高铁转延吉。延吉留一晚和一个完整白天，吃喝、夜游和民俗园都够排。</p>
+        </article>
+        <article class="timeline-card">
+          <strong>5 月 2 日晚 - 5 月 5 日</strong>
+          <h3>二道白河 → 北坡 → 返程</h3>
+          <p>5 月 2 日晚住二道白河，5 月 3 日北坡主线，5 月 4 日留机动，5 月 5 日返程。天气不好时，这一天的机动会非常值钱。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="packing" class="feature-panel">
+      <div class="section-intro">
+        <p class="kicker">穿衣打包</p>
+        <h2>一句话记住：城市春装，进山多一层</h2>
+        <p>长春和延吉的白天不算折磨人，真正容易后悔的是清晨去水上市场和上山时低估风感。</p>
+      </div>
+      <div class="guide-grid">
+        <article class="paper">
+          <h3>城市部分</h3>
+          <ul>
+            <li>长春：短袖或薄长袖 + 卫衣 / 薄外套。</li>
+            <li>延吉：白天适合长袖衬衫、针织，夜里别只穿单层。</li>
+            <li>鞋子：舒服的运动鞋就够，别太重。</li>
+          </ul>
+        </article>
+        <article class="paper">
+          <h3>上山部分</h3>
+          <ul>
+            <li>防风壳或冲锋衣一定带。</li>
+            <li>抓绒或轻薄羽绒至少一件。</li>
+            <li>防水鞋、厚袜、帽子、墨镜和一次性雨衣都很值得。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="booking" class="feature-panel">
+      <div class="section-intro">
+        <p class="kicker">订票顺序</p>
+        <h2>别把票房顺序搞反</h2>
+        <p>这部分专门回答“怎么买最不慌”，也把最近可查交通班次和价格一起放在这里。</p>
+      </div>
+      <article class="paper">
+        <h3>交通班次与价格参考</h3>
+        <p>截至 2026 年 4 月 10 日最近可查。五一库存后续可能继续调整，下面先用最近可查班次做执行参考；公共交通线路通常稳定，节假日若有变化一般会提前公告。</p>
+        <table class="table">
+          <thead>
+            <tr><th>段落</th><th>高铁 / 动车</th><th>飞机</th><th>公交 / 地铁 / 打车</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>南京 ⇄ 长春</td>
+              <td>最近可查直达 <strong>G2621 / G2622</strong>，单程约 8 小时 20 分，二等座约 <strong>¥799 - ¥821</strong>。</td>
+              <td>近期公开时刻页可见南京到长春每天约 4 班直飞，飞行约 2 小时 40 分，近期票价常见 <strong>¥637 起</strong>。</td>
+              <td>龙嘉机场到市区常用城际铁路或机场巴士；机场巴士常见 <strong>¥25</strong>，打车到市区约 <strong>¥80 - ¥120</strong>。</td>
+            </tr>
+            <tr>
+              <td>长春 ⇄ 延吉</td>
+              <td>最近可查 <strong>C1023 / C1041 / D8083</strong> 等班次，二等座约 <strong>¥180.5 - ¥189.5</strong>。</td>
+              <td>这段飞机通常不如高铁稳，也不如高铁省脑子。</td>
+              <td>长春市内常用地铁票价 <strong>¥2 - ¥4</strong>；晚上来不及地铁再补打车。</td>
+            </tr>
+            <tr>
+              <td>延吉 ⇄ 二道白河 / 北坡</td>
+              <td>没有像长春城际那样顺手的主力高铁直达，接驳成本更高。</td>
+              <td>这段不考虑飞机。</td>
+              <td>客运参考约 <strong>¥45 / 人</strong>，旅游直通车常见 <strong>¥70 / 人</strong>，拼车约 <strong>¥80 / 人</strong>，包车约 <strong>¥300 / 车</strong>；二道白河到北景区集散点打车常见 <strong>¥10 - ¥20</strong>。</td>
+            </tr>
+            <tr>
+              <td>延吉 ⇄ 南京</td>
+              <td>高铁可兜底，但总路程明显更长。</td>
+              <td>2026 年 3 月 29 日起可查到 <strong>AQ1575 / AQ1576</strong> 直飞，飞行约 2 小时 55 分；近期一程多在 <strong>¥1900+</strong>。</td>
+              <td>延吉没有地铁。延吉西站到延边大学 / 百货大楼一线可看 <strong>B37、10、39</strong> 等公交，单程多为 <strong>¥1 - ¥2</strong>；打车约 <strong>¥20 - ¥30</strong>。</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="transport-note">主力订票顺序：先长白山，再二道白河，再长春 ⇄ 延吉，再返程航班。对这条线来说，顺序错了，后面再会抢票也会心态崩。</div>
+      </article>
+    </section>
+
+    <section id="guide" class="feature-panel">
+      <div class="section-intro">
+        <p class="kicker">完整展开攻略</p>
+        <h2>如果你想把备选方案和细节都看全，再往下读</h2>
+        <p>这里把方案差异和预算补完整，方便你按体力、拍照欲和预算再微调。</p>
+      </div>
+      <div class="guide-grid">
+        <article class="paper">
+          <h3>Plan A｜第一次去最稳</h3>
+          <p>长春 1 晚 + 延吉 1 晚 + 二道白河 1 - 2 晚，北坡主线，不硬塞西坡。</p>
+          <ul>
+            <li>优点：成功率高，整体最轻松。</li>
+            <li>预算：常规舒适档约 <strong>¥3600 - ¥5400 / 人</strong>。</li>
+          </ul>
+        </article>
+        <article class="paper">
+          <h3>Plan B｜延吉吃喝拍照版</h3>
+          <p>把时间让给延吉，长春压缩成半天，适合更看重夜景、写真和餐厅命中率的人。</p>
+          <ul>
+            <li>优点：照片和吃饭满意度最高。</li>
+            <li>代价：长春更像中转站。</li>
+          </ul>
+        </article>
+        <article class="paper wide">
+          <h3>Plan C｜双坡风景升级版</h3>
+          <p>北坡做主线，5 月 4 日视天气和票再加西坡。更像升级包，不是默认主线。</p>
+          <ul>
+            <li>适合：预算更宽松、体力在线、愿意接受更高转场成本的人。</li>
+            <li>额外成本：西坡拼车约 <strong>¥60 / 人</strong>，包车约 <strong>¥200 / 车</strong>，如果加住松江河 / 万达，整体再上浮 <strong>¥500 - ¥1200 / 人</strong>。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="tips" class="feature-panel">
+      <div class="section-intro">
+        <p class="kicker">注意事项</p>
+        <h2>这几件事最容易把心态搞崩</h2>
+      </div>
+      <div class="guide-grid">
+        <article class="paper">
+          <h3>关于长白山</h3>
+          <ul>
+            <li>五一期间游客量大，官方会做预约和分时管理。</li>
+            <li>山下是春天，山上可能还是雪线感。防风、防滑、防水比“穿得好看”优先级高。</li>
+            <li>把天池能见度当惊喜，不要当必须兑现的承诺。</li>
+          </ul>
+        </article>
+        <article class="paper">
+          <h3>关于转场</h3>
+          <ul>
+            <li>两人同行时，延吉到二道白河先比较拼车和包车，很多时候多花一点更省脑子。</li>
+            <li>返程别把航班形式当执念。能轻松回去，比死守某一班更重要。</li>
+            <li>住宿先看位置、隔音和叫车便利，再看装修图。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="sources" class="feature-panel">
+      <div class="section-intro">
+        <p class="kicker">信息来源</p>
+        <h2>这版用到的关键来源</h2>
+      </div>
+      <div class="sources">
+        <article class="source">
+          <h3>交通班次</h3>
+          <ul>
+            <li><a href="https://trains.ctrip.com/trainbooking/nanjingnan-changchun" target="_blank" rel="noreferrer">携程火车票：南京南到长春</a></li>
+            <li><a href="https://trains.ctrip.com/trainbooking/changchunxi-yanjixi" target="_blank" rel="noreferrer">携程火车票：长春西到延吉西</a></li>
+            <li><a href="https://aviability.com/zh-hans/route/nkg-nanjing-lukou/ynj-yanji-chaoyangchuan" target="_blank" rel="noreferrer">Aviability：南京到延吉直飞航线</a></li>
+          </ul>
+        </article>
+        <article class="source">
+          <h3>城市接驳</h3>
+          <ul>
+            <li><a href="https://www.innenu.com/jiaotong/yunjiaotong/changchun/" target="_blank" rel="noreferrer">长春交通参考：龙嘉机场、机场巴士、轨道交通票价</a></li>
+            <li><a href="https://en.wikipedia.org/wiki/Yanji_West_railway_station" target="_blank" rel="noreferrer">Yanji West Railway Station：公交线路参考</a></li>
+            <li><a href="https://m.checi.cn/car/22833_e/" target="_blank" rel="noreferrer">车次网：延吉到二道白河汽车票参考</a></li>
+          </ul>
+        </article>
+        <article class="source">
+          <h3>景区与天气</h3>
+          <ul>
+            <li><a href="https://changbaishan.gov.cn/hdjl/zfsqpt/jlszbsbhkfqglwyh/sqck/blhf/202504/t20250419_266869.html" target="_blank" rel="noreferrer">长白山官方售票渠道答复</a></li>
+            <li><a href="https://www.news.cn/politics/20241023/3d05d81d8eb8454f9cf8dbd4ba16175e/c.html" target="_blank" rel="noreferrer">新华社：长白山景区 15 天预约规则</a></li>
+            <li><a href="https://www.tianqi24.com/changchun/history5.html" target="_blank" rel="noreferrer">长春 5 月历史天气</a></li>
+          </ul>
+        </article>
+      </div>
+    </section>
+    <div class="footer">这份专题版仍然按单文件离线 HTML 设计。真正下单前，请在 12306、航司购票页和长白山官方小程序再核一次实时价格与可售状态。</div>
+  </main>
+</body>
+</html>
