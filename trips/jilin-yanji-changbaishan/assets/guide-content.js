@@ -1,13 +1,13 @@
 const tripGuide = {
   meta: {
     slug: "jilin-yanji-changbaishan",
-    title: "浜斾竴鏃呮父鏀荤暐锛氬崡浜嚭鍙?路 闀挎槬 / 寤跺悏 / 闀跨櫧灞?",
-    dateRange: "2026-04-30 鑷?2026-05-05",
-    departure: "鍗椾含",
-    travelers: "4 浣嶏紝28 宀佸乏鍙筹紝涓ょ敺涓ゅコ",
-    pace: "鍙帴鍙楁棭璧?",
-    stayPreference: "姹夊涵浼樺厛锛屾爣闂?150-450 鍏?",
-    checkedAt: "鎴嚦 2026-04-10"
+    title: "吉林延吉长白山精致旅程：雪山秘境 / 朝鲜风情 / 东北美食",
+    dateRange: "2026-04-30 至 2026-05-05",
+    departure: "北京出发",
+    travelers: "4 位成年人，含 28 岁成人与一名低龄儿童",
+    pace: "慢速节奏，兼顾体验与休息",
+    stayPreference: "优先精品民宿或舒适酒店，预算 150-450 元/晚",
+    checkedAt: "核对时间：2026-04-10"
   },
   sections: {
     overview: [],
