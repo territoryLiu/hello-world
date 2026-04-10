@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>吉林延吉长白山旅行指南</title>
+    <link rel="stylesheet" href="../assets/base.css" />
+    <link rel="stylesheet" href="./desktop.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#overview">跳到正文</a>
+
+    <header class="hero">
+      <div class="section-shell hero-inner">
+        <p class="hero-kicker">旅行指南 (Desktop)</p>
+        <h1 id="page-title" class="hero-title">吉林延吉长白山</h1>
+        <div class="hero-meta" id="page-meta" aria-label="行程概览信息"></div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="toc" aria-label="页面导航">
+        <div class="toc-box">
+          <a class="toc-top" href="#overview">阅读顺序</a>
+          <nav>
+            <a href="#overview" data-nav="overview">1. 每日安排 <span class="toc-count" data-count="overview"></span></a>
+            <a href="#recommended" data-nav="recommended">2. 最推荐方案 <span class="toc-count" data-count="recommended"></span></a>
+            <a href="#options" data-nav="options">3. 备选方案 <span class="toc-count" data-count="options"></span></a>
+            <a href="#attractions" data-nav="attractions">4. 玩法与景点 <span class="toc-count" data-count="attractions"></span></a>
+            <a href="#food" data-nav="food">5. 美食清单 <span class="toc-count" data-count="food"></span></a>
+            <a href="#season" data-nav="season">6. 天气与季节 <span class="toc-count" data-count="season"></span></a>
+            <a href="#packing" data-nav="packing">7. 打包清单 <span class="toc-count" data-count="packing"></span></a>
+            <a href="#transport" data-nav="transport">8. 交通与落地 <span class="toc-count" data-count="transport"></span></a>
+            <a href="#sources" data-nav="sources">9. 信源 <span class="toc-count" data-count="sources"></span></a>
+          </nav>
+        </div>
+      </aside>
+
+      <main class="content" aria-label="指南正文">
+        <section id="overview" class="guide-section">
+          <header class="section-head">
+            <h2>每日安排</h2>
+            <p>先把每天怎么走讲清楚，再给推荐方案和替代方案，最后是深挖模块。</p>
+          </header>
+          <div class="cards" data-cards="overview"></div>
+        </section>
+
+        <section id="recommended" class="guide-section">
+          <header class="section-head">
+            <h2>最推荐方案</h2>
+            <p>把“最稳”那条主线写成可执行清单，方便临出发复盘。</p>
+          </header>
+          <div class="cards" data-cards="recommended"></div>
+        </section>
+
+        <section id="options" class="guide-section">
+          <header class="section-head">
+            <h2>备选方案</h2>
+            <p>在住宿结构和机动日上做变体，保持整体可控。</p>
+          </header>
+          <div class="cards" data-cards="options"></div>
+        </section>
+
+        <section id="attractions" class="guide-section">
+          <header class="section-head">
+            <h2>玩法与景点</h2>
+            <p>延吉和长白山周边的关键点位，按“顺路”与“值得”排序。</p>
+          </header>
+          <div class="cards" data-cards="attractions"></div>
+        </section>
+
+        <section id="food" class="guide-section">
+          <header class="section-head">
+            <h2>美食清单</h2>
+            <p>把想吃的拆成具体菜品和适合安排在第几天。</p>
+          </header>
+          <div class="cards" data-cards="food"></div>
+        </section>
+
+        <section id="season" class="guide-section">
+          <header class="section-head">
+            <h2>天气与季节</h2>
+            <p>强调温差与风感，避免用市区穿法硬扛景区。</p>
+          </header>
+          <div class="cards" data-cards="season"></div>
+        </section>
+
+        <section id="packing" class="guide-section">
+          <header class="section-head">
+            <h2>打包清单</h2>
+            <p>按“进山刚需”和“城市日常”分组，避免过度携带。</p>
+          </header>
+          <div class="cards" data-cards="packing"></div>
+        </section>
+
+        <section id="transport" class="guide-section">
+          <header class="section-head">
+            <h2>交通与落地</h2>
+            <p>把关键交通决策点写成“到哪一刻要确认什么”。</p>
+          </header>
+          <div class="cards" data-cards="transport"></div>
+        </section>
+
+        <section id="sources" class="guide-section">
+          <header class="section-head">
+            <h2>信源</h2>
+            <p>只保留能复核规则和官方口径的链接，附最近核对时间。</p>
+          </header>
+          <div class="cards" data-cards="sources"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="../assets/guide-content.js"></script>
+    <script src="../assets/render-guide.js"></script>
+    <script>
+      (function () {
+        var registry = globalThis.__TRIP_GUIDES__;
+        var guide = registry && registry["jilin-yanji-changbaishan"];
+        var renderer = window.tripGuideRenderer;
+
+        function byId(id) {
+          return document.getElementById(id);
+        }
+
+        function setText(el, value) {
+          if (!el) return;
+          el.textContent = value == null ? "" : String(value);
+        }
+
+        function createEl(tag, className, text) {
+          var el = document.createElement(tag);
+          if (className) el.className = className;
+          if (text != null) el.textContent = String(text);
+          return el;
+        }
+
+        function renderMeta(meta) {
+          var target = byId("page-meta");
+          if (!target || !meta) return;
+
+          target.replaceChildren();
+
+          var rows = [
+            ["时间", meta.dateRange],
+            ["出发", meta.departure],
+            ["同行", meta.travelers],
+            ["节奏", meta.pace],
+            ["住宿", meta.stayPreference],
+            ["核对", meta.checkedAt]
+          ];
+
+          rows.forEach(function (row) {
+            if (!row[1]) return;
+            var item = createEl("div", "meta-item");
+            item.appendChild(createEl("span", "meta-label", row[0]));
+            item.appendChild(createEl("span", "meta-value", row[1]));
+            target.appendChild(item);
+          });
+        }
+
+        function renderSectionCards(sectionId, items) {
+          var container = document.querySelector('[data-cards="' + sectionId + '"]');
+          if (!container) return;
+          if (!renderer || typeof renderer.renderCards !== "function") {
+            container.innerHTML = "";
+            return;
+          }
+          container.innerHTML = renderer.renderCards(items || []);
+        }
+
+        function renderSources(sectionId, groups) {
+          var container = document.querySelector('[data-cards="' + sectionId + '"]');
+          if (!container) return;
+          container.replaceChildren();
+
+          if (!Array.isArray(groups) || groups.length === 0) {
+            return;
+          }
+
+          groups.forEach(function (group) {
+            var card = createEl("article", "card");
+            card.appendChild(createEl("h3", "", group && group.title ? group.title : "未命名信源"));
+            if (group && group.summary) {
+              card.appendChild(createEl("p", "", group.summary));
+            }
+
+            if (group && Array.isArray(group.entries) && group.entries.length) {
+              var list = createEl("ul", "source-entries");
+              group.entries.forEach(function (entry) {
+                var li = document.createElement("li");
+                var link = document.createElement("a");
+                link.href = entry.url || "#";
+                link.target = "_blank";
+                link.rel = "noreferrer";
+                link.textContent = entry.title || entry.url || "链接";
+                li.appendChild(link);
+
+                if (entry && entry.checkedAt) {
+                  li.appendChild(createEl("span", "source-checked", "核对：" + entry.checkedAt));
+                }
+                list.appendChild(li);
+              });
+              card.appendChild(list);
+            }
+
+            container.appendChild(card);
+          });
+        }
+
+        function setCounts(sections) {
+          if (!sections) return;
+          Object.keys(sections).forEach(function (key) {
+            var count = Array.isArray(sections[key]) ? sections[key].length : 0;
+            var badge = document.querySelector('[data-count="' + key + '"]');
+            if (!badge) return;
+            badge.textContent = count ? String(count) : "";
+            badge.hidden = !count;
+          });
+        }
+
+        function wireActiveNav() {
+          var navLinks = Array.prototype.slice.call(document.querySelectorAll("[data-nav]"));
+          if (!("IntersectionObserver" in window) || navLinks.length === 0) return;
+
+          var sectionById = Object.create(null);
+          navLinks.forEach(function (link) {
+            var id = link.getAttribute("data-nav");
+            var section = id ? byId(id) : null;
+            if (section) sectionById[id] = section;
+          });
+
+          var observer = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                var id = entry.target && entry.target.id;
+                if (!id) return;
+                var link = document.querySelector('[data-nav="' + id + '"]');
+                if (!link) return;
+                if (entry.isIntersecting) {
+                  navLinks.forEach(function (a) {
+                    a.removeAttribute("aria-current");
+                  });
+                  link.setAttribute("aria-current", "true");
+                }
+              });
+            },
+            { rootMargin: "-20% 0px -70% 0px", threshold: 0.01 }
+          );
+
+          Object.keys(sectionById).forEach(function (id) {
+            observer.observe(sectionById[id]);
+          });
+        }
+
+        if (!guide) {
+          setText(byId("page-title"), "未加载到指南数据");
+          return;
+        }
+
+        setText(byId("page-title"), guide.meta && guide.meta.title ? guide.meta.title : "旅行指南");
+        renderMeta(guide.meta || {});
+        setCounts(guide.sections || {});
+
+        var sections = guide.sections || {};
+        renderSectionCards("overview", sections.overview);
+        renderSectionCards("recommended", sections.recommended);
+        renderSectionCards("options", sections.options);
+        renderSectionCards("attractions", sections.attractions);
+        renderSectionCards("food", sections.food);
+        renderSectionCards("season", sections.season);
+        renderSectionCards("packing", sections.packing);
+        renderSectionCards("transport", sections.transport);
+        renderSources("sources", sections.sources);
+
+        wireActiveNav();
+      })();
+    </script>
+  </body>
+</html>
+
