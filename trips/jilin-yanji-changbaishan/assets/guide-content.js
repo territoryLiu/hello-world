@@ -282,42 +282,98 @@ const tripGuide = {
       {
         title: "长白山官方票务与北坡规则",
         summary: "用来核对北坡是否实名预约、官方购票渠道、二道白河与北景区的关系，以及北坡经典点位范围。",
-        points: [
-          "《咨询长白山景区官方售票平台》 https://changbaishan.gov.cn/hdjl/zfsqpt/jlszbsbhkfqglwyh/sqck/blhf/202504/t20250419_266869.html （核对 2026-04-10）",
-          "《长白山天池预约》 https://changbaishan.gov.cn/hdjl/zfsqpt/jlszbsbhkfqglwyh/sqck/blhf/202510/t20251020_268605.html （核对 2026-04-10）",
-          "《怎么去长白山？请收藏好这份最全交通攻略》 https://www.changbaishan.gov.cn/zbsly/lyzn/bpgl/202106/t20210625_210152.html （核对 2026-04-10）"
+        entries: [
+          {
+            title: "咨询长白山景区官方售票平台",
+            url: "https://changbaishan.gov.cn/hdjl/zfsqpt/jlszbsbhkfqglwyh/sqck/blhf/202504/t20250419_266869.html",
+            checkedAt: "2026-04-10"
+          },
+          {
+            title: "长白山天池预约",
+            url: "https://changbaishan.gov.cn/hdjl/zfsqpt/jlszbsbhkfqglwyh/sqck/blhf/202510/t20251020_268605.html",
+            checkedAt: "2026-04-10"
+          },
+          {
+            title: "怎么去长白山？请收藏好这份最全交通攻略",
+            url: "https://www.changbaishan.gov.cn/zbsly/lyzn/bpgl/202106/t20210625_210152.html",
+            checkedAt: "2026-04-10"
+          }
         ]
       },
       {
         title: "延吉城市与景点氛围",
         summary: "用来核对民俗园、水上市场、网红墙等点位仍是有效主线，并补足节假日人流和玩法判断。",
-        points: [
-          "《玩转延边》 https://www.yanbian.gov.cn/csmp/wzyb/xcy/index.html （核对 2026-04-10）",
-          "《五一黄金周 延吉水上市场早市烟火气浓人气爆棚》 https://yanjinews.com/html/news/yanjinews/2025/0502/216079.html （核对 2026-04-10）",
-          "《中国朝鲜族民俗园美食街将于4月30日开业》 https://www.yanjinews.com/html/news/yanjinews/2025/0429/215963.html （核对 2026-04-10）"
+        entries: [
+          {
+            title: "玩转延边",
+            url: "https://www.yanbian.gov.cn/csmp/wzyb/xcy/index.html",
+            checkedAt: "2026-04-10"
+          },
+          {
+            title: "五一黄金周 延吉水上市场早市烟火气浓人气爆棚",
+            url: "https://yanjinews.com/html/news/yanjinews/2025/0502/216079.html",
+            checkedAt: "2026-04-10"
+          },
+          {
+            title: "中国朝鲜族民俗园美食街将于4月30日开业",
+            url: "https://www.yanjinews.com/html/news/yanjinews/2025/0429/215963.html",
+            checkedAt: "2026-04-10"
+          }
         ]
       },
       {
         title: "住宿与落位",
         summary: "用来核对汉庭偏好在延吉和二道白河都能落地，并支持“住得靠近核心动线”这一安排。",
-        points: [
-          "《汉庭延吉水上市场酒店（原爱丹路酒店）》 https://m.huazhu.com/Hotel/Detail/1330991 （核对 2026-04-10）",
-          "《汉庭优佳延吉西市场酒店》 https://m.huazhu.com/Hotel/Detail/1330993 （核对 2026-04-10）",
-          "《汉庭长白山二道白河网红街酒店》 https://m.huazhu.com/Hotel/Detail/9009052 （核对 2026-04-10）"
+        entries: [
+          {
+            title: "汉庭延吉水上市场酒店（原爱丹路酒店）",
+            url: "https://m.huazhu.com/Hotel/Detail/1330991",
+            checkedAt: "2026-04-10"
+          },
+          {
+            title: "汉庭优佳延吉西市场酒店",
+            url: "https://m.huazhu.com/Hotel/Detail/1330993",
+            checkedAt: "2026-04-10"
+          },
+          {
+            title: "汉庭长白山二道白河网红街酒店",
+            url: "https://m.huazhu.com/Hotel/Detail/9009052",
+            checkedAt: "2026-04-10"
+          }
         ]
       },
       {
         title: "交通查询入口",
         summary: "用来做出发前最后一次车次、航班和机场服务核对，不把具体班次硬编码到内容里。",
-        points: [
-          "中国铁路 12306 https://www.12306.cn/ （核对 2026-04-10）",
-          "《延吉朝阳川国际机场》 https://www.cah.com.cn/content/2023/01-28/7030450089160085504.html （核对 2026-04-10）"
+        entries: [
+          {
+            title: "中国铁路 12306",
+            url: "https://www.12306.cn/",
+            checkedAt: "2026-04-10"
+          },
+          {
+            title: "延吉朝阳川国际机场",
+            url: "https://www.cah.com.cn/content/2023/01-28/7030450089160085504.html",
+            checkedAt: "2026-04-10"
+          }
         ]
       }
     ]
   }
 };
 
-if (typeof window !== "undefined") {
-  window.tripGuide = tripGuide;
+if (typeof globalThis !== "undefined") {
+  const registryKey = "__TRIP_GUIDES__";
+  const existingRegistry = globalThis[registryKey];
+  const tripGuideRegistry =
+    existingRegistry && typeof existingRegistry === "object"
+      ? existingRegistry
+      : Object.create(null);
+
+  tripGuideRegistry[tripGuide.meta.slug] = tripGuide;
+  globalThis[registryKey] = tripGuideRegistry;
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = tripGuide;
 }
