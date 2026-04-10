@@ -23,6 +23,18 @@ $sourceNotePath = Join-Path $Root "trips/jilin-yanji-changbaishan/notes/sources.
 $imagePlanPath = Join-Path $Root "trips/jilin-yanji-changbaishan/notes/image-plan.md"
 $contentPath = Join-Path $Root "trips/jilin-yanji-changbaishan/assets/guide-content.js"
 
+foreach ($pathInfo in @(
+  @{ Path = $desktopPath; Label = "desktop index" },
+  @{ Path = $mobilePath; Label = "mobile index" },
+  @{ Path = $sourceNotePath; Label = "sources note" },
+  @{ Path = $imagePlanPath; Label = "image plan note" },
+  @{ Path = $contentPath; Label = "shared guide content" }
+)) {
+  if (-not (Test-Path $pathInfo.Path)) {
+    throw "Missing $($pathInfo.Label): $($pathInfo.Path)"
+  }
+}
+
 $playbookContent = Get-Content -Raw $playbookPath
 
 foreach ($heading in @(
@@ -34,18 +46,6 @@ foreach ($heading in @(
   "## 浜や粯妫€鏌ユ竻鍗?"
 )) {
   Assert-Match -Content $playbookContent -Pattern [regex]::Escape($heading) -Label $heading
-}
-
-foreach ($pathInfo in @(
-  @{ Path = $desktopPath; Label = "desktop index" },
-  @{ Path = $mobilePath; Label = "mobile index" },
-  @{ Path = $sourceNotePath; Label = "sources note" },
-  @{ Path = $imagePlanPath; Label = "image plan note" },
-  @{ Path = $contentPath; Label = "shared guide content" }
-)) {
-  if (-not (Test-Path $pathInfo.Path)) {
-    throw "Missing $($pathInfo.Label): $($pathInfo.Path)"
-  }
 }
 
 $desktopContent = Get-Content -Raw $desktopPath
