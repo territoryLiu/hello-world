@@ -188,16 +188,18 @@ def collect_report(outdir: Path):
 
                 safe_prefix = page_key.replace("\\", "_").replace("/", "_").replace(":", "")
                 for label, viewport in VIEWPORTS:
-                    context = browser.new_context(
-                        viewport=viewport,
-                        device_scale_factor=1,
-                        locale="zh-CN",
-                        timezone_id="Asia/Shanghai",
-                        color_scheme="light",
-                        reduced_motion="reduce",
-                    )
-                    page = context.new_page()
+                    context = None
+                    page = None
                     try:
+                        context = browser.new_context(
+                            viewport=viewport,
+                            device_scale_factor=1,
+                            locale="zh-CN",
+                            timezone_id="Asia/Shanghai",
+                            color_scheme="light",
+                            reduced_motion="reduce",
+                        )
+                        page = context.new_page()
                         page.goto(path.as_uri(), wait_until="domcontentloaded")
                         page.add_style_tag(
                             content="*{animation:none!important;transition:none!important;scroll-behavior:auto!important}"
@@ -209,13 +211,15 @@ def collect_report(outdir: Path):
                         # Capture as much as possible for debugging; don't stop other viewports/pages.
                         err = traceback.format_exc(limit=8).strip().replace("\n", " | ")
                         try:
-                            page.screenshot(path=str(outdir / f"{safe_prefix}-{label}-error.png"), full_page=True)
+                            if page is not None:
+                                page.screenshot(path=str(outdir / f"{safe_prefix}-{label}-error.png"), full_page=True)
                         except Exception:
                             pass
                         page_results[label] = {"error": err}
                     finally:
                         try:
-                            context.close()
+                            if context is not None:
+                                context.close()
                         except Exception:
                             pass
 
@@ -239,22 +243,33 @@ def main():
 
     report = {}
     err: Optional[BaseException] = None
+    exit_code = 0
     try:
         report = collect_report(outdir)
         verify_report(report)
-        return 0
     except BaseException as e:
         err = e
-        return 1
+        exit_code = 1
     finally:
-        (outdir / "trip-render-report.json").write_text(
-            json.dumps(report, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-        print(json.dumps(report, ensure_ascii=False, indent=2))
-        print(f"\nartifacts: {outdir}")
-        if err:
-            raise err
+        try:
+            (outdir / "trip-render-report.json").write_text(
+                json.dumps(report, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+        except Exception:
+            # Best-effort artifact writing; don't mask the original error.
+            pass
+
+        try:
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+            print(f"\nartifacts: {outdir}")
+        except Exception:
+            # Best-effort printing; don't mask the original error.
+            pass
+
+    if err is not None:
+        raise err
+    return exit_code
 
 if __name__ == "__main__":
     raise SystemExit(main())
