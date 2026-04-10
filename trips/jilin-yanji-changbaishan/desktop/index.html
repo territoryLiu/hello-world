@@ -166,7 +166,8 @@
             container.innerHTML = "";
             return;
           }
-          container.innerHTML = renderer.renderCards(items || []);
+          var safeItems = Array.isArray(items) ? items : [];
+          container.innerHTML = renderer.renderCards(safeItems);
         }
 
         function renderSources(sectionId, groups) {
@@ -189,12 +190,17 @@
               var list = createEl("ul", "source-entries");
               group.entries.forEach(function (entry) {
                 var li = document.createElement("li");
-                var link = document.createElement("a");
-                link.href = entry.url || "#";
-                link.target = "_blank";
-                link.rel = "noreferrer";
-                link.textContent = entry.title || entry.url || "链接";
-                li.appendChild(link);
+                var label = (entry && (entry.title || entry.url)) ? (entry.title || entry.url) : "链接";
+                if (entry && entry.url) {
+                  var link = document.createElement("a");
+                  link.href = entry.url;
+                  link.target = "_blank";
+                  link.rel = "noreferrer noopener";
+                  link.textContent = label;
+                  li.appendChild(link);
+                } else {
+                  li.appendChild(createEl("span", "", label));
+                }
 
                 if (entry && entry.checkedAt) {
                   li.appendChild(createEl("span", "source-checked", "核对：" + entry.checkedAt));
@@ -208,15 +214,38 @@
           });
         }
 
-        function setCounts(sections) {
+        function getSectionOrderFromDom() {
+          // Use the DOM as the single source of truth for section ids and render order.
+          var nodes = Array.prototype.slice.call(document.querySelectorAll("[data-cards]"));
+          return nodes
+            .map(function (node) {
+              return node.getAttribute("data-cards");
+            })
+            .filter(Boolean);
+        }
+
+        function setCounts(sections, sectionOrder) {
           if (!sections) return;
-          Object.keys(sections).forEach(function (key) {
+          var badges = Array.prototype.slice.call(document.querySelectorAll("[data-count]"));
+          badges.forEach(function (badge) {
+            var key = badge.getAttribute("data-count");
+            if (!key) return;
             var count = Array.isArray(sections[key]) ? sections[key].length : 0;
-            var badge = document.querySelector('[data-count="' + key + '"]');
-            if (!badge) return;
             badge.textContent = count ? String(count) : "";
             badge.hidden = !count;
           });
+
+          // Hide badges for sections that do not exist in this page shell.
+          if (Array.isArray(sectionOrder) && sectionOrder.length) {
+            badges.forEach(function (badge) {
+              var key = badge.getAttribute("data-count");
+              if (!key) return;
+              if (sectionOrder.indexOf(key) === -1) {
+                badge.textContent = "";
+                badge.hidden = true;
+              }
+            });
+          }
         }
 
         function wireActiveNav() {
@@ -260,22 +289,20 @@
 
         setText(byId("page-title"), guide.meta && guide.meta.title ? guide.meta.title : "旅行指南");
         renderMeta(guide.meta || {});
-        setCounts(guide.sections || {});
-
         var sections = guide.sections || {};
-        renderSectionCards("overview", sections.overview);
-        renderSectionCards("recommended", sections.recommended);
-        renderSectionCards("options", sections.options);
-        renderSectionCards("attractions", sections.attractions);
-        renderSectionCards("food", sections.food);
-        renderSectionCards("season", sections.season);
-        renderSectionCards("packing", sections.packing);
-        renderSectionCards("transport", sections.transport);
-        renderSources("sources", sections.sources);
+        var sectionOrder = getSectionOrderFromDom();
+        setCounts(sections, sectionOrder);
+
+        sectionOrder.forEach(function (sectionId) {
+          if (sectionId === "sources") {
+            renderSources(sectionId, sections[sectionId]);
+            return;
+          }
+          renderSectionCards(sectionId, sections[sectionId]);
+        });
 
         wireActiveNav();
       })();
     </script>
   </body>
 </html>
-
