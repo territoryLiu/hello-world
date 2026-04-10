@@ -96,6 +96,12 @@ def verify_report(report):
                 failures.append(
                     f"{page_name} {label} has horizontal overflow (doc {doc_width} > viewport {viewport_width})"
                 )
+            overs = result.get("overs", [])
+            if overs:
+                sample = overs[:2]
+                failures.append(
+                    f"{page_name} {label} reports {len(overs)} oversize elements: {sample}"
+                )
     if failures:
         raise AssertionError(" | ".join(failures))
 
