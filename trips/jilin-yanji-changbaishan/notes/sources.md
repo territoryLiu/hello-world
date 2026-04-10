@@ -1,21 +1,38 @@
-# 吉林延吉长白山行程来源记录
+# 吉林延吉长白山行程来源记录（可追溯分组）
 
-## 方案一：延吉城市体验
-- [延边州文化和旅游厅官网 · 延吉旅游资讯](https://www.yb.gov.cn/col/col2697/index.html)（访问 2026-04-10）
-- [TravelChinaGuide：延吉城市旅游指南](https://www.travelchinaguide.com/cityguides/jilin/yanji/)（访问 2026-04-10）
+> 核对日期：2026-04-10
+> 用途：只保留本次共享内容层真正用到的事实来源，方便后续桌面 / 移动 HTML 共用。
 
-## 方案二：长白山秘境探访
-- [长白山国家级自然保护区官网 · 保护与开放公告](http://www.cbnb.gov.cn/)（访问 2026-04-10）
-- [TravelChinaGuide：长白山景区大全](https://www.travelchinaguide.com/attraction/jilin/changbai-mountain.htm)（访问 2026-04-10）
+## A. 长白山官方票务与入园规则
 
-## 方案三：朝鲜族文化体验
-- [China Highlights：延吉朝鲜族博物馆介绍](https://www.chinahighlights.com/yanbian/yanji/yanji-korean-ethnic-museum.htm)（访问 2026-04-10）
-- [TravelChinaGuide：朝鲜族文化与节庆](https://www.travelchinaguide.com/intro/guide/culture/korean.htm)（访问 2026-04-10）
+- 《咨询长白山景区官方售票平台》｜https://changbaishan.gov.cn/hdjl/zfsqpt/jlszbsbhkfqglwyh/sqck/blhf/202504/t20250419_266869.html ｜核对：2026-04-10 ｜要点：官方售票平台口径只认“长白山”小程序和“一机游”小程序，不把第三方平台当官方渠道。
+- 《长白山天池预约》｜https://changbaishan.gov.cn/hdjl/zfsqpt/jlszbsbhkfqglwyh/sqck/blhf/202510/t20251020_268605.html ｜核对：2026-04-10 ｜要点：景区实行分时分段、实名预约、人脸识别检票；主峰车在已购门票基础上处理。
+- 吉林省长白山保护开发区管理委员会首页｜https://www.changbaishan.gov.cn/index.html ｜核对：2026-04-10 ｜要点：作为景区公告、政策和临时通知总入口，出发前最后复核用。
 
-## 方案四：交通与出行
-- [12306 火车票官方网站](https://www.12306.cn/index/)（访问 2026-04-10）
-- [长春龙嘉国际机场官网 · 航班查询与服务](https://www.changchun-airport.com/)（访问 2026-04-10）
+## B. 北坡 / 二道白河静态地理与景点结构
 
-## 方案五：美食与住宿
-- [大众点评：延吉特色朝鲜族料理热评](https://www.dianping.com/search/keyword/2/0_%E5%BB%B6%E5%90%89)（访问 2026-04-10）
-- [携程：延吉民宿与精品酒店精选](https://hotels.ctrip.com/hotel/yanji4)（访问 2026-04-10）
+- 《怎么去长白山？请收藏好这份最全交通攻略》｜https://www.changbaishan.gov.cn/zbsly/lyzn/bpgl/202106/t20210625_210152.html ｜核对：2026-04-10 ｜要点：北景区位于池北区（二道白河镇），池北区承接北坡主要接待能力，支持“前夜落地二道白河”的行程设计。
+- 《〖北坡攻略〗长白山不完全实用手册》｜https://www.changbaishan.gov.cn/zbsly/lyzn/bpgl/201803/t20180306_210122.html ｜核对：2026-04-10 ｜要点：用于核对北坡经典点位组合，如天池、长白瀑布、聚龙泉 / 温泉群、地下森林等；属于较老页面，只承担静态景观结构核对，不承担最新运营规则核对。
+
+## C. 延吉城市主线与节假日氛围
+
+- 《玩转延边》｜https://www.yanbian.gov.cn/csmp/wzyb/xcy/index.html ｜核对：2026-04-10 ｜要点：官方文旅入口，可核对中国朝鲜族民俗园等核心景点仍在主推线路中。
+- 《五一黄金周 延吉水上市场早市烟火气浓人气爆棚》｜https://yanjinews.com/html/news/yanjinews/2025/0502/216079.html ｜核对：2026-04-10 ｜要点：支持“水上市场要早去、节假日人会很多”的内容判断。
+- 《中国朝鲜族民俗园美食街将于4月30日开业》｜https://www.yanjinews.com/html/news/yanjinews/2025/0429/215963.html ｜核对：2026-04-10 ｜要点：支持民俗园在五一档仍具备白天打卡和夜间延展性。
+- 《延吉网红弹幕墙周边再添4个暖手炉 温暖寒冬打卡路》｜https://www.yanjinews.com/html/news/chinanews/2026/0113/223819.html ｜核对：2026-04-10 ｜要点：支持“网红墙仍为延吉夜间高频打卡点”的判断。
+
+## D. 住宿偏好落地
+
+- 《汉庭延吉水上市场酒店（原爱丹路酒店）》｜https://m.huazhu.com/Hotel/Detail/1330991 ｜核对：2026-04-10 ｜要点：支持“延吉首选住水上市场 / 市中心一线汉庭”的安排。
+- 《汉庭优佳延吉西市场酒店》｜https://m.huazhu.com/Hotel/Detail/1330993 ｜核对：2026-04-10 ｜要点：支持“西市场商圈也适合作为延吉落脚点”的安排。
+- 《汉庭延吉延边大学城酒店》｜https://m.huazhu.com/Hotel/Detail/9020669 ｜核对：2026-04-10 ｜要点：支持“延边大学 / 网红墙一线可住汉庭”的安排。
+- 《汉庭长白山二道白河网红街酒店》｜https://m.huazhu.com/Hotel/Detail/9009052 ｜核对：2026-04-10 ｜要点：支持“二道白河住汉庭可行，且离北景区集散中心更近”的安排。
+
+## E. 出发前最终交通复核
+
+- 中国铁路 12306｜https://www.12306.cn/ ｜核对：2026-04-10 ｜要点：南京往返延吉的高铁 / 中转车次、退改签规则、余票都以此为准。
+- 《延吉朝阳川国际机场》｜https://www.cah.com.cn/content/2023/01-28/7030450089160085504.html ｜核对：2026-04-10 ｜要点：核对机场位置、基础服务和落地交通提示。
+
+## F. 天气与临行提醒
+
+- 中国天气网｜https://www.weather.com.cn/ ｜核对：2026-04-10 ｜要点：仅作为临出发前查看延吉 / 安图 / 长白山周边温度、风力、降水趋势的入口，不在共享内容中写死具体预报。
