@@ -1,0 +1,19 @@
+{
+  "title": "五一延吉长白山",
+  "departure_city": "南京",
+  "date_range": {
+    "start": "2026-04-30",
+    "end": "2026-05-05"
+  },
+  "travelers": {
+    "count": 4,
+    "profile": "两男两女，8岁左右"
+  },
+  "budget": {
+    "mode": "per_person",
+    "min": 3000,
+    "max": 5000
+  },
+  "stay_preference": "汉庭优先",
+  "pace_preference": "接受早起，但不想极限赶路"
+}

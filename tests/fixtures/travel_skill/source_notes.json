@@ -1,0 +1,54 @@
+[
+  {
+    "category": "transport",
+    "title": "12306 南京到延吉（旧）",
+    "url": "https://www.12306.cn/",
+    "checked_at": "2026-04-10",
+    "source_type": "official",
+    "facts": [
+      "南京到延吉通常需中转或先到长春后转高铁",
+      {
+        "text": "高峰时段需尽早锁票"
+      },
+      [
+        "候补",
+        "中转"
+      ]
+    ]
+  },
+  {
+    "category": "transport",
+    "title": "12306 南京到延吉（更新）",
+    "url": "https://www.12306.cn/",
+    "checked_at": "2026-04-12",
+    "source_type": "",
+    "facts": [
+      "南京到延吉通常需中转或先到长春后转高铁",
+      {
+        "text": "高峰时段需尽早锁票"
+      }
+    ]
+  },
+  {
+    "category": "food",
+    "title": "元奶奶包饭",
+    "url": "https://example.com/yuan-nainai",
+    "checked_at": "2026-04-11",
+    "source_type": "local-listing",
+    "facts": [
+      "招牌菜: 包饭",
+      "人均: 60-90"
+    ]
+  },
+  {
+    "category": "risk",
+    "title": "",
+    "url": "javascript:alert(1)",
+    "checked_at": "2026-04-11",
+    "source_type": "social",
+    "facts": [
+      "注意甄别营销贴与真实体验",
+      "raw <b>tag</b> [danger] `code` & symbol"
+    ]
+  }
+]

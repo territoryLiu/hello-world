@@ -10,10 +10,6 @@ import json
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
 GUIDE_ROOT = ROOT / "trips" / "jilin-yanji-changbaishan"
-PAGES = [
-    GUIDE_ROOT / "desktop" / "index.html",
-    GUIDE_ROOT / "mobile" / "index.html",
-]
 VIEWPORTS = [
     ("desktop", {"width": 1440, "height": 1400}),
     ("mobile", {"width": 390, "height": 844}),
@@ -21,6 +17,17 @@ VIEWPORTS = [
 ARTIFACTS_ROOT = ROOT / "tests" / "artifacts"
 
 REQUIRED_SECTIONS = {"overview", "recommended", "options", "attractions", "food", "season", "packing", "transport", "sources"}
+
+
+def resolve_guide_root(path: Optional[Path]) -> Path:
+    return path.resolve() if path is not None else GUIDE_ROOT.resolve()
+
+
+def pages_for(guide_root: Path):
+    return [
+        guide_root / "desktop" / "index.html",
+        guide_root / "mobile" / "index.html",
+    ]
 
 
 def resolve_chrome_executable() -> Optional[Path]:
@@ -169,7 +176,7 @@ def verify_report(report):
     if failures:
         raise AssertionError(" | ".join(failures))
 
-def collect_report(outdir: Path):
+def collect_report(outdir: Path, guide_root: Path):
     with sync_playwright() as p:
         browser_kwargs = {"headless": True}
         chrome_exe = resolve_chrome_executable()
@@ -179,10 +186,10 @@ def collect_report(outdir: Path):
         browser = p.chromium.launch(**browser_kwargs)
         try:
             report = {}
-            for path in PAGES:
+            for path in pages_for(guide_root):
                 page_results = {}
                 try:
-                    page_key = str(path.relative_to(GUIDE_ROOT))
+                    page_key = str(path.relative_to(guide_root))
                 except ValueError:
                     page_key = str(path)
 
@@ -236,8 +243,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--outdir", default=None, help="Write artifacts under this directory (or use TRIP_RENDER_OUTDIR).")
     parser.add_argument("--run-id", default=None, help="Per-run subdirectory name under outdir (defaults to timestamp+pid).")
+    parser.add_argument("--guide-root", default=None, help="Trip guide root containing desktop/ and mobile/ subdirectories.")
     args = parser.parse_args()
 
+    guide_root = resolve_guide_root(Path(args.guide_root) if args.guide_root else None)
     outdir = resolve_outdir(args.outdir, args.run_id)
     outdir.mkdir(parents=True, exist_ok=True)
 
@@ -245,7 +254,7 @@ def main():
     err: Optional[BaseException] = None
     exit_code = 0
     try:
-        report = collect_report(outdir)
+        report = collect_report(outdir, guide_root)
         verify_report(report)
     except BaseException as e:
         err = e
