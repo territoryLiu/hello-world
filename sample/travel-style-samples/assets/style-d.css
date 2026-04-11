@@ -1,0 +1,42 @@
+body.theme-d {
+  --page-bg:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 20%),
+    linear-gradient(180deg, #f5f8fb 0%, #edf1f5 100%);
+  --ink-strong: #0f172a;
+  --ink: #334155;
+  --ink-soft: #64748b;
+  --line: rgba(15, 23, 42, 0.1);
+  --surface-strong: #ffffff;
+  --hero-gradient: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(255, 255, 255, 1));
+  --display-font: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.theme-d .showcase-top h1,
+.theme-d .guide-hero-copy h2,
+.theme-d .mobile-hero h2,
+.theme-d .guide-section-head h3,
+.theme-d .story-card h4 { font-family: var(--body-font); }
+.theme-d .guide-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.theme-d .guide-nav a { justify-content: center; background: #ffffff; }
+.theme-d .section-card-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.theme-d .section-card-grid .story-card:nth-child(1) { grid-column: span 5; }
+.theme-d .section-card-grid .story-card:nth-child(2) { grid-column: span 3; }
+.theme-d .section-card-grid .story-card:nth-child(3) { grid-column: span 4; }
+.theme-d .mobile-quick-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.theme-d .quick-card-1,
+.theme-d .quick-card-4 { grid-column: span 6; }
+.theme-d .quick-card-2,
+.theme-d .quick-card-3 { grid-column: span 3; }
+.theme-d .quick-card,
+.theme-d .story-card,
+.theme-d .mobile-section { border-radius: 22px; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.05); }
+.theme-d .quick-card { background: linear-gradient(180deg, rgba(37, 99, 235, 0.08), #ffffff); }
+@media (max-width: 720px) {
+  .theme-d .guide-nav,
+  .theme-d .section-card-grid,
+  .theme-d .mobile-quick-grid { grid-template-columns: 1fr; }
+  .theme-d .section-card-grid .story-card,
+  .theme-d .quick-card-1,
+  .theme-d .quick-card-2,
+  .theme-d .quick-card-3,
+  .theme-d .quick-card-4 { grid-column: auto; }
+}
