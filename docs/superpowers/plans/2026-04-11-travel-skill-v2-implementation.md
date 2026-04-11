@@ -6,7 +6,7 @@
 
 **Architecture:** Extend the current scripts in `.codex/skills/travel-skill/scripts/` instead of creating a second pipeline. Keep the flow staged and file-based: intake produces a stricter request contract, research persists raw and normalized notes by place and topic, compose outputs three content models, render outputs desktop and mobile pages for all three layers, then share packaging builds portal and single-file exports on top of those generated artifacts.
 
-**Tech Stack:** Python standard library, Markdown, JSON, HTML, CSS, vanilla JavaScript, repo-local Codex skill metadata, unittest, existing Playwright Python checker
+**Tech Stack:** Python standard library, Markdown, JSON, HTML, CSS, vanilla JavaScript, repo-local Codex skill metadata, unittest, existing Playwright Python checker, existing conda environment (`py313`)
 
 ---
 
@@ -70,8 +70,27 @@ Planned file ownership before task breakdown:
   Regression suite for the upgraded contract.
 - Modify: `tests/playwright_trip_render_check.py`
   Verify layered desktop/mobile outputs instead of one page per device.
-- Modify: `docs/pipe/travel-planning-playbook.md`
-  Keep the operator-facing playbook in sync with the new pipeline.
+- Modify: `docs/superpowers/plans/2026-04-11-travel-skill-v2-implementation.md`
+  Record the migration of useful `docs/pipe` rules into travel-skill references and the runtime environment policy.
+
+## Migrated From `docs/pipe`
+
+Useful rules from `docs/pipe` are absorbed into `travel-skill` itself rather than kept as a separate folder:
+
+- intake checklist for travelers, dates, budget, approvals, and output form
+- research order and delivery notes structure
+- stable HTML section order and ASCII section ids
+- desktop/mobile/assets/notes output layout
+- pre-delivery regression checks
+
+`docs/pipe` can be removed after these rules are represented in `travel-skill` references and plan files.
+
+## Python Runtime Policy
+
+- Prefer an existing conda environment for travel-skill Python commands.
+- Current preferred environment: `py313`
+- Browser verification fallback environment: `paper2any`
+- If a package is missing, install it from `https://pypi.tuna.tsinghua.edu.cn/simple`
 
 ### Task 1: Tighten The V2 Intake Contract And Research Planner
 

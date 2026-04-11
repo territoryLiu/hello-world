@@ -4,7 +4,6 @@ import argparse
 from datetime import datetime
 import os
 import traceback
-from playwright.sync_api import sync_playwright
 import json
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -16,7 +15,11 @@ VIEWPORTS = [
 ]
 ARTIFACTS_ROOT = ROOT / "tests" / "artifacts"
 
-REQUIRED_SECTIONS = {"overview", "recommended", "options", "attractions", "food", "season", "packing", "transport", "sources"}
+REQUIRED_SECTIONS = {
+    "daily-overview": {"days", "wearing", "transport", "alerts", "sources"},
+    "recommended": {"overview", "route", "days", "attractions", "food", "packing_list", "sources"},
+    "comprehensive": {"overview", "transport_options", "attractions", "food_options", "lodging", "seasonality", "risks", "sources"},
+}
 
 
 def resolve_guide_root(path: Optional[Path]) -> Path:
@@ -25,8 +28,12 @@ def resolve_guide_root(path: Optional[Path]) -> Path:
 
 def pages_for(guide_root: Path):
     return [
-        guide_root / "desktop" / "index.html",
-        guide_root / "mobile" / "index.html",
+        guide_root / "desktop" / "daily-overview" / "index.html",
+        guide_root / "desktop" / "recommended" / "index.html",
+        guide_root / "desktop" / "comprehensive" / "index.html",
+        guide_root / "mobile" / "daily-overview" / "index.html",
+        guide_root / "mobile" / "recommended" / "index.html",
+        guide_root / "mobile" / "comprehensive" / "index.html",
     ]
 
 
@@ -69,7 +76,7 @@ def wait_for_stable_render(page) -> None:
         pass
 
     # Ensure section shells and cards are present before taking screenshots/metrics.
-    page.wait_for_function("() => document.querySelectorAll('section').length >= 9", timeout=10_000)
+    page.wait_for_function("() => document.querySelectorAll('section').length >= 5", timeout=10_000)
     page.wait_for_function("() => document.querySelectorAll('.card').length > 0", timeout=10_000)
     page.evaluate("() => (document.fonts ? document.fonts.ready : Promise.resolve())")
 
@@ -88,7 +95,7 @@ def inspect_page(page):
         """
         () => {
           const overs = [...document.querySelectorAll('body *')].filter((el) => {
-            const inScrollableNav = !!el.closest('.navin');
+            const inScrollableNav = !!el.closest('.navin, .section-nav');
             if (inScrollableNav) return false;
             const rect = el.getBoundingClientRect();
             return rect.width > window.innerWidth + 1 || rect.right > window.innerWidth + 1;
@@ -118,7 +125,7 @@ def inspect_page(page):
             bodyScrollWidth: document.body.scrollWidth,
             docScrollWidth: document.documentElement.scrollWidth,
             viewportWidth: window.innerWidth,
-            mode: document.body ? document.body.getAttribute('data-mode') : null,
+            mode: document.body ? (document.body.getAttribute('data-mode') || document.body.getAttribute('data-device')) : null,
             navHeight: nav ? Math.round(nav.getBoundingClientRect().height) : null,
             heroHeight: hero ? Math.round(hero.getBoundingClientRect().height) : null,
             sections,
@@ -139,7 +146,9 @@ def verify_report(report):
                 continue
             sections = result.get("sections", [])
             found_ids = {sec.get("id") for sec in sections if sec.get("id")}
-            missing = sorted(REQUIRED_SECTIONS - found_ids)
+            layer = page_name.split("\\")[1] if "\\" in page_name else page_name.split("/")[1]
+            expected_sections = REQUIRED_SECTIONS.get(layer, set())
+            missing = sorted(expected_sections - found_ids)
             if missing:
                 failures.append(f"{page_name} {label} missing sections: {missing}")
             viewport_width = result.get("viewportWidth", 0)
@@ -177,6 +186,11 @@ def verify_report(report):
         raise AssertionError(" | ".join(failures))
 
 def collect_report(outdir: Path, guide_root: Path):
+    try:
+        from playwright.sync_api import sync_playwright
+    except ModuleNotFoundError as exc:
+        raise RuntimeError("Playwright Python package is not installed in the active environment.") from exc
+
     with sync_playwright() as p:
         browser_kwargs = {"headless": True}
         chrome_exe = resolve_chrome_executable()
