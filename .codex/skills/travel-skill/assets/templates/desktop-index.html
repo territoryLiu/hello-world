@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{TITLE}}</title>
+    <link rel="stylesheet" href="../assets/base.css" />
+  </head>
+  <body data-mode="desktop">
+    <div class="page-shell">
+      <header class="hero">
+        <p class="eyebrow">Travel Skill Render</p>
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <h1>{{TITLE}}</h1>
+            <p class="hero-summary">{{SUMMARY}}</p>
+            <div class="meta-row">{{META_CHIPS}}</div>
+          </div>
+          <aside class="hero-panel">
+            <h2>分享方式</h2>
+            <p>多文件站点用于维护，单文件 HTML 用于转发，ZIP 用于整包留档。</p>
+            <ul>
+              <li>桌面页与移动页都在本地可独立打开。</li>
+              <li>占位内容会显式标记，方便后续补足。</li>
+              <li>来源清单同步写入 `notes/sources.md`。</li>
+            </ul>
+          </aside>
+        </div>
+      </header>
+      <main class="content-shell">
+        <nav class="section-nav">{{NAV_ITEMS}}</nav>
+        {{SECTION_CONTENT}}
+      </main>
+    </div>
+    <script src="../assets/guide-content.js"></script>
+    <script src="../assets/render-guide.js"></script>
+  </body>
+</html>
