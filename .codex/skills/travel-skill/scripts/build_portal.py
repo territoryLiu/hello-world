@@ -24,14 +24,14 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
     desktop_links = [(label, f"../trips/{guide_root.name}/desktop/{layer}/index.html") for layer, label in LAYER_LABELS.items()]
     mobile_links = [(label, f"../trips/{guide_root.name}/mobile/{layer}/index.html") for layer, label in LAYER_LABELS.items()]
     share_links = [
-        ("最推荐攻略", "recommended.html"),
-        ("最全面攻略", "comprehensive.html"),
+        ("单文件分享版", "share.html"),
+        ("最推荐单文件", "recommended.html"),
     ]
 
     html_text = _load_template()
     replacements = {
         "{{TITLE}}": html.escape(title),
-        "{{SUMMARY}}": html.escape("通过入口页快速跳转到桌面端、手机端和单文件分享版。"),
+        "{{SUMMARY}}": html.escape("通过入口页快速跳转到桌面端、手机端、单文件分享版和压缩包。"),
         "{{DESKTOP_LINKS}}": _links(desktop_links),
         "{{MOBILE_LINKS}}": _links(mobile_links),
         "{{SHARE_LINKS}}": _links(share_links),

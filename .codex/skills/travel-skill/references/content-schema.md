@@ -1,6 +1,7 @@
 # Content Schema
 
 ## trip_request
+
 - `title`
 - `trip_slug`
 - `departure_city`
@@ -16,6 +17,7 @@
 - `research_dimensions`
 
 ## research_task
+
 - `trip_slug`
 - `place`
 - `topic`
@@ -24,6 +26,7 @@
 - `query_hint`
 
 ## fact_item
+
 - `place`
 - `topic`
 - `text`
@@ -33,7 +36,42 @@
 - `platform`
 - `checked_at`
 
+## content_item
+
+- `title`
+- `summary`
+- `points`
+- `is_placeholder`
+
+## source_item
+
+- `title`
+- `url`
+- `type`
+- `checked_at`
+
 ## layered_outputs
+
 - `daily-overview`
 - `recommended`
 - `comprehensive`
+
+## daily-overview sections
+
+- `summary`
+- `days`
+- `wearing`
+- `transport`
+- `alerts`
+- `sources`
+
+## recommended and comprehensive sections
+
+- `recommended_route`
+- `route_options`
+- `clothing_guide`
+- `attractions`
+- `transport_details`
+- `food_by_city`
+- `tips`
+- `sources`

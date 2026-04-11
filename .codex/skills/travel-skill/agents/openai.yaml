@@ -1,3 +1,3 @@
 display_name: Travel Skill
-short_description: Build shareable travel guides from research to packaged output
-default_prompt: Generate a staged travel guide workflow with research, review, rendering, single-file export, packaging, and verification.
+short_description: Build layered, shareable travel guides from multi-source research to verified delivery
+default_prompt: Generate a staged travel-guide workflow that performs intake, multi-source web research, human review, layered guide composition, desktop/mobile rendering, single-file export, ZIP packaging, and final verification.

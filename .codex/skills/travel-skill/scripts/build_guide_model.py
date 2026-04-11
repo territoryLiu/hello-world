@@ -4,6 +4,15 @@ import json
 
 
 OUTPUT_KEYS = ["daily-overview", "recommended", "comprehensive"]
+ROUTE_KEYS = [
+    "recommended_route",
+    "route_options",
+    "clothing_guide",
+    "attractions",
+    "transport_details",
+    "food_by_city",
+    "tips",
+]
 
 
 def _clean_text(value) -> str:
@@ -96,44 +105,54 @@ def _pick(grouped: dict[str, list[dict]], key: str) -> list[dict]:
     return list(grouped.get(key, []))
 
 
+def _combine(*parts: list[dict]) -> list[dict]:
+    merged: list[dict] = []
+    for part in parts:
+        merged.extend(part)
+    return merged
+
+
 def compose(payload: dict) -> dict:
     grouped = _facts_by_topic(payload)
     sources = _dedup_sources(payload)
 
-    transport_facts = _pick(grouped, "transport") + _pick(grouped, "long_distance_transport")
-    clothing_facts = _pick(grouped, "clothing") + _pick(grouped, "packing")
-    risk_facts = _pick(grouped, "risk") + _pick(grouped, "risks")
-    lodging_facts = _pick(grouped, "lodging") + _pick(grouped, "lodging_area")
-    weather_facts = _pick(grouped, "weather") + _pick(grouped, "seasonality")
+    transport_facts = _combine(_pick(grouped, "transport"), _pick(grouped, "long_distance_transport"), _pick(grouped, "city_transport"))
+    clothing_facts = _combine(_pick(grouped, "clothing"), _pick(grouped, "packing"))
+    risk_facts = _combine(_pick(grouped, "risk"), _pick(grouped, "risks"))
+    lodging_facts = _combine(_pick(grouped, "lodging"), _pick(grouped, "lodging_area"))
+    weather_facts = _combine(_pick(grouped, "weather"), _pick(grouped, "seasonality"))
     food_facts = _pick(grouped, "food")
     attraction_facts = _pick(grouped, "attractions")
 
     summary_parts = [fact["text"] for fact in (transport_facts + weather_facts)[:2] if fact.get("text")]
     daily_overview = {
         "summary": "；".join(summary_parts) if summary_parts else "待补充行程总览。",
-        "days": _items_from_facts(attraction_facts[:2], "每日安排"),
-        "wearing": _items_from_facts(clothing_facts, "穿衣建议"),
-        "transport": _items_from_facts(transport_facts, "交通安排"),
-        "alerts": _items_from_facts(risk_facts, "注意事项"),
-        "sources": list(sources),
-    }
-    recommended = {
-        "overview": _items_from_facts((weather_facts + lodging_facts)[:2], "推荐概览"),
-        "route": _items_from_facts(transport_facts[:2], "推荐路线"),
         "days": _items_from_facts(attraction_facts[:3], "每日安排"),
-        "attractions": _items_from_facts(attraction_facts, "景点建议"),
-        "food": _items_from_facts(food_facts, "美食推荐"),
-        "packing_list": _items_from_facts(clothing_facts, "打包建议"),
+        "wearing": _items_from_facts(clothing_facts or weather_facts[:2], "穿衣建议"),
+        "transport": _items_from_facts(transport_facts[:3], "交通安排"),
+        "alerts": _items_from_facts(risk_facts[:3], "注意事项"),
         "sources": list(sources),
     }
+
+    recommended = {
+        "recommended_route": _items_from_facts(_combine(transport_facts[:2], lodging_facts[:1]), "最推荐路线"),
+        "route_options": _items_from_facts(transport_facts[:3], "多方案路线"),
+        "clothing_guide": _items_from_facts(_combine(clothing_facts, weather_facts[:1]), "穿衣指南"),
+        "attractions": _items_from_facts(attraction_facts, "景点信息"),
+        "transport_details": _items_from_facts(_combine(transport_facts, lodging_facts[:1]), "交通详情"),
+        "food_by_city": _items_from_facts(food_facts, "分城市美食"),
+        "tips": _items_from_facts(_combine(risk_facts, weather_facts[:1]), "注意事项与避坑"),
+        "sources": list(sources),
+    }
+
     comprehensive = {
-        "overview": _items_from_facts((weather_facts + transport_facts + lodging_facts)[:3], "全面概览"),
-        "transport_options": _items_from_facts(transport_facts + lodging_facts[:1], "交通方案"),
-        "attractions": _items_from_facts(attraction_facts, "景点清单"),
-        "food_options": _items_from_facts(food_facts, "餐饮清单"),
-        "lodging": _items_from_facts(lodging_facts, "住宿建议"),
-        "seasonality": _items_from_facts(weather_facts, "季节体感"),
-        "risks": _items_from_facts(risk_facts, "注意事项"),
+        "recommended_route": _items_from_facts(_combine(transport_facts[:2], weather_facts[:1], lodging_facts[:1]), "最推荐路线"),
+        "route_options": _items_from_facts(_combine(transport_facts, lodging_facts[:1]), "多方案路线"),
+        "clothing_guide": _items_from_facts(_combine(clothing_facts, weather_facts), "穿衣指南"),
+        "attractions": _items_from_facts(attraction_facts, "景点信息"),
+        "transport_details": _items_from_facts(_combine(transport_facts, lodging_facts), "交通详情"),
+        "food_by_city": _items_from_facts(food_facts, "分城市美食"),
+        "tips": _items_from_facts(_combine(risk_facts, weather_facts, lodging_facts[:1]), "注意事项与避坑"),
         "sources": list(sources),
     }
 
@@ -165,10 +184,7 @@ def main() -> None:
     output_path = Path(args.output)
     payload = json.loads(input_path.read_text(encoding="utf-8"))
     model = compose(payload if isinstance(payload, dict) else {})
-    output_path.write_text(
-        json.dumps(model, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    output_path.write_text(json.dumps(model, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 if __name__ == "__main__":

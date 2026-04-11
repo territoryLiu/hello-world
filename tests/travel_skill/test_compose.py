@@ -8,6 +8,16 @@ from tests.travel_skill.helpers import ROOT, SKILL_DIR, run_script
 
 class ComposeGuideModelTest(unittest.TestCase):
     OUTPUT_KEYS = ["comprehensive", "daily-overview", "recommended"]
+    ROUTE_KEYS = [
+        "recommended_route",
+        "route_options",
+        "clothing_guide",
+        "attractions",
+        "transport_details",
+        "food_by_city",
+        "tips",
+        "sources",
+    ]
 
     def _assert_content_item_shape(self, item):
         self.assertIsInstance(item, dict)
@@ -46,11 +56,9 @@ class ComposeGuideModelTest(unittest.TestCase):
             self.assertIsInstance(daily[key], list)
 
         recommended = payload["outputs"]["recommended"]
-        for key in ["overview", "route", "days", "attractions", "food", "packing_list", "sources"]:
-            self.assertIsInstance(recommended[key], list)
-
         comprehensive = payload["outputs"]["comprehensive"]
-        for key in ["overview", "transport_options", "attractions", "food_options", "lodging", "seasonality", "risks", "sources"]:
+        for key in self.ROUTE_KEYS:
+            self.assertIsInstance(recommended[key], list)
             self.assertIsInstance(comprehensive[key], list)
 
         for layer_name, layer_payload in payload["outputs"].items():
@@ -68,12 +76,12 @@ class ComposeGuideModelTest(unittest.TestCase):
         self.assertGreaterEqual(len(payload["sources"]), 3)
         self.assertEqual(payload["meta"]["source_count"], len(payload["sources"]))
 
-    def test_fill_missing_sections_enforces_v2_layer_defaults(self):
+    def test_fill_missing_sections_enforces_route_and_share_defaults(self):
         raw_model = {
             "meta": {"trip_slug": "demo"},
             "outputs": {
                 "daily-overview": {
-                    "summary": "两天一晚轻量行程。",
+                    "summary": "两天一夜轻量行程",
                     "days": [{"title": "D1", "summary": "城市漫游", "points": ["先逛市区"], "is_placeholder": False}],
                     "wearing": [],
                     "transport": [],
@@ -81,22 +89,23 @@ class ComposeGuideModelTest(unittest.TestCase):
                     "sources": [],
                 },
                 "recommended": {
-                    "overview": [],
-                    "route": [],
-                    "days": [],
+                    "recommended_route": [],
+                    "route_options": [],
+                    "clothing_guide": [],
                     "attractions": [{"title": "A景点", "summary": "必打卡", "points": [], "is_placeholder": False}],
-                    "food": [],
-                    "packing_list": [],
+                    "transport_details": [],
+                    "food_by_city": [],
+                    "tips": [],
                     "sources": [],
                 },
                 "comprehensive": {
-                    "overview": [],
-                    "transport_options": [],
+                    "recommended_route": [],
+                    "route_options": [],
+                    "clothing_guide": [],
                     "attractions": [],
-                    "food_options": [],
-                    "lodging": [],
-                    "seasonality": [],
-                    "risks": [],
+                    "transport_details": [],
+                    "food_by_city": [],
+                    "tips": [],
                     "sources": [],
                 },
             },
@@ -111,8 +120,9 @@ class ComposeGuideModelTest(unittest.TestCase):
             payload = json.loads(output_path.read_text(encoding="utf-8"))
 
         self.assertTrue(payload["outputs"]["daily-overview"]["wearing"])
-        self.assertTrue(payload["outputs"]["recommended"]["packing_list"])
-        self.assertTrue(payload["outputs"]["comprehensive"]["transport_options"])
+        self.assertTrue(payload["outputs"]["recommended"]["route_options"])
+        self.assertTrue(payload["outputs"]["recommended"]["clothing_guide"])
+        self.assertTrue(payload["outputs"]["comprehensive"]["transport_details"])
 
         def flatten(items):
             text = []
@@ -121,9 +131,9 @@ class ComposeGuideModelTest(unittest.TestCase):
             return "\n".join(text)
 
         self.assertIn("分层穿衣", flatten(payload["outputs"]["daily-overview"]["wearing"]))
-        self.assertIn("店铺级推荐", flatten(payload["outputs"]["recommended"]["food"]))
-        self.assertIn("价格区间", flatten(payload["outputs"]["comprehensive"]["transport_options"]))
-        self.assertTrue(any(item["is_placeholder"] for item in payload["outputs"]["recommended"]["packing_list"]))
+        self.assertIn("高铁", flatten(payload["outputs"]["recommended"]["route_options"]))
+        self.assertIn("交通", flatten(payload["outputs"]["comprehensive"]["transport_details"]))
+        self.assertTrue(any(item["is_placeholder"] for item in payload["outputs"]["recommended"]["clothing_guide"]))
 
     def test_build_then_fill_preserves_sources_and_backfills_required_lists(self):
         fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "approved_research.json"
@@ -136,8 +146,9 @@ class ComposeGuideModelTest(unittest.TestCase):
 
         self.assertGreaterEqual(len(payload["sources"]), 3)
         self.assertTrue(any("http" in item.get("url", "") for item in payload["sources"]))
-        self.assertTrue(payload["outputs"]["recommended"]["packing_list"])
-        self.assertTrue(payload["outputs"]["comprehensive"]["transport_options"])
+        self.assertTrue(payload["outputs"]["recommended"]["route_options"])
+        self.assertTrue(payload["outputs"]["recommended"]["clothing_guide"])
+        self.assertTrue(payload["outputs"]["comprehensive"]["transport_details"])
         self.assertEqual(payload["meta"]["source_count"], len(payload["sources"]))
 
     def test_fill_missing_sections_sanitizes_dirty_v2_model(self):
@@ -153,22 +164,23 @@ class ComposeGuideModelTest(unittest.TestCase):
                     "sources": [None, {"url": 1}, {"title": "src", "url": "https://example.com", "type": "official"}],
                 },
                 "recommended": {
-                    "overview": [None],
-                    "route": [{}],
-                    "days": [],
+                    "recommended_route": [None],
+                    "route_options": [{}],
+                    "clothing_guide": [],
                     "attractions": [{"title": "A", "summary": "S", "points": ["x", 1], "is_placeholder": "no"}],
-                    "food": "not-a-list",
-                    "packing_list": [],
+                    "transport_details": "not-a-list",
+                    "food_by_city": [],
+                    "tips": [],
                     "sources": [],
                 },
                 "comprehensive": {
-                    "overview": [],
-                    "transport_options": ["bad"],
+                    "recommended_route": [],
+                    "route_options": ["bad"],
+                    "clothing_guide": [],
                     "attractions": [],
-                    "food_options": [],
-                    "lodging": [],
-                    "seasonality": [],
-                    "risks": [],
+                    "transport_details": [],
+                    "food_by_city": [],
+                    "tips": [],
                     "sources": [],
                 },
             },

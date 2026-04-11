@@ -34,12 +34,14 @@ a {
   width: min(1180px, calc(100% - 28px));
   margin: 0 auto;
   padding: 24px 0 40px;
+  min-width: 0;
 }
 
 .hero-grid {
   display: grid;
   grid-template-columns: 1.35fr 0.85fr;
   gap: 18px;
+  min-width: 0;
 }
 
 .hero-copy,
@@ -58,6 +60,7 @@ a {
 .hero-panel,
 .hero-mobile {
   padding: 26px;
+  min-width: 0;
 }
 
 .eyebrow {
@@ -125,6 +128,7 @@ h1 {
   display: grid;
   gap: 18px;
   margin-top: 18px;
+  min-width: 0;
 }
 
 .section-nav {
@@ -139,6 +143,7 @@ h1 {
 .section-block {
   padding: 20px;
   scroll-margin-top: 80px;
+  min-width: 0;
 }
 
 .mobile-page {
@@ -150,17 +155,20 @@ h1 {
   flex-direction: column;
   gap: 8px;
   margin-bottom: 14px;
+  min-width: 0;
 }
 
 .section-body {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+  min-width: 0;
 }
 
 .card,
 .source-card {
   padding: 18px;
+  min-width: 0;
 }
 
 .card-header,
@@ -202,10 +210,26 @@ h1 {
   word-break: break-all;
 }
 
+h1,
+h2,
+h3,
+.layer-title,
+.hero-summary,
+.section-lead,
+.card-summary,
+.source-meta {
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 900px) {
   .hero-grid,
   .section-body {
     grid-template-columns: 1fr;
+  }
+
+  .hero-grid > *,
+  .section-body > * {
+    min-width: 0;
   }
 }
 
