@@ -26,27 +26,57 @@ class VerifyPipelineTest(unittest.TestCase):
             model = Path(tmp) / "guide-content.json"
             output_root = Path(tmp) / "out"
             report = output_root / "verify" / "report.json"
-            single_html = output_root / "dist" / "wuyi-yanji-changbaishan.html"
+            portal = output_root / "dist" / "portal.html"
+            recommended_html = output_root / "dist" / "recommended.html"
+            comprehensive_html = output_root / "dist" / "comprehensive.html"
             guide_root = output_root / "trips" / "wuyi-yanji-changbaishan"
             run_script(SKILL_DIR / "scripts" / "build_guide_model.py", "--input", fixture, "--output", model)
             run_script(SKILL_DIR / "scripts" / "fill_missing_sections.py", "--input", model, "--output", model)
             run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", model, "--output-root", output_root)
-            run_script(SKILL_DIR / "scripts" / "export_single_html.py", "--guide-root", guide_root, "--output", single_html)
+            run_script(SKILL_DIR / "scripts" / "build_portal.py", "--guide-root", guide_root, "--output", portal)
+            run_script(
+                SKILL_DIR / "scripts" / "export_single_html.py",
+                "--guide-root",
+                guide_root,
+                "--layer",
+                "recommended",
+                "--output",
+                recommended_html,
+            )
+            run_script(
+                SKILL_DIR / "scripts" / "export_single_html.py",
+                "--guide-root",
+                guide_root,
+                "--layer",
+                "comprehensive",
+                "--output",
+                comprehensive_html,
+            )
             run_script(
                 SKILL_DIR / "scripts" / "verify_trip.py",
                 "--guide-root",
                 guide_root,
-                "--single-html",
-                single_html,
+                "--portal",
+                portal,
+                "--recommended-html",
+                recommended_html,
+                "--comprehensive-html",
+                comprehensive_html,
                 "--report",
                 report,
                 "--skip-browser",
             )
             payload = json.loads(report.read_text(encoding="utf-8"))
 
-        self.assertTrue(payload["static_checks"]["desktop_exists"])
-        self.assertTrue(payload["static_checks"]["mobile_exists"])
-        self.assertTrue(payload["static_checks"]["single_html_exists"])
+        self.assertTrue(payload["static_checks"]["desktop_daily_exists"])
+        self.assertTrue(payload["static_checks"]["desktop_recommended_exists"])
+        self.assertTrue(payload["static_checks"]["desktop_comprehensive_exists"])
+        self.assertTrue(payload["static_checks"]["mobile_daily_exists"])
+        self.assertTrue(payload["static_checks"]["mobile_recommended_exists"])
+        self.assertTrue(payload["static_checks"]["mobile_comprehensive_exists"])
+        self.assertTrue(payload["static_checks"]["portal_exists"])
+        self.assertTrue(payload["static_checks"]["recommended_single_exists"])
+        self.assertTrue(payload["static_checks"]["comprehensive_single_exists"])
         self.assertTrue(payload["static_checks"]["sources_exists"])
         self.assertEqual(payload["browser_check"], "skipped")
 
@@ -56,6 +86,7 @@ class VerifyPipelineTest(unittest.TestCase):
 
         self.assertTrue(guide_root.is_absolute())
         self.assertTrue(all(page.is_absolute() for page in pages))
+        self.assertEqual(len(pages), 6)
 
     def test_verify_trip_resolves_existing_checker_script(self):
         module = load_verify_trip_module()
@@ -67,7 +98,9 @@ class VerifyPipelineTest(unittest.TestCase):
     def test_verify_trip_returns_nonzero_when_required_artifacts_are_missing(self):
         with tempfile.TemporaryDirectory() as tmp:
             guide_root = Path(tmp) / "missing-guide"
-            single_html = Path(tmp) / "missing.html"
+            portal = Path(tmp) / "portal.html"
+            recommended_html = Path(tmp) / "recommended.html"
+            comprehensive_html = Path(tmp) / "comprehensive.html"
             report = Path(tmp) / "report.json"
             result = subprocess.run(
                 [
@@ -75,8 +108,12 @@ class VerifyPipelineTest(unittest.TestCase):
                     str(SKILL_DIR / "scripts" / "verify_trip.py"),
                     "--guide-root",
                     str(guide_root),
-                    "--single-html",
-                    str(single_html),
+                    "--portal",
+                    str(portal),
+                    "--recommended-html",
+                    str(recommended_html),
+                    "--comprehensive-html",
+                    str(comprehensive_html),
                     "--report",
                     str(report),
                     "--skip-browser",
@@ -88,9 +125,15 @@ class VerifyPipelineTest(unittest.TestCase):
             payload = json.loads(report.read_text(encoding="utf-8"))
 
         self.assertNotEqual(result.returncode, 0)
-        self.assertFalse(payload["static_checks"]["desktop_exists"])
-        self.assertFalse(payload["static_checks"]["mobile_exists"])
-        self.assertFalse(payload["static_checks"]["single_html_exists"])
+        self.assertFalse(payload["static_checks"]["desktop_daily_exists"])
+        self.assertFalse(payload["static_checks"]["desktop_recommended_exists"])
+        self.assertFalse(payload["static_checks"]["desktop_comprehensive_exists"])
+        self.assertFalse(payload["static_checks"]["mobile_daily_exists"])
+        self.assertFalse(payload["static_checks"]["mobile_recommended_exists"])
+        self.assertFalse(payload["static_checks"]["mobile_comprehensive_exists"])
+        self.assertFalse(payload["static_checks"]["portal_exists"])
+        self.assertFalse(payload["static_checks"]["recommended_single_exists"])
+        self.assertFalse(payload["static_checks"]["comprehensive_single_exists"])
         self.assertFalse(payload["static_checks"]["sources_exists"])
 
 

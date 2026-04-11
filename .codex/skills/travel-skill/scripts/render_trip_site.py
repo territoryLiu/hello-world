@@ -4,28 +4,41 @@ import html
 import json
 from urllib.parse import urlsplit
 
-from build_guide_model import EXECUTION_KEYS, SECTION_KEYS
 
-
-SECTION_LABELS = {
-    "overview": ("行程概览", "先看路线骨架、交通切换和核对日期。"),
-    "recommended": ("推荐方案", "优先给出更稳的主线安排。"),
-    "options": ("备选方案", "保留天气、预算和排队波动下的替代动作。"),
-    "attractions": ("景点安排", "核心景点和节奏建议。"),
-    "food": ("吃喝清单", "餐厅、招牌菜和插入时段。"),
-    "season": ("天气体感", "历史体感、风感和补充判断。"),
-    "packing": ("穿衣打包", "分层穿衣与实用装备。"),
-    "transport": ("逐段交通", "大交通、本地接驳和风险段。"),
-    "sources": ("来源清单", "列出当前页面依赖的可追溯信息源。"),
+LAYER_SECTION_LABELS = {
+    "daily-overview": {
+        "days": ("每日安排", "把每天安排放在前面，便于先确定节奏。"),
+        "wearing": ("穿衣与装备", "结合当前月份体感与活动强度整理。"),
+        "transport": ("交通安排", "优先看当天主交通和接驳。"),
+        "alerts": ("注意事项", "把要提前核对的风险单独列出。"),
+        "sources": ("信息来源", "保留可追溯来源与核对日期。"),
+    },
+    "recommended": {
+        "overview": ("方案概览", "先看这条路线适合谁、节奏如何。"),
+        "route": ("推荐路线", "优先给出更顺手的主线安排。"),
+        "days": ("每日安排", "按天展开节奏、景点和餐饮安排。"),
+        "attractions": ("景点说明", "整理核心景点与停留理由。"),
+        "food": ("美食推荐", "保留店铺级选择空间。"),
+        "packing_list": ("必备物品", "结合天气、温差和行程强度整理。"),
+        "sources": ("信息来源", "列出正文依赖的来源。"),
+    },
+    "comprehensive": {
+        "overview": ("全面概览", "先看整体路线和多方案逻辑。"),
+        "transport_options": ("交通方案", "集中查看高铁、飞机、地铁、公交、打车等方案。"),
+        "attractions": ("景点清单", "完整列出景点、预约与停留建议。"),
+        "food_options": ("餐饮清单", "尽量保留更多店铺供读者选择。"),
+        "lodging": ("住宿建议", "整理落脚区域与动线关系。"),
+        "seasonality": ("季节与月份", "说明当前月份可看内容与最佳季节。"),
+        "risks": ("注意事项", "把复核项和高风险节点单独列出。"),
+        "sources": ("信息来源", "保留全量可追溯来源。"),
+    },
 }
 
-EXECUTION_LABELS = {
-    "booking_order": ("预订顺序", "高风险项目先锁，避免顺序反了。"),
-    "daily_table": ("每日执行", "把每天拆成可落地的执行块。"),
-    "budget_bands": ("预算分档", "价格带写成范围，而不是假装实时精确。"),
+LAYER_TITLES = {
+    "daily-overview": "每日行程速览",
+    "recommended": "最推荐攻略",
+    "comprehensive": "最全面攻略",
 }
-
-SECTION_ORDER = list(SECTION_KEYS) + list(EXECUTION_KEYS)
 
 
 def _load_template(name: str) -> str:
@@ -95,6 +108,7 @@ def _render_source_card(source: dict) -> str:
         if url
         else '<span class="empty-text">暂无链接</span>'
     )
+    raw_url_line = f"<p class=\"source-meta\">原始链接：{_escape(raw_url)}</p>" if raw_url and not url else ""
     return (
         '<article class="source-card">'
         '<div class="source-header">'
@@ -102,66 +116,23 @@ def _render_source_card(source: dict) -> str:
         f"{checked}"
         "</div>"
         f'<p class="source-meta">来源类型：{_escape(source.get("type") or "unknown")}</p>'
-        f'{f"<p class=\"source-meta\">原始链接：{_escape(raw_url)}</p>" if raw_url and not url else ""}'
+        f"{raw_url_line}"
         f"<p>{link}</p>"
         "</article>"
     )
 
 
-def _render_section(key: str, items: list[dict], page_index: int, mobile: bool = False) -> str:
-    label, lead = SECTION_LABELS.get(key, EXECUTION_LABELS.get(key, (key, "")))
-    kind = "sources" if key == "sources" else "content"
-    cards = (
-        "".join(_render_source_card(item) for item in items)
-        if kind == "sources"
-        else "".join(_render_content_card(item) for item in items)
-    )
-    density = "compact" if key in EXECUTION_KEYS or kind == "sources" else "wide"
-    page_attr = f' data-page="{page_index}"' if mobile else ""
-    return (
-        f'<section id="{key}" class="section-block" data-kind="{kind}" data-density="{density}"{page_attr}>'
-        '<div class="section-head">'
-        f"<h2>{html.escape(label)}</h2>"
-        f'<p class="section-lead">{html.escape(lead)}</p>'
-        "</div>"
-        f'<div class="section-body">{cards}</div>'
-        "</section>"
-    )
-
-
-def _render_nav() -> str:
-    items = []
-    for key in SECTION_ORDER:
-        label = SECTION_LABELS.get(key, EXECUTION_LABELS.get(key, (key, "")))[0]
-        items.append(f'<a href="#{key}">{html.escape(label)}</a>')
-    return "".join(items)
-
-
-def _render_meta_chips(payload: dict) -> str:
+def _meta_chips(payload: dict, layer_name: str) -> str:
     meta = payload.get("meta", {})
     chips = [
-        ("攻略版本", _safe_text(meta.get("checked_at")) or "待补充"),
+        ("攻略层级", LAYER_TITLES[layer_name]),
+        ("核对日期", _safe_text(meta.get("checked_at")) or "待补充"),
         ("来源数量", str(meta.get("source_count", 0))),
-        ("分享形态", "多文件 + 单文件 + ZIP"),
     ]
     return "".join(
-        f'<span class="meta-chip"><strong>{html.escape(label)}</strong>{html.escape(value)}</span>'
+        f'<span class="meta-chip"><strong>{_escape(label)}</strong>{_escape(value)}</span>'
         for label, value in chips
     )
-
-
-def _build_summary(payload: dict) -> str:
-    meta = payload.get("meta", {})
-    overview = _safe_list(payload.get("sections", {}).get("overview"))
-    if overview:
-        first = overview[0]
-        summary = _safe_text(first.get("summary"))
-        if summary:
-            return summary
-    title = _safe_text(meta.get("title"))
-    if title:
-        return f"围绕 {title} 输出可分享的桌面页、移动页和离线包。"
-    return "围绕当前研究结果输出可分享的桌面页、移动页和离线包。"
 
 
 def _guide_content_script(payload: dict) -> str:
@@ -180,7 +151,7 @@ def _sources_markdown(payload: dict) -> str:
         f"- source_count: {meta.get('source_count', 0)}",
         "",
     ]
-    for source in _safe_list(payload.get("sections", {}).get("sources")):
+    for source in _safe_list(payload.get("sources")):
         title = _safe_text(source.get("title")) or "待补充来源"
         url = _safe_text(source.get("url")) or "(no url)"
         source_type = _safe_text(source.get("type")) or "unknown"
@@ -197,61 +168,77 @@ def _sources_markdown(payload: dict) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
+def _render_section(section_id: str, section_title: str, lead: str, items: list[dict], mobile: bool, page_index: int) -> str:
+    cards = "".join(_render_source_card(item) for item in items) if section_id == "sources" else "".join(
+        _render_content_card(item) for item in items
+    )
+    page_attr = f' data-page="{page_index}"' if mobile else ""
+    extra_class = " mobile-page" if mobile else ""
+    return (
+        f'<section id="{section_id}" class="section-block{extra_class}"{page_attr}>'
+        '<div class="section-head">'
+        f"<h2>{_escape(section_title)}</h2>"
+        f'<p class="section-lead">{_escape(lead)}</p>'
+        "</div>"
+        f'<div class="section-body">{cards}</div>'
+        "</section>"
+    )
+
+
+def _layer_nav(layer_name: str) -> str:
+    labels = LAYER_SECTION_LABELS[layer_name]
+    return "".join(f'<a href="#{section_id}">{_escape(title)}</a>' for section_id, (title, _) in labels.items())
+
+
+def _render_layer_html(payload: dict, layer_name: str, device: str) -> str:
+    meta = payload.get("meta", {})
+    layer_payload = payload.get("outputs", {}).get(layer_name, {})
+    labels = LAYER_SECTION_LABELS[layer_name]
+    title = _safe_text(meta.get("title")) or "旅游攻略"
+    summary = _safe_text(layer_payload.get("summary")) or f"{title} · {LAYER_TITLES[layer_name]}"
+    sources = _safe_list(layer_payload.get("sources")) or _safe_list(payload.get("sources"))
+    sections = []
+    page_index = 1
+    for section_id, (section_title, lead) in labels.items():
+        items = sources if section_id == "sources" else _safe_list(layer_payload.get(section_id))
+        sections.append(_render_section(section_id, section_title, lead, items, device == "mobile", page_index))
+        page_index += 1
+
+    template_name = "mobile-index.html" if device == "mobile" else "desktop-index.html"
+    template = _load_template(template_name)
+    replacements = {
+        "{{TITLE}}": _escape(title),
+        "{{LAYER_TITLE}}": _escape(LAYER_TITLES[layer_name]),
+        "{{SUMMARY}}": _escape(summary),
+        "{{META_CHIPS}}": _meta_chips(payload, layer_name),
+        "{{NAV_ITEMS}}": _layer_nav(layer_name),
+        "{{SECTION_CONTENT}}": "\n".join(sections),
+        "{{DEVICE}}": _escape(device),
+        "{{LAYER}}": _escape(layer_name),
+    }
+    output = template
+    for key, value in replacements.items():
+        output = output.replace(key, value)
+    return output
+
+
 def render_site(payload: dict, output_root: Path) -> Path:
     meta = payload.get("meta", {})
     slug = _safe_text(meta.get("trip_slug")) or "travel-guide"
-    title = _safe_text(meta.get("title")) or slug
-    summary = _build_summary(payload)
-    section_html = []
-    sections = payload.get("sections", {})
-    execution = payload.get("execution", {})
-
-    for index, key in enumerate(SECTION_ORDER, start=1):
-        if key in SECTION_KEYS:
-            items = _safe_list(sections.get(key))
-        else:
-            items = _safe_list(execution.get(key))
-        section_html.append(_render_section(key, items, page_index=index, mobile=False))
-
-    desktop_html = _load_template("desktop-index.html")
-    mobile_html = _load_template("mobile-index.html")
-    section_content = "\n".join(section_html) + '\n<p class="footer-note">下单前请再到官方渠道复核实时价格、班次与规则。</p>'
-    mobile_content = "\n".join(
-        _render_section(
-            key,
-            _safe_list(sections.get(key) if key in SECTION_KEYS else execution.get(key)),
-            page_index=index,
-            mobile=True,
-        )
-        for index, key in enumerate(SECTION_ORDER, start=1)
-    )
-    mobile_content += '\n<p class="footer-note">移动页同样适合离线打开与即时转发。</p>'
-
-    replacements = {
-        "{{TITLE}}": html.escape(title),
-        "{{SUMMARY}}": html.escape(summary),
-        "{{META_CHIPS}}": _render_meta_chips(payload),
-        "{{NAV_ITEMS}}": _render_nav(),
-        "{{SECTION_CONTENT}}": section_content,
-    }
-    desktop_output = desktop_html
-    for key, value in replacements.items():
-        desktop_output = desktop_output.replace(key, value)
-
-    mobile_output = mobile_html
-    for key, value in replacements.items():
-        mobile_output = mobile_output.replace(key, mobile_content if key == "{{SECTION_CONTENT}}" else value)
 
     trip_root = output_root / "trips" / slug
-    desktop_dir = trip_root / "desktop"
-    mobile_dir = trip_root / "mobile"
     assets_dir = trip_root / "assets"
     notes_dir = trip_root / "notes"
-    for path in [desktop_dir, mobile_dir, assets_dir, notes_dir]:
-        path.mkdir(parents=True, exist_ok=True)
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    notes_dir.mkdir(parents=True, exist_ok=True)
 
-    (desktop_dir / "index.html").write_text(desktop_output, encoding="utf-8")
-    (mobile_dir / "index.html").write_text(mobile_output, encoding="utf-8")
+    for device in ["desktop", "mobile"]:
+        for layer_name in LAYER_TITLES:
+            output_dir = trip_root / device / layer_name
+            output_dir.mkdir(parents=True, exist_ok=True)
+            html_text = _render_layer_html(payload, layer_name, device)
+            (output_dir / "index.html").write_text(html_text, encoding="utf-8")
+
     (assets_dir / "base.css").write_text(_load_template("base.css"), encoding="utf-8")
     (assets_dir / "render-guide.js").write_text(_load_template("render-guide.js"), encoding="utf-8")
     (assets_dir / "guide-content.js").write_text(_guide_content_script(payload), encoding="utf-8")

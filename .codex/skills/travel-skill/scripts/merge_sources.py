@@ -29,12 +29,14 @@ def _prefer_latest_non_empty(records: list[dict], field: str) -> str:
 
 
 def merge(entries: list[dict]) -> dict:
-    groups: dict[tuple[str, str], list[dict]] = {}
+    groups: dict[tuple[str, str, str, str], list[dict]] = {}
     for raw in entries:
         entry = raw if isinstance(raw, dict) else {}
-        category = str(entry.get("category", ""))
+        place = str(entry.get("place", ""))
+        topic = str(entry.get("topic", entry.get("category", "")))
         url = str(entry.get("url", ""))
-        groups.setdefault((category, url), []).append(entry)
+        platform = str(entry.get("platform", ""))
+        groups.setdefault((place, topic, url, platform), []).append(entry)
 
     merged_entries = []
     for key, records in groups.items():
@@ -54,8 +56,10 @@ def merge(entries: list[dict]) -> dict:
 
         merged_entries.append(
             {
-                "category": str(key[0]),
-                "url": str(key[1]),
+                "place": str(key[0]),
+                "topic": str(key[1]),
+                "url": str(key[2]),
+                "platform": str(key[3]),
                 "checked_at": str(newest.get("checked_at", "")),
                 "title": _prefer_latest_non_empty(records_sorted, "title"),
                 "source_type": _prefer_latest_non_empty(records_sorted, "source_type"),
@@ -63,8 +67,16 @@ def merge(entries: list[dict]) -> dict:
             }
         )
 
-    ordered = sorted(merged_entries, key=lambda item: (item["category"], item["url"], item["title"]))
-    return {"entries": ordered}
+    ordered = sorted(merged_entries, key=lambda item: (item["topic"], item["place"], item["url"], item["title"]))
+    normalized: dict[str, dict[str, list[dict]]] = {}
+    for entry in ordered:
+        normalized.setdefault(entry["place"], {}).setdefault(entry["topic"], []).append(entry)
+    summary = {
+        "places": sorted({entry["place"] for entry in ordered if entry["place"]}),
+        "topics": sorted({entry["topic"] for entry in ordered if entry["topic"]}),
+        "platforms": sorted({entry["platform"] for entry in ordered if entry["platform"]}),
+    }
+    return {"entries": ordered, "normalized": normalized, "summary": summary}
 
 
 def main() -> None:

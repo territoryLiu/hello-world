@@ -3,22 +3,24 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{TITLE}} / Mobile</title>
-    <link rel="stylesheet" href="../assets/base.css" />
+    <title>{{TITLE}} · {{LAYER_TITLE}} / Mobile</title>
+    <link rel="stylesheet" href="../../assets/base.css" />
   </head>
-  <body data-mode="mobile">
+  <body data-device="{{DEVICE}}" data-layer="{{LAYER}}">
     <div class="page-shell">
       <header class="hero hero-mobile">
-        <p class="eyebrow">Travel Skill Render</p>
+        <p class="eyebrow">Travel Skill V2</p>
         <h1>{{TITLE}}</h1>
+        <p class="layer-title">{{LAYER_TITLE}}</p>
         <p class="hero-summary">{{SUMMARY}}</p>
         <div class="meta-row">{{META_CHIPS}}</div>
       </header>
-      <main class="content-shell">
+      <main class="content-shell mobile-shell">
+        <nav class="section-nav">{{NAV_ITEMS}}</nav>
         {{SECTION_CONTENT}}
       </main>
     </div>
-    <script src="../assets/guide-content.js"></script>
-    <script src="../assets/render-guide.js"></script>
+    <script src="../../assets/guide-content.js"></script>
+    <script src="../../assets/render-guide.js"></script>
   </body>
 </html>

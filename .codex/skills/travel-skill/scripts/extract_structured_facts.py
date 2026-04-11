@@ -14,10 +14,13 @@ def _fact_to_text(fact) -> str:
 
 
 def extract(payload: dict) -> dict:
-    categories: dict[str, list[dict]] = {}
+    by_place: dict[str, dict[str, list[dict]]] = {}
+    facts = []
     for raw_entry in payload.get("entries", []):
         entry = raw_entry if isinstance(raw_entry, dict) else {}
-        category = str(entry.get("category", ""))
+        place = str(entry.get("place", ""))
+        topic = str(entry.get("topic", entry.get("category", "")))
+        platform = str(entry.get("platform", ""))
         source_url = str(entry.get("url", ""))
         checked_at = str(entry.get("checked_at", ""))
         source_type = str(entry.get("source_type", ""))
@@ -32,16 +35,24 @@ def extract(payload: dict) -> dict:
             text = _fact_to_text(fact).strip()
             if not text:
                 continue
-            categories.setdefault(category, []).append(
-                {
-                    "text": text,
-                    "source_url": source_url,
-                    "checked_at": checked_at,
-                    "source_type": source_type,
-                    "source_title": source_title,
-                }
-            )
-    return {"categories": categories}
+            fact_item = {
+                "place": place,
+                "topic": topic,
+                "platform": platform,
+                "text": text,
+                "source_url": source_url,
+                "checked_at": checked_at,
+                "source_type": source_type,
+                "source_title": source_title,
+            }
+            by_place.setdefault(place, {}).setdefault(topic, []).append(fact_item)
+            facts.append(fact_item)
+    return {
+        "by_place": by_place,
+        "facts": facts,
+        "summary": payload.get("summary", {}),
+        "normalized": payload.get("normalized", {}),
+    }
 
 
 def main() -> None:
