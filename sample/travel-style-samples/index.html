@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Travel Style Samples</title>
+    <link rel="stylesheet" href="./assets/shared.css" />
+    <style>
+      body {
+        background:
+          radial-gradient(circle at top left, rgba(17, 24, 39, 0.08), transparent 22%),
+          linear-gradient(180deg, #f4f4f1 0%, #ece9e2 100%);
+      }
+      .catalog-hero {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 1.15fr 0.85fr;
+        margin-bottom: 24px;
+      }
+      .catalog-copy,
+      .catalog-side,
+      .catalog-card {
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(17, 24, 39, 0.08);
+        border-radius: 28px;
+        box-shadow: 0 20px 60px rgba(17, 24, 39, 0.08);
+        backdrop-filter: blur(14px);
+      }
+      .catalog-copy,
+      .catalog-side {
+        padding: 28px;
+      }
+      .catalog-copy h1 {
+        margin: 0 0 14px;
+        font-size: clamp(42px, 8vw, 88px);
+        letter-spacing: -0.05em;
+        line-height: 0.96;
+      }
+      .catalog-copy p,
+      .catalog-side p,
+      .catalog-card p {
+        color: #5f646d;
+      }
+      .catalog-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+      .catalog-card {
+        padding: 24px;
+        text-decoration: none;
+        color: inherit;
+        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+      }
+      .catalog-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 24px 68px rgba(17, 24, 39, 0.12);
+        border-color: rgba(17, 24, 39, 0.18);
+      }
+      .catalog-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(17, 24, 39, 0.1);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .catalog-card h2 {
+        margin: 18px 0 10px;
+        font-size: 32px;
+        line-height: 1.04;
+      }
+      .catalog-bar {
+        height: 10px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--swatch-a), var(--swatch-b));
+      }
+      .catalog-list {
+        display: grid;
+        gap: 8px;
+        padding: 0;
+        margin: 18px 0 0;
+        list-style: none;
+        color: #30343b;
+      }
+      .catalog-list li {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(17, 24, 39, 0.04);
+      }
+      .theme-a-card { --swatch-a: #111111; --swatch-b: #bdbdbd; }
+      .theme-b-card { --swatch-a: #0f766e; --swatch-b: #ef4444; }
+      .theme-c-card { --swatch-a: #8b7b65; --swatch-b: #d4c6a8; }
+      .theme-d-card { --swatch-a: #2563eb; --swatch-b: #14b8a6; }
+      @media (max-width: 960px) {
+        .catalog-hero,
+        .catalog-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="showcase-page">
+      <header class="catalog-hero">
+        <section class="catalog-copy">
+          <p class="eyebrow">Travel Skill Sample Folder</p>
+          <h1>四版旅行攻略风格样机</h1>
+          <p>这里先不改正式产线模板，先把桌面端和移动端的视觉方向做成可直接打开的真实页面。每一版都用同一套旅行内容骨架，便于纯看风格和信息组织方式。</p>
+        </section>
+        <aside class="catalog-side">
+          <p class="eyebrow">What To Compare</p>
+          <ul class="catalog-list">
+            <li>桌面端是否像杂志专题，而不是普通卡片拼盘</li>
+            <li>移动端是否更适合一屏一屏往下读</li>
+            <li>路线、穿衣、景点、交通、美食的层级是否清楚</li>
+            <li>你更愿意把哪一版升级成 travel-skill 默认样式</li>
+          </ul>
+        </aside>
+      </header>
+      <main class="catalog-grid">
+        <a class="catalog-card theme-a-card" href="./style-a-editorial.html">
+          <span class="catalog-chip">Style A</span>
+          <h2>黑白杂志风</h2>
+          <p>桌面端走 Editorial / Magazine，移动端保持清爽白卡片和浅灰底。</p>
+          <div class="catalog-bar"></div>
+          <ul class="catalog-list">
+            <li>适合高级、克制、信息密度高的旅行专题</li>
+            <li>图片与留白占主导，文字像编辑导览</li>
+          </ul>
+        </a>
+        <a class="catalog-card theme-b-card" href="./style-b-destination.html">
+          <span class="catalog-chip">Style B</span>
+          <h2>目的地画报风</h2>
+          <p>更强调目的地色彩和视觉冲击，像旅行画报或品牌专题页。</p>
+          <div class="catalog-bar"></div>
+          <ul class="catalog-list">
+            <li>适合景点、风景、季节气氛更强的目的地</li>
+            <li>视觉记忆点最强，首页张力更大</li>
+          </ul>
+        </a>
+        <a class="catalog-card theme-c-card" href="./style-c-hotel.html">
+          <span class="catalog-chip">Style C</span>
+          <h2>轻奢酒店刊物风</h2>
+          <p>更柔和、舒适，像精品酒店房内旅行手册或生活方式刊物。</p>
+          <div class="catalog-bar"></div>
+          <ul class="catalog-list">
+            <li>适合住宿、美食、穿衣和慢节奏攻略</li>
+            <li>整体最温和，长时间阅读压力小</li>
+          </ul>
+        </a>
+        <a class="catalog-card theme-d-card" href="./style-d-bento.html">
+          <span class="catalog-chip">Style D</span>
+          <h2>现代信息设计风</h2>
+          <p>更强调交通、价格和多方案对照，移动端是标准 Bento Box 思路。</p>
+          <div class="catalog-bar"></div>
+          <ul class="catalog-list">
+            <li>适合复杂路线、多中转、多方案旅行</li>
+            <li>读者最快能看懂路线和执行逻辑</li>
+          </ul>
+        </a>
+      </main>
+    </div>
+  </body>
+</html>

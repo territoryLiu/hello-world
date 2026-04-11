@@ -1,0 +1,31 @@
+body.theme-b {
+  --page-bg:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.2), transparent 20%),
+    radial-gradient(circle at top right, rgba(239, 68, 68, 0.16), transparent 22%),
+    linear-gradient(180deg, #eef8f7 0%, #f4efe9 100%);
+  --ink-strong: #132226;
+  --ink: #234048;
+  --ink-soft: #5b7076;
+  --line: rgba(19, 34, 38, 0.12);
+  --surface-strong: #ffffff;
+  --hero-gradient: linear-gradient(135deg, rgba(10, 102, 97, 0.12), rgba(255, 255, 255, 0.76) 44%, rgba(239, 68, 68, 0.14));
+  --display-font: "Georgia", "Times New Roman", serif;
+}
+.theme-b .guide-hero,
+.theme-b .mobile-hero { position: relative; }
+.theme-b .guide-hero::before {
+  content: "";
+  position: absolute;
+  inset: auto -80px -100px auto;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle at center, rgba(239, 68, 68, 0.36), transparent 64%);
+  filter: blur(8px);
+}
+.theme-b .section-index,
+.theme-b .eyebrow,
+.theme-b .guide-kicker,
+.theme-b .preview-label { color: #0f766e; }
+.theme-b .story-card:nth-child(2n) { background: linear-gradient(180deg, rgba(15, 118, 110, 0.05), rgba(255, 255, 255, 1)); }
+.theme-b .quick-card:nth-child(odd) { background: linear-gradient(180deg, rgba(15, 118, 110, 0.12), rgba(255, 255, 255, 1)); }
+.theme-b .quick-card:nth-child(even) { background: linear-gradient(180deg, rgba(239, 68, 68, 0.11), rgba(255, 255, 255, 1)); }
