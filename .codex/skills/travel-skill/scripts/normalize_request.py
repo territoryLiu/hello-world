@@ -6,7 +6,29 @@ import re
 
 DEFAULT_SHARE_MODE = "single-html"
 DEFAULT_REVIEW_MODE = "manual-gate"
-REQUIRED_OPTIONAL_FIELDS = ["must_go", "transport_preference"]
+CORE_FIELDS = [
+    "title",
+    "departure_city",
+    "destinations",
+    "date_range",
+    "travelers",
+    "budget",
+]
+PREFERENCE_FIELDS = ["must_go", "transport_preference"]
+TOPIC_DEFAULTS = [
+    "weather",
+    "clothing",
+    "packing",
+    "long_distance_transport",
+    "city_transport",
+    "attractions",
+    "tickets_and_booking",
+    "food",
+    "lodging_area",
+    "seasonality",
+    "risks",
+    "sources",
+]
 
 
 def slugify(text: str) -> str:
@@ -29,21 +51,41 @@ def slugify(text: str) -> str:
     return f"trip-{digest}"
 
 
+def traveler_profile(payload: dict) -> dict:
+    if not isinstance(payload, dict):
+        return {"adults": 0, "children": 0, "age_notes": ""}
+    count = payload.get("count", 0)
+    adults = payload.get("adults", count if isinstance(count, int) else 0)
+    children = payload.get("children", 0)
+    age_notes = payload.get("age_notes", "")
+    return {
+        "adults": adults if isinstance(adults, int) else 0,
+        "children": children if isinstance(children, int) else 0,
+        "age_notes": age_notes.strip() if isinstance(age_notes, str) else "",
+    }
+
+
 def normalize(payload: dict) -> dict:
     return {
         "title": payload["title"],
         "trip_slug": slugify(payload["title"]),
         "departure_city": payload["departure_city"],
+        "destinations": payload.get("destinations", []),
         "date_range": payload["date_range"],
         "travelers": payload["travelers"],
+        "traveler_profile": traveler_profile(payload.get("travelers", {})),
         "budget": payload["budget"],
-        "stay_preference": payload.get("stay_preference", ""),
-        "pace_preference": payload.get("pace_preference", ""),
-        "must_go": payload.get("must_go", []),
-        "transport_preference": payload.get("transport_preference", ""),
+        "preferences": {
+            "stay": payload.get("stay_preference", ""),
+            "pace": payload.get("pace_preference", ""),
+            "transport": payload.get("transport_preference", ""),
+        },
+        "required_topics": payload.get("required_topics", TOPIC_DEFAULTS),
         "share_mode": payload.get("share_mode", DEFAULT_SHARE_MODE),
         "review_mode": payload.get("review_mode", DEFAULT_REVIEW_MODE),
-        "unknown_fields": [key for key in REQUIRED_OPTIONAL_FIELDS if key not in payload],
+        "missing_core_fields": [key for key in CORE_FIELDS if key not in payload],
+        "missing_preference_fields": [key for key in PREFERENCE_FIELDS if key not in payload],
+        "research_dimensions": ["place", "topic", "platform"],
     }
 
 

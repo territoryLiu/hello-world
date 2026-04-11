@@ -26,8 +26,22 @@ class TravelSkillContractTest(unittest.TestCase):
     def test_reference_documents_include_required_keywords(self):
         checks = {
             "source-priority.md": ["# Source Priority", "official", "platform", "social", "checked_at"],
-            "research-checklists.md": ["# Research Checklists", "## Transport", "## Weather", "## Food"],
-            "content-schema.md": ["# Content Schema", "`meta`", "`sections.sources`", "`execution.booking_order`"],
+            "research-checklists.md": [
+                "# Research Checklists",
+                "## Transport",
+                "## Weather",
+                "## Food",
+                "packing",
+                "seasonality",
+            ],
+            "content-schema.md": [
+                "# Content Schema",
+                "trip_request",
+                "research_task",
+                "fact_item",
+                "daily-overview",
+                "comprehensive",
+            ],
             "sharing-modes.md": ["# Sharing Modes", "`single-html`", "`zip-bundle`", "`static-url`"],
             "sample-gap-checklist.md": ["# Sample Gap Checklist", "订票顺序", "价格区间", "每日执行表", "风险与避坑提示"],
         }

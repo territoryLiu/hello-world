@@ -22,16 +22,28 @@ class IntakeResearchTest(unittest.TestCase):
             run_script(SKILL_DIR / "scripts" / "normalize_request.py", "--input", fixture, "--output", output)
             payload = json.loads(output.read_text(encoding="utf-8"))
         self.assertEqual(payload["trip_slug"], "wuyi-yanji-changbaishan")
+        self.assertEqual(payload["destinations"], ["延吉", "长白山"])
         self.assertEqual(payload["share_mode"], "single-html")
         self.assertEqual(payload["review_mode"], "manual-gate")
-        self.assertEqual(payload["unknown_fields"], ["must_go", "transport_preference"])
+        self.assertEqual(payload["missing_core_fields"], [])
+        self.assertEqual(payload["missing_preference_fields"], ["must_go", "transport_preference"])
+        self.assertEqual(payload["research_dimensions"], ["place", "topic", "platform"])
+        self.assertEqual(
+            payload["traveler_profile"],
+            {
+                "adults": 3,
+                "children": 1,
+                "age_notes": "1 位 7 岁儿童，2 位 60+ 长辈",
+            },
+        )
 
     def test_normalize_request_slug_is_non_empty_and_stable_for_unmapped_chinese_title(self):
         raw = {
             "title": "端午吉林慢游",
             "departure_city": "上海",
+            "destinations": ["吉林"],
             "date_range": {"start": "2026-06-20", "end": "2026-06-24"},
-            "travelers": {"count": 2, "profile": "情侣"},
+            "travelers": {"count": 2, "adults": 2, "children": 0, "age_notes": "", "profile": "情侣"},
             "budget": {"mode": "total", "min": 5000, "max": 8000},
         }
         normalized_first = self._normalize_payload(raw)
@@ -43,8 +55,9 @@ class IntakeResearchTest(unittest.TestCase):
         base = {
             "title": "五一延吉长白山",
             "departure_city": "南京",
+            "destinations": ["延吉", "长白山"],
             "date_range": {"start": "2026-04-30", "end": "2026-05-05"},
-            "travelers": {"count": 4, "profile": "两男两女，8岁左右"},
+            "travelers": {"count": 4, "adults": 3, "children": 1, "age_notes": "1 位 7 岁儿童，2 位 60+ 长辈"},
             "budget": {"mode": "per_person", "min": 3000, "max": 5000},
         }
         missing_case = self._normalize_payload(base)
@@ -55,10 +68,10 @@ class IntakeResearchTest(unittest.TestCase):
                 "transport_preference": "",
             }
         )
-        self.assertEqual(missing_case["unknown_fields"], ["must_go", "transport_preference"])
-        self.assertEqual(explicit_empty_case["unknown_fields"], [])
+        self.assertEqual(missing_case["missing_preference_fields"], ["must_go", "transport_preference"])
+        self.assertEqual(explicit_empty_case["missing_preference_fields"], [])
 
-    def test_build_research_tasks_expands_core_categories(self):
+    def test_build_research_tasks_expands_place_topic_platform_dimensions(self):
         with tempfile.TemporaryDirectory() as tmp:
             normalized = Path(tmp) / "normalized.json"
             tasks = Path(tmp) / "tasks.json"
@@ -66,22 +79,21 @@ class IntakeResearchTest(unittest.TestCase):
             run_script(SKILL_DIR / "scripts" / "normalize_request.py", "--input", fixture, "--output", normalized)
             run_script(SKILL_DIR / "scripts" / "build_research_tasks.py", "--input", normalized, "--output", tasks)
             payload = json.loads(tasks.read_text(encoding="utf-8"))
-        categories = [item["category"] for item in payload["tasks"]]
-        expected = {
-            "transport": ["official", "platform"],
-            "weather": ["official", "history"],
-            "clothing": ["history", "social"],
-            "attractions": ["official", "social"],
-            "food": ["local-listing", "social"],
-            "lodging": ["platform", "map"],
-            "risk": ["official", "social"],
-        }
-        self.assertEqual(categories, list(expected.keys()))
         self.assertEqual(payload["trip_slug"], "wuyi-yanji-changbaishan")
+        self.assertEqual(payload["research_dimensions"], ["place", "topic", "platform"])
+        self.assertEqual(payload["places"], ["延吉", "长白山"])
+        topics = {item["topic"] for item in payload["tasks"]}
+        self.assertIn("city_transport", topics)
+        self.assertIn("packing", topics)
+        task_triplets = {(item["place"], item["topic"], item["platform"]) for item in payload["tasks"]}
+        self.assertIn(("延吉", "food", "local-listing"), task_triplets)
+        self.assertIn(("长白山", "attractions", "official"), task_triplets)
+        self.assertIn(("延吉", "city_transport", "map"), task_triplets)
         for task in payload["tasks"]:
             self.assertEqual(task["trip_slug"], payload["trip_slug"])
-            self.assertEqual(task["required_sources"], expected[task["category"]])
-            self.assertEqual(task["query_hint"], f"南京 五一延吉长白山 {task['category']}")
+            self.assertIn(task["place"], payload["places"])
+            self.assertTrue(task["query_hint"].startswith("南京 "))
+            self.assertIn(task["topic"], task["query_hint"])
 
 
 if __name__ == "__main__":

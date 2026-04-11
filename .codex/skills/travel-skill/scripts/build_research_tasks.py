@@ -2,29 +2,46 @@ from pathlib import Path
 import argparse
 import json
 
-TASKS = [
-    ("transport", ["official", "platform"]),
-    ("weather", ["official", "history"]),
-    ("clothing", ["history", "social"]),
-    ("attractions", ["official", "social"]),
-    ("food", ["local-listing", "social"]),
-    ("lodging", ["platform", "map"]),
-    ("risk", ["official", "social"]),
-]
+PLATFORM_MAP = {
+    "weather": ["official", "history"],
+    "clothing": ["history", "social"],
+    "packing": ["official", "social"],
+    "long_distance_transport": ["official", "platform"],
+    "city_transport": ["official", "map"],
+    "tickets_and_booking": ["official"],
+    "attractions": ["official", "social"],
+    "food": ["local-listing", "social"],
+    "lodging_area": ["platform", "map"],
+    "seasonality": ["official", "social"],
+    "risks": ["official", "social"],
+    "sources": ["official", "social"],
+}
 
 
 def build_tasks(payload: dict) -> dict:
     tasks = []
-    for category, required_sources in TASKS:
-        tasks.append(
-            {
-                "trip_slug": payload["trip_slug"],
-                "category": category,
-                "required_sources": required_sources,
-                "query_hint": f"{payload['departure_city']} {payload['title']} {category}",
-            }
-        )
-    return {"trip_slug": payload["trip_slug"], "tasks": tasks}
+    places = [item for item in payload.get("destinations", []) if isinstance(item, str) and item.strip()]
+    topics = payload.get("required_topics", [])
+    for place in places:
+        for topic in topics:
+            platforms = PLATFORM_MAP.get(topic, ["official"])
+            for platform in platforms:
+                tasks.append(
+                    {
+                        "trip_slug": payload["trip_slug"],
+                        "place": place,
+                        "topic": topic,
+                        "platform": platform,
+                        "required_sources": platforms,
+                        "query_hint": f"{payload['departure_city']} {payload['title']} {place} {topic}",
+                    }
+                )
+    return {
+        "trip_slug": payload["trip_slug"],
+        "research_dimensions": ["place", "topic", "platform"],
+        "places": places,
+        "tasks": tasks,
+    }
 
 
 def main() -> None:
