@@ -1,6 +1,8 @@
 [
   {
-    "category": "transport",
+    "place": "yanbian-route",
+    "topic": "long_distance_transport",
+    "platform": "official",
     "title": "12306 南京到延吉（旧）",
     "url": "https://www.12306.cn/",
     "checked_at": "2026-04-10",
@@ -17,7 +19,9 @@
     ]
   },
   {
-    "category": "transport",
+    "place": "yanbian-route",
+    "topic": "long_distance_transport",
+    "platform": "official",
     "title": "12306 南京到延吉（更新）",
     "url": "https://www.12306.cn/",
     "checked_at": "2026-04-12",
@@ -30,7 +34,9 @@
     ]
   },
   {
-    "category": "food",
+    "place": "yanji",
+    "topic": "food",
+    "platform": "local-listing",
     "title": "元奶奶包饭",
     "url": "https://example.com/yuan-nainai",
     "checked_at": "2026-04-11",
@@ -41,7 +47,9 @@
     ]
   },
   {
-    "category": "risk",
+    "place": "changbaishan",
+    "topic": "risks",
+    "platform": "social",
     "title": "",
     "url": "javascript:alert(1)",
     "checked_at": "2026-04-11",

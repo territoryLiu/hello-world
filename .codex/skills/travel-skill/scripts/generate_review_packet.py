@@ -82,25 +82,25 @@ def _normalized_facts(category: str, items) -> list[dict]:
 
 def build_markdown(payload: dict) -> str:
     lines = ["# Research Review Packet", "", "## Verified", ""]
-    categories = payload.get("categories", {})
-    if not isinstance(categories, dict):
-        categories = {}
-    for category, items in categories.items():
-        facts = _normalized_facts(str(category), items)
-        lines.append(f"### {_escape_markdown(str(category))}")
-        if not facts:
-            lines.append("- (no facts)")
-            lines.append("")
-            continue
-        for fact in facts:
-            source_title = _escape_markdown(fact["source_title"] or "Untitled Source")
-            source_type = _escape_markdown(fact["source_type"] or "unknown")
-            checked_at = _escape_markdown(fact["checked_at"] or "unknown-date")
-            text = _escape_markdown(fact["text"])
-            lines.append(f"- {text}")
-            lines.append(f"  - source: {source_title} ({source_type}, {checked_at})")
-            if fact["source_url"]:
-                lines.append(f"  - url: {_escape_markdown(fact['source_url'])}")
+    by_place = payload.get("by_place", {})
+    if not isinstance(by_place, dict):
+        by_place = {}
+    for place, topics in by_place.items():
+        lines.append(f"### {_escape_markdown(str(place))}")
+        topic_map = topics if isinstance(topics, dict) else {}
+        for topic, items in topic_map.items():
+            lines.append(f"- topic: {_escape_markdown(str(topic))}")
+            facts = _normalized_facts(str(topic), items)
+            for fact in facts:
+                source_title = _escape_markdown(fact["source_title"] or "Untitled Source")
+                source_type = _escape_markdown(fact["source_type"] or "unknown")
+                checked_at = _escape_markdown(fact["checked_at"] or "unknown-date")
+                text = _escape_markdown(fact["text"])
+                lines.append(f"  - {text}")
+                lines.append(f"    - source: {source_title} ({source_type})")
+                lines.append(f"    - 核对日期: {checked_at}")
+                if fact["source_url"]:
+                    lines.append(f"    - url: {_escape_markdown(fact['source_url'])}")
         lines.append("")
     lines.extend(["## Pending Confirmation", "", "- Recheck volatile transport and weather data before departure.", ""])
     return "\n".join(lines)
@@ -108,30 +108,35 @@ def build_markdown(payload: dict) -> str:
 
 def build_html(payload: dict) -> str:
     blocks = []
-    categories = payload.get("categories", {})
-    if not isinstance(categories, dict):
-        categories = {}
-    for category, items in categories.items():
-        facts = _normalized_facts(str(category), items)
-        card_lines = [f"<section><h3>{escape(str(category))}</h3><ul>"]
-        if not facts:
-            card_lines.append("<li>(no facts)</li>")
-        for fact in facts:
-            text = escape(fact["text"])
-            source_title = escape(fact["source_title"] or "Untitled Source")
-            source_type = escape(fact["source_type"] or "unknown")
-            checked_at = escape(fact["checked_at"] or "unknown-date")
-            url = fact["source_url"]
-            card_lines.append(f"<li><div>{text}</div>")
-            card_lines.append(f"<div>{source_title} ({source_type}, {checked_at})</div>")
-            if url:
-                url_text = escape(url)
-                if _is_clickable_url(url):
-                    card_lines.append(f"<div><a href=\"{url_text}\">{url_text}</a></div>")
-                else:
-                    card_lines.append(f"<div>{url_text}</div>")
-            card_lines.append("</li>")
-        card_lines.append("</ul></section>")
+    by_place = payload.get("by_place", {})
+    if not isinstance(by_place, dict):
+        by_place = {}
+    for place, topics in by_place.items():
+        topic_map = topics if isinstance(topics, dict) else {}
+        card_lines = [f"<section><h3>{escape(str(place))}</h3>"]
+        for topic, items in topic_map.items():
+            facts = _normalized_facts(str(topic), items)
+            card_lines.append(f"<h4>{escape(str(topic))}</h4><ul>")
+            if not facts:
+                card_lines.append("<li>(no facts)</li>")
+            for fact in facts:
+                text = escape(fact["text"])
+                source_title = escape(fact["source_title"] or "Untitled Source")
+                source_type = escape(fact["source_type"] or "unknown")
+                checked_at = escape(fact["checked_at"] or "unknown-date")
+                url = fact["source_url"]
+                card_lines.append(f"<li><div>{text}</div>")
+                card_lines.append(f"<div>{source_title} ({source_type})</div>")
+                card_lines.append(f"<div>核对日期: {checked_at}</div>")
+                if url:
+                    url_text = escape(url)
+                    if _is_clickable_url(url):
+                        card_lines.append(f"<div><a href=\"{url_text}\">{url_text}</a></div>")
+                    else:
+                        card_lines.append(f"<div>{url_text}</div>")
+                card_lines.append("</li>")
+            card_lines.append("</ul>")
+        card_lines.append("</section>")
         blocks.append("".join(card_lines))
     return """<!doctype html>
 <html lang="zh-CN">
