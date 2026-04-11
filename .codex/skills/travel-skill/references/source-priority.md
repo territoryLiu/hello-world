@@ -1,12 +1,17 @@
 # Source Priority
 
-优先级从高到低：
-1. 官方一手来源（`official`）
-2. 正规平台公开页面（`platform`）
-3. 本地生活平台页面（`local-listing`）
-4. 社交平台经验内容（`social`）
+Priority from high to low:
 
-写作规则：
-- 规则、票务、交通、营业状态、公告，优先引用 `official`。
-- 社媒仅补充体感、避坑、排队、拍照点，不替代官方规则。
-- 高频时效信息必须写明 `checked_at`（核对日期），避免把动态信息写成永久事实。
+1. `official`
+2. `platform`
+3. `local-listing`
+4. `social`
+
+Writing rules:
+
+- Use `official` first for tickets, transport schedules, reservation rules, opening status, closures, weather interfaces, and notices.
+- Use `platform` pages to补充公开可售方案、餐厅页面、景点页和标准信息。
+- Use `local-listing` for food shops, address confirmation, recommended dishes, opening hours, and per-capita ranges.
+- Use `social` for travel feel, photo spots, queue patterns, crowd feedback, transit friction, and real-world pacing.
+- Keep `checked_at` on all time-sensitive facts.
+- When schedules for the future are not yet queryable, cite the nearest searchable date and write it as a recent reference plan with a checked date.

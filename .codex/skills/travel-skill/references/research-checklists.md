@@ -1,43 +1,75 @@
 # Research Checklists
 
 ## Intake
-- 出发地、目的地、备选日期窗口
-- 出行人数、儿童/老人/年龄段说明
-- 节奏偏好、住宿偏好、预算方式
-- 已锁定交通 / 酒店 / 审批节点
-- 输出形式：桌面端、手机端、单文件、ZIP、notes
+
+- departure city, destinations, and date range
+- traveler count
+- whether children are included
+- rough age range of travelers
+- budget range
+- transport preference
+- lodging preference
+- pace preference
+- whether transfer-city stopover is acceptable
+- required deliverables: desktop, mobile, single-file, ZIP, notes
 
 ## Transport
-- 大交通主方案（去程/返程）
-- 大交通备选方案（延误或售罄时）
-- 城市内接驳（机场/高铁站到酒店与景点）
-- 公交 / 地铁 / 打车 / 步行接驳
+
+- outbound and return long-distance plans
+- high-speed-rail-first route
+- `flight + rail` route for trips over `600km`
+- pure rail fallback route
+- transfer-city route when direct plans are weak
+- station or airport to hotel and attraction transfers
+- subway, bus, taxi, self-drive, and walking segments
+- recent searchable schedule date
+- price range and checked date
 
 ## Weather
-- 历史天气与体感范围
-- 出发前近期天气趋势
-- 不确定项复核口径（何时再查、查哪些源）
 
-## Packing
+- recent weather reference or historical range
+- city feel temperature
+- scenic-area feel temperature
+- current-month clothing layers
+- shoes, windproof, rain or snow preparation
+- must-pack items
 - packing
-- 分层穿衣
-- 鞋子与保暖装备
-- 雨雪与风大场景备用物品
-
-## Seasonality
 - seasonality
-- 当前月份可看内容
-- 最佳月份
-- 当前月份较难看到的内容
+
+## Attractions
+
+- attraction summary
+- city or area
+- ticket or fee range
+- reservation method
+- reservation timing
+- stop duration suggestion
+- current-month view highlights
+- best viewing months
 
 ## Food
-- 店名与主打菜
-- 区域位置与动线顺序
-- 人均价格区间
-- 排队风险与替代店
+
+- city grouping
+- shop name
+- address
+- cuisine style
+- recommended dishes
+- per-capita range
+- queue pattern
+- alternative shop options
+
+## Sources
+
+- official source coverage
+- social source coverage
+- local-life source coverage
+- checked date on time-sensitive items
+- raw links retained for later review
 
 ## Delivery
-- 桌面端与手机端事实内容一致
-- notes 至少包含 `sources.md` 与 `image-plan.md`
-- 页面按固定章节顺序组织，并保留稳定的 ASCII section id
-- 交付前运行静态检查与 Playwright 检查
+
+- desktop and mobile contain the same facts
+- mobile supports paged reading
+- share package includes `portal.html`, `recommended.html`, `share.html`, `package.zip`
+- notes include `sources.md`
+- final render passes static checks and Playwright checks

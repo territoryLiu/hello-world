@@ -12,25 +12,82 @@ LAYER_DEFAULTS = {
         "summary": "待补充每日行程总览。",
         "days": {"title": "每日安排占位", "summary": "待补齐每天安排。", "points": ["按天拆分主要活动。"]},
         "wearing": {"title": "分层穿衣占位", "summary": "待补齐当前月份穿衣建议。", "points": ["分层穿衣更稳妥。"]},
-        "transport": {"title": "逐段交通占位", "summary": "待补齐当天主交通与接驳。", "points": ["逐段交通建议补齐主备方案。"]},
+        "transport": {"title": "逐段交通占位", "summary": "待补齐当天主要交通与接驳。", "points": ["逐段交通建议补齐主备方案。"]},
         "alerts": {"title": "注意事项占位", "summary": "待补齐天气、排队和时间提醒。", "points": ["重要风险建议提前核对。"]},
     },
     "recommended": {
-        "overview": {"title": "推荐概览占位", "summary": "待补齐最合适方案概览。", "points": ["先明确路线骨架。"]},
-        "route": {"title": "推荐路线占位", "summary": "待补齐主线路与换乘说明。", "points": ["按城市与景点顺序整理。"]},
-        "days": {"title": "每日安排占位", "summary": "待补齐每日执行安排。", "points": ["按上午、下午、晚间拆分。"]},
-        "attractions": {"title": "景点安排占位", "summary": "待补齐主景点说明。", "points": ["景点建议标记停留时长。"]},
-        "food": {"title": "店铺级推荐占位", "summary": "待补齐店名、地址、菜系与推荐菜。", "points": ["店铺级推荐方便后续选择。"]},
-        "packing_list": {"title": "打包建议占位", "summary": "待补齐衣物、药品和证件。", "points": ["分层穿衣和必备物品建议一起整理。"]},
+        "recommended_route": {
+            "title": "最推荐路线占位",
+            "summary": "待补齐最合适的一条路线。",
+            "points": ["先给最推荐路线，再补备用方案。"],
+        },
+        "route_options": {
+            "title": "多方案路线占位",
+            "summary": "待补齐高铁优先、飞机+高铁组合和纯高铁三类方案。",
+            "points": ["默认先给高铁方案。", "超过 600km 再补飞机+高铁组合。"],
+        },
+        "clothing_guide": {
+            "title": "穿衣指南占位",
+            "summary": "待补齐城市与景区的穿衣层次。",
+            "points": ["城市一套，上山一套。"],
+        },
+        "attractions": {
+            "title": "景点信息占位",
+            "summary": "待补齐景点玩法、票价和预约信息。",
+            "points": ["景点信息建议补齐费用与预约时间。"],
+        },
+        "transport_details": {
+            "title": "交通详情占位",
+            "summary": "待补齐高铁、飞机、公交、打车和接驳细节。",
+            "points": ["把高铁车次和飞机班次写清楚。"],
+        },
+        "food_by_city": {
+            "title": "分城市美食占位",
+            "summary": "待补齐按城市划分的餐厅推荐。",
+            "points": ["每座城市至少给出几家可选店。"],
+        },
+        "tips": {
+            "title": "注意事项与避坑占位",
+            "summary": "待补齐预约、排队、天气和预算提醒。",
+            "points": ["把容易踩坑的环节提前讲清楚。"],
+        },
     },
     "comprehensive": {
-        "overview": {"title": "全面概览占位", "summary": "待补齐完整路线说明。", "points": ["覆盖多交通与多景点选择。"]},
-        "transport_options": {"title": "价格区间占位", "summary": "待补齐全部交通方案与价格区间。", "points": ["价格区间建议写成范围。"]},
-        "attractions": {"title": "景点清单占位", "summary": "待补齐全部景点与预约信息。", "points": ["景点清单建议补齐收费与预约。"]},
-        "food_options": {"title": "店铺级推荐占位", "summary": "待补齐更多餐饮备选。", "points": ["店铺级推荐更便于读者选择。"]},
-        "lodging": {"title": "住宿建议占位", "summary": "待补齐商圈与落脚建议。", "points": ["住宿区域建议按动线整理。"]},
-        "seasonality": {"title": "季节体感占位", "summary": "待补齐最佳月份与当前可看内容。", "points": ["历史体感与当前月份建议一起写。"]},
-        "risks": {"title": "注意事项占位", "summary": "待补齐风险提醒与复核项。", "points": ["重要风险建议写清核对日期。"]},
+        "recommended_route": {
+            "title": "最推荐路线占位",
+            "summary": "待补齐最推荐的一条执行线。",
+            "points": ["把最省心的方案放在最前面。"],
+        },
+        "route_options": {
+            "title": "多方案路线占位",
+            "summary": "待补齐高铁优先、飞机+高铁组合和纯高铁方案。",
+            "points": ["默认高铁优先。", "跨省长距离再补飞机+高铁。"],
+        },
+        "clothing_guide": {
+            "title": "穿衣指南占位",
+            "summary": "待补齐当前月份的气温、体感和必备物品。",
+            "points": ["穿衣建议要区分城市和高海拔景区。"],
+        },
+        "attractions": {
+            "title": "景点信息占位",
+            "summary": "待补齐景点简介、费用和预约说明。",
+            "points": ["景点建议写停留时长和预约口径。"],
+        },
+        "transport_details": {
+            "title": "交通详情占位",
+            "summary": "待补齐每一段交通方式、时间和价格区间。",
+            "points": ["交通详情建议覆盖高铁、飞机、公交、地铁、打车。"],
+        },
+        "food_by_city": {
+            "title": "分城市美食占位",
+            "summary": "待补齐按城市归类的店铺、地址和推荐菜。",
+            "points": ["店铺推荐尽量多给一些，方便读者选择。"],
+        },
+        "tips": {
+            "title": "注意事项与避坑占位",
+            "summary": "待补齐天气、客流、预约和中转提示。",
+            "points": ["把核对日期和风险条件写清楚。"],
+        },
     },
 }
 
@@ -142,10 +199,7 @@ def main() -> None:
     output_path = Path(args.output)
     payload = json.loads(input_path.read_text(encoding="utf-8"))
     completed = fill(payload if isinstance(payload, dict) else {})
-    output_path.write_text(
-        json.dumps(completed, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    output_path.write_text(json.dumps(completed, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -17,8 +17,8 @@ ARTIFACTS_ROOT = ROOT / "tests" / "artifacts"
 
 REQUIRED_SECTIONS = {
     "daily-overview": {"days", "wearing", "transport", "alerts", "sources"},
-    "recommended": {"overview", "route", "days", "attractions", "food", "packing_list", "sources"},
-    "comprehensive": {"overview", "transport_options", "attractions", "food_options", "lodging", "seasonality", "risks", "sources"},
+    "recommended": {"recommended_route", "route_options", "clothing_guide", "attractions", "transport_details", "food_by_city", "tips", "sources"},
+    "comprehensive": {"recommended_route", "route_options", "clothing_guide", "attractions", "transport_details", "food_by_city", "tips", "sources"},
 }
 
 

@@ -7,29 +7,30 @@ from urllib.parse import urlsplit
 
 LAYER_SECTION_LABELS = {
     "daily-overview": {
-        "days": ("每日安排", "把每天安排放在前面，便于先确定节奏。"),
-        "wearing": ("穿衣与装备", "结合当前月份体感与活动强度整理。"),
-        "transport": ("交通安排", "优先看当天主交通和接驳。"),
-        "alerts": ("注意事项", "把要提前核对的风险单独列出。"),
+        "days": ("每天安排", "把每天安排放在最前面，先确认整体节奏。"),
+        "wearing": ("穿衣与必备物品", "结合当前月份体感和活动强度整理。"),
+        "transport": ("当天交通", "优先看当日主要交通和接驳。"),
+        "alerts": ("注意事项", "把需要提前核对的提醒单独列出。"),
         "sources": ("信息来源", "保留可追溯来源与核对日期。"),
     },
     "recommended": {
-        "overview": ("方案概览", "先看这条路线适合谁、节奏如何。"),
-        "route": ("推荐路线", "优先给出更顺手的主线安排。"),
-        "days": ("每日安排", "按天展开节奏、景点和餐饮安排。"),
-        "attractions": ("景点说明", "整理核心景点与停留理由。"),
-        "food": ("美食推荐", "保留店铺级选择空间。"),
-        "packing_list": ("必备物品", "结合天气、温差和行程强度整理。"),
-        "sources": ("信息来源", "列出正文依赖的来源。"),
+        "recommended_route": ("最推荐路线", "先看最省心、最顺手的一条路线。"),
+        "route_options": ("多方案路线", "默认高铁优先，再补飞机加高铁和纯高铁方案。"),
+        "clothing_guide": ("穿衣指南", "把城市体感、景区体感和必备物品整理在一起。"),
+        "attractions": ("景点信息", "集中看景点玩法、费用和预约。"),
+        "transport_details": ("交通详细信息", "把高铁、飞机、公交、打车和接驳写清楚。"),
+        "food_by_city": ("按城市划分的美食店铺", "每座城市分开整理，更方便选店。"),
+        "tips": ("注意事项和避坑指南", "把预约、天气、排队和中转提醒放在这里。"),
+        "sources": ("信息来源", "保留正文依赖的原始来源。"),
     },
     "comprehensive": {
-        "overview": ("全面概览", "先看整体路线和多方案逻辑。"),
-        "transport_options": ("交通方案", "集中查看高铁、飞机、地铁、公交、打车等方案。"),
-        "attractions": ("景点清单", "完整列出景点、预约与停留建议。"),
-        "food_options": ("餐饮清单", "尽量保留更多店铺供读者选择。"),
-        "lodging": ("住宿建议", "整理落脚区域与动线关系。"),
-        "seasonality": ("季节与月份", "说明当前月份可看内容与最佳季节。"),
-        "risks": ("注意事项", "把复核项和高风险节点单独列出。"),
+        "recommended_route": ("最推荐路线", "先看最合适的一条执行线。"),
+        "route_options": ("多方案路线", "默认高铁优先，再补飞机加高铁和纯高铁方案。"),
+        "clothing_guide": ("穿衣指南", "把当前月份气温、体感和必备物品一起讲清楚。"),
+        "attractions": ("景点信息", "完整列出景点简介、票价、预约和停留建议。"),
+        "transport_details": ("交通详细信息", "把每一段交通方式、价格区间和时间写清楚。"),
+        "food_by_city": ("按城市划分的美食店铺", "按城市分组，方便对照行程选店。"),
+        "tips": ("注意事项和避坑指南", "把高风险节点和复核项目单独列出。"),
         "sources": ("信息来源", "保留全量可追溯来源。"),
     },
 }
@@ -103,12 +104,11 @@ def _render_source_card(source: dict) -> str:
     checked_at = _safe_text(source.get("checked_at"))
     checked = f'<span class="source-badge">核对 {html.escape(checked_at)}</span>' if checked_at else ""
     link = (
-        f'<a class="source-url" href="{html.escape(url, quote=True)}" target="_blank" rel="noreferrer noopener">'
-        f"{html.escape(url)}</a>"
+        f'<a class="source-url" href="{html.escape(url, quote=True)}" target="_blank" rel="noreferrer noopener">{html.escape(url)}</a>'
         if url
         else '<span class="empty-text">暂无链接</span>'
     )
-    raw_url_line = f"<p class=\"source-meta\">原始链接：{_escape(raw_url)}</p>" if raw_url and not url else ""
+    raw_url_line = f'<p class="source-meta">原始链接：{_escape(raw_url)}</p>' if raw_url and not url else ""
     return (
         '<article class="source-card">'
         '<div class="source-header">'
