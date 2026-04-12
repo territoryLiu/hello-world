@@ -24,8 +24,10 @@ Default share format is `single-file HTML` plus ZIP packaging.
 
 - Use `web-access` for all online collection.
 - Use `frontend-design` when shaping the final reading experience.
+- Use `ui-ux-pro-max` when finalizing mobile or desktop reading structure and readability.
 - Use `theme-factory` when a themed visual variant is requested.
 - Use `playwright-skill` or the repo render checker before claiming completion.
+- Use `verification-before-completion` before claiming the guide is complete.
 
 ## Execution Order
 
@@ -66,6 +68,8 @@ Section order for `daily-overview`:
 
 - Prefer official and platform-first sources for transport, weather, tickets, reservation rules, opening status, and notices.
 - Use social and local-life platforms to enrich experience details, food choices, queue patterns, photo spots, and practical tips.
+- `research-run` must use `web-access` with concrete site coverage, not abstract `social` only.
+- Required social and local-life sites include `xiaohongshu`, `douyin`, `bilibili`, `meituan`, and `dianping` when the topic matrix calls for them.
 - Keep `checked_at` on time-sensitive facts.
 - Store research in reusable JSON so later trips can extend the same destination knowledge base.
 

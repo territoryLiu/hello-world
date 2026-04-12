@@ -12,12 +12,14 @@ def build_summary(guide_root: Path, portal: Path, recommended_html: Path, share_
             f"- {portal.name}",
             f"- {recommended_html.name}",
             f"- {share_html.name}",
-            "- trip-summary.txt",
             "- notes/sources.md",
+            "- notes/sources.html",
+            "- trip-summary.txt",
             "",
             "share_notes:",
-            "- share.html 是优先转发的单文件分享版。",
-            "- recommended.html 适合更轻量的推荐版阅读。",
+            "- share.html 是优先转发的完整单文件分享版。",
+            "- recommended.html 适合更轻量的最推荐阅读版本。",
+            "- notes/sources.html 用于按 site、topic、checked_at 和 time-sensitive 快速复核。",
             "- ZIP 适合归档和整包分发。",
         ]
     ) + "\n"
@@ -34,6 +36,7 @@ def package_trip(guide_root: Path, portal: Path, recommended_html: Path, share_h
         archive.write(share_html, arcname=share_html.name)
         archive.write(summary_path, arcname="trip-summary.txt")
         archive.write(guide_root / "notes" / "sources.md", arcname="notes/sources.md")
+        archive.write(guide_root / "notes" / "sources.html", arcname="notes/sources.html")
     return summary_path
 
 

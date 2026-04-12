@@ -21,6 +21,7 @@ def extract(payload: dict) -> dict:
         place = str(entry.get("place", ""))
         topic = str(entry.get("topic", entry.get("category", "")))
         platform = str(entry.get("platform", ""))
+        site = str(entry.get("site", platform or "unknown"))
         source_url = str(entry.get("url", ""))
         checked_at = str(entry.get("checked_at", ""))
         source_type = str(entry.get("source_type", ""))
@@ -39,6 +40,7 @@ def extract(payload: dict) -> dict:
                 "place": place,
                 "topic": topic,
                 "platform": platform,
+                "site": site,
                 "text": text,
                 "source_url": source_url,
                 "checked_at": checked_at,

@@ -57,12 +57,20 @@
 - per-capita range
 - queue pattern
 - alternative shop options
+- xiaohongshu notes
+- meituan listing coverage
+- dianping listing coverage
 
 ## Sources
 
 - official source coverage
 - social source coverage
 - local-life source coverage
+- xiaohongshu coverage
+- douyin coverage
+- bilibili coverage
+- meituan coverage
+- dianping coverage
 - checked date on time-sensitive items
 - raw links retained for later review
 

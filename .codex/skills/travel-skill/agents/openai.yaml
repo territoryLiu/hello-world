@@ -1,3 +1,11 @@
 display_name: Travel Skill
 short_description: Build layered, shareable travel guides from multi-source research to verified delivery
-default_prompt: Generate a staged travel-guide workflow that performs intake, multi-source web research, human review, layered guide composition, desktop/mobile rendering, single-file export, ZIP packaging, and final verification.
+default_prompt: |
+  Travel Skill execution contract:
+  1. Run intake first and confirm traveler composition, departure city, destinations, and sample_reference.
+  2. Build research tasks with build_research_tasks.py and turn them into concrete web-access runs with build_web_research_runs.py.
+  3. research-run must call web-access with concrete sites, not abstract labels only. Required site coverage includes xiaohongshu, douyin, bilibili, meituan, and dianping when the topic matrix calls for them.
+  4. Persist raw JSON research outputs with url, site, checked_at, collection_method, page title, summary, comment_highlights, transcript, timeline, screenshot candidates, and extracted facts.
+  5. Run validate_site_coverage.py before review-gate and report missing site coverage explicitly.
+  6. Compose the guide model with traveler constraints, sample_reference, the 600km transport rule, structured food cards, and media/image_plan.
+  7. Render desktop and mobile outputs, single-file exports, portal, sources page, ZIP package, and final verification.

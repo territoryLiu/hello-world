@@ -6,6 +6,7 @@ import re
 
 DEFAULT_SHARE_MODE = "single-html"
 DEFAULT_REVIEW_MODE = "manual-gate"
+DEFAULT_SAMPLE_REFERENCE = {"path": "sample.html", "density_mode": "match-sample"}
 CORE_FIELDS = [
     "title",
     "departure_city",
@@ -65,27 +66,58 @@ def traveler_profile(payload: dict) -> dict:
     }
 
 
+def traveler_constraints(payload: dict) -> dict:
+    profile = traveler_profile(payload)
+    notes = profile["age_notes"]
+    has_seniors = any(token in notes for token in ["60+", "老人", "长辈", "闀胯緢"])
+    has_children = profile["children"] > 0
+    return {
+        "has_children": has_children,
+        "has_seniors": has_seniors,
+        "requires_accessible_pace": has_children or has_seniors,
+        "avoid_long_unbroken_walks": has_children or has_seniors,
+    }
+
+
+def sample_reference(payload: dict) -> dict:
+    if isinstance(payload.get("sample_reference"), dict):
+        incoming = payload["sample_reference"]
+        return {
+            "path": str(incoming.get("path") or DEFAULT_SAMPLE_REFERENCE["path"]),
+            "density_mode": str(incoming.get("density_mode") or DEFAULT_SAMPLE_REFERENCE["density_mode"]),
+        }
+    if "sample_path" in payload:
+        return {
+            "path": str(payload.get("sample_path") or DEFAULT_SAMPLE_REFERENCE["path"]),
+            "density_mode": DEFAULT_SAMPLE_REFERENCE["density_mode"],
+        }
+    return dict(DEFAULT_SAMPLE_REFERENCE)
+
+
 def normalize(payload: dict) -> dict:
+    normalized_travelers = payload["travelers"]
     return {
         "title": payload["title"],
         "trip_slug": slugify(payload["title"]),
         "departure_city": payload["departure_city"],
         "destinations": payload.get("destinations", []),
         "date_range": payload["date_range"],
-        "travelers": payload["travelers"],
+        "travelers": normalized_travelers,
         "traveler_profile": traveler_profile(payload.get("travelers", {})),
+        "traveler_constraints": traveler_constraints(payload.get("travelers", {})),
         "budget": payload["budget"],
         "preferences": {
             "stay": payload.get("stay_preference", ""),
             "pace": payload.get("pace_preference", ""),
             "transport": payload.get("transport_preference", ""),
         },
+        "sample_reference": sample_reference(payload),
         "required_topics": payload.get("required_topics", TOPIC_DEFAULTS),
         "share_mode": payload.get("share_mode", DEFAULT_SHARE_MODE),
         "review_mode": payload.get("review_mode", DEFAULT_REVIEW_MODE),
         "missing_core_fields": [key for key in CORE_FIELDS if key not in payload],
         "missing_preference_fields": [key for key in PREFERENCE_FIELDS if key not in payload],
-        "research_dimensions": ["place", "topic", "platform"],
+        "research_dimensions": ["place", "topic", "platform", "site"],
     }
 
 
