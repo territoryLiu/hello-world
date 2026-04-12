@@ -70,8 +70,12 @@ Section order for `daily-overview`:
 - Use social and local-life platforms to enrich experience details, food choices, queue patterns, photo spots, and practical tips.
 - `research-run` must use `web-access` with concrete site coverage, not abstract `social` only.
 - Required social and local-life sites include `xiaohongshu`, `douyin`, `bilibili`, `meituan`, and `dianping` when the topic matrix calls for them.
+- For `xiaohongshu`, `douyin`, and `bilibili`, capture page body plus comment highlights, comment status, and sample size.
+- For `douyin` and `bilibili`, also capture transcript, timeline, and screenshot candidates when the page is video-based.
+- If a required field cannot be collected, mark it as failed and record the failure reason instead of pretending the site was covered.
 - Keep `checked_at` on time-sensitive facts.
 - Store research in reusable JSON so later trips can extend the same destination knowledge base.
+- Persist reusable place knowledge under `travel-data/places/<place-slug>/` with raw web research, structured facts, media raw, and site coverage files.
 
 ## Transport Defaults
 
@@ -79,11 +83,13 @@ Section order for `daily-overview`:
 - For trips over `600km`, also provide `flight + rail` and `pure rail` options.
 - When direct transport is weak, add a transfer-city option and note whether half-day or one-day stopover play is suitable.
 - When future schedules are not yet on sale, use the nearest searchable schedule, keep the checked date, and give price ranges.
+- When future rail tickets are not yet on sale, explicitly show the latest searchable date, example train numbers, checked date context, and a reminder to re-check once formal sale opens.
 
 ## Rendering Rules
 
 - Desktop and mobile must contain the same facts.
 - Mobile can paginate for readability.
+- Generate all five style variants when requested: `classic`, `minimalist`, `original`, `vintage`, `zen`.
 - Single-file sharing is the default share target.
 - ZIP is the default archive target.
 

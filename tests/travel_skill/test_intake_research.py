@@ -135,6 +135,114 @@ class IntakeResearchTest(unittest.TestCase):
         self.assertEqual(first_run["skill"], "web-access")
         self.assertTrue(first_run["prompt"].startswith("Use web-access"))
 
+    def test_social_tasks_require_comment_capture_and_transport_tasks_include_latest_searchable_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            normalized = Path(tmp) / "normalized.json"
+            tasks_path = Path(tmp) / "tasks.json"
+            fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "trip_request_raw.json"
+            run_script(SKILL_DIR / "scripts" / "normalize_request.py", "--input", fixture, "--output", normalized)
+            run_script(SKILL_DIR / "scripts" / "build_research_tasks.py", "--input", normalized, "--output", tasks_path)
+            payload = json.loads(tasks_path.read_text(encoding="utf-8"))
+
+        social_tasks = [
+            task
+            for task in payload["tasks"]
+            if task["site"] in {"xiaohongshu", "douyin", "bilibili"}
+        ]
+        self.assertTrue(social_tasks)
+        for task in social_tasks:
+            self.assertIn("comment_highlights", task["must_capture_fields"])
+            self.assertIn("comment_capture_status", task["must_capture_fields"])
+            self.assertIn("comment_sample_size", task["must_capture_fields"])
+
+        transport_tasks = [task for task in payload["tasks"] if task["topic"] == "long_distance_transport"]
+        self.assertTrue(transport_tasks)
+        official_transport = next(task for task in transport_tasks if task["site"] == "official")
+        self.assertIn("latest_searchable_schedule", official_transport["must_capture_fields"])
+        self.assertIn("fallback_strategy", official_transport["must_capture_fields"])
+        self.assertIn("checked_date_context", official_transport["must_capture_fields"])
+
+    def test_build_web_research_runs_prompt_requires_body_comment_and_failure_capture(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            normalized = Path(tmp) / "normalized.json"
+            tasks_path = Path(tmp) / "tasks.json"
+            runs_path = Path(tmp) / "runs.json"
+            fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "trip_request_raw.json"
+            run_script(SKILL_DIR / "scripts" / "normalize_request.py", "--input", fixture, "--output", normalized)
+            run_script(SKILL_DIR / "scripts" / "build_research_tasks.py", "--input", normalized, "--output", tasks_path)
+            run_script(SKILL_DIR / "scripts" / "build_web_research_runs.py", "--input", tasks_path, "--output", runs_path)
+            payload = json.loads(runs_path.read_text(encoding="utf-8"))
+
+        douyin_run = next(run for run in payload["runs"] if run["task"]["site"] == "douyin")
+        self.assertIn("comments", douyin_run["prompt"].lower())
+        self.assertIn("timeline", douyin_run["prompt"].lower())
+        self.assertIn("failed", douyin_run["prompt"].lower())
+
+    def test_persist_research_knowledge_writes_reusable_place_buckets(self):
+        raw_payload = {
+            "trip_slug": "demo-trip",
+            "records": [
+                {"place": "延吉", "topic": "food", "site": "dianping", "status": "success"},
+                {"place": "长白山", "topic": "attractions", "site": "official", "status": "success"},
+            ],
+        }
+        approved_payload = {
+            "trip_slug": "demo-trip",
+            "facts": [
+                {"place": "延吉", "topic": "food", "site": "dianping", "text": "冷面"},
+                {"place": "长白山", "topic": "attractions", "site": "official", "text": "北坡整天"},
+            ],
+        }
+        media_payload = [
+            {"place": "延吉", "platform": "bilibili", "title": "延吉 vlog"},
+            {"place": "长白山", "platform": "douyin", "title": "北坡 vlog"},
+        ]
+        coverage_payload = {
+            "trip_slug": "demo-trip",
+            "by_topic": {
+                "food": {"seen_sites": ["dianping"], "missing_required_sites": ["meituan", "xiaohongshu"]},
+                "attractions": {"seen_sites": ["official"], "missing_required_sites": ["xiaohongshu", "douyin", "bilibili"]},
+            },
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            raw_path = tmp_path / "raw.json"
+            approved_path = tmp_path / "approved.json"
+            media_path = tmp_path / "media.json"
+            coverage_path = tmp_path / "coverage.json"
+            output_root = tmp_path / "travel-data"
+            raw_path.write_text(json.dumps(raw_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            approved_path.write_text(json.dumps(approved_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            media_path.write_text(json.dumps(media_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            coverage_path.write_text(json.dumps(coverage_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+            run_script(
+                SKILL_DIR / "scripts" / "persist_research_knowledge.py",
+                "--raw-research",
+                raw_path,
+                "--approved-research",
+                approved_path,
+                "--media-raw",
+                media_path,
+                "--site-coverage",
+                coverage_path,
+                "--output-root",
+                output_root,
+            )
+
+            yanji_root = output_root / "places" / "yanji"
+            changbai_root = output_root / "places" / "changbaishan"
+
+            self.assertTrue((yanji_root / "raw-web-research.json").exists())
+            self.assertTrue((yanji_root / "structured-facts.json").exists())
+            self.assertTrue((yanji_root / "media-raw.json").exists())
+            self.assertTrue((yanji_root / "site-coverage.json").exists())
+            self.assertTrue((changbai_root / "raw-web-research.json").exists())
+
+            yanji_facts = json.loads((yanji_root / "structured-facts.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(yanji_facts["facts"]), 1)
+            self.assertEqual(yanji_facts["facts"][0]["place"], "延吉")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,6 +13,7 @@ FIELDS = [
     "transcript",
     "timeline",
     "shot_candidates",
+    "image_candidates",
     "recommended_usage",
 ]
 
@@ -24,7 +25,7 @@ def normalize_items(payload: list[dict]) -> dict:
         item = {}
         for field in FIELDS:
             value = entry.get(field)
-            if field in {"comment_highlights", "timeline", "shot_candidates"}:
+            if field in {"comment_highlights", "timeline", "shot_candidates", "image_candidates"}:
                 item[field] = value if isinstance(value, list) else []
             else:
                 item[field] = str(value or "")

@@ -17,10 +17,45 @@ def _render_links(items: list[tuple[str, str]]) -> str:
     )
 
 
+def _discover_styles(guide_root: Path, device: str) -> list[str]:
+    device_root = guide_root / device
+    if not device_root.exists():
+        return []
+    styles = []
+    for child in sorted(device_root.iterdir()):
+        if child.is_dir() and child.name in {"classic", "minimalist", "original", "vintage", "zen"}:
+            styles.append(child.name)
+    return styles
+
+
+def _layer_links(guide_root: Path, device: str) -> list[tuple[str, str]]:
+    return [(label, f"../trips/{guide_root.name}/{device}/{layer}/index.html") for layer, label in LAYER_LABELS.items()]
+
+
+def _style_links(guide_root: Path, device: str, style: str) -> list[tuple[str, str]]:
+    return [
+        (f"{style} · {label}", f"../trips/{guide_root.name}/{device}/{style}/{layer}/index.html")
+        for layer, label in LAYER_LABELS.items()
+    ]
+
+
 def build_portal(guide_root: Path, output_path: Path) -> Path:
     title = guide_root.name
-    desktop_links = [(label, f"../trips/{guide_root.name}/desktop/{layer}/index.html") for layer, label in LAYER_LABELS.items()]
-    mobile_links = [(label, f"../trips/{guide_root.name}/mobile/{layer}/index.html") for layer, label in LAYER_LABELS.items()]
+    desktop_styles = _discover_styles(guide_root, "desktop")
+    mobile_styles = _discover_styles(guide_root, "mobile")
+    desktop_links = _layer_links(guide_root, "desktop")
+    mobile_links = _layer_links(guide_root, "mobile")
+    style_sections = []
+    for style in sorted(set(desktop_styles + mobile_styles)):
+        style_sections.append(
+            f"""
+        <section class="group">
+          <h2>{html.escape(style)}</h2>
+          <p>同一份事实内容生成的独立风格版本，方便客户自行挑选。</p>
+          {_render_links(_style_links(guide_root, "desktop", style) + _style_links(guide_root, "mobile", style))}
+        </section>
+        """
+        )
     share_links = [
         ("单文件分享版", "share.html"),
         ("最推荐单文件", "recommended.html"),
@@ -45,7 +80,7 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
         color: #2b241d;
       }}
       .shell {{
-        width: min(1040px, calc(100% - 24px));
+        width: min(1100px, calc(100% - 24px));
         margin: 0 auto;
         padding: 32px 0 40px;
       }}
@@ -66,7 +101,6 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
       }}
       .group h2 {{
         margin: 0 0 10px;
-        font-family: "STKaiti", "KaiTi", serif;
       }}
       .group p {{
         margin: 0 0 12px;
@@ -95,7 +129,7 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
       <section class="hero">
         <p>Travel Skill Portal</p>
         <h1>{html.escape(title)}</h1>
-        <p>这个入口页把桌面端、手机端、单文件分享、来源说明和 ZIP 打包说明放在一起，便于快速分发。</p>
+        <p>这个入口页把桌面端、手机端、单文件、来源说明和 ZIP 打包说明放在一起，并附上五套 style 版本的独立入口。</p>
       </section>
       <div class="grid">
         <section class="group">
@@ -110,7 +144,7 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
         </section>
         <section class="group">
           <h2>单文件</h2>
-          <p>适合直接转发；`share.html` 默认用于完整分享，`recommended.html` 更轻量。</p>
+          <p>适合直接转发，`share.html` 默认用于完整分享，`recommended.html` 更轻量。</p>
           {_render_links(share_links)}
         </section>
         <section class="group" id="zip-notes">
@@ -118,6 +152,7 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
           <p>适合归档和整包交付，压缩包里包含单文件、来源说明和摘要文本。</p>
           {_render_links(package_links)}
         </section>
+        {''.join(style_sections)}
       </div>
     </div>
   </body>

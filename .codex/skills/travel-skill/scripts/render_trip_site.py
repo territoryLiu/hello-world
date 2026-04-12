@@ -13,7 +13,7 @@ LAYER_TITLES = {
 SECTION_LABELS = {
     "daily-overview": [
         ("days", "每日安排", "先看按天拆分后的主线节奏。"),
-        ("wearing", "穿衣与装备", "把当前月份体感和必备物品放在一起看。"),
+        ("wearing", "穿衣与装备", "把当月体感和必备物品放在一起看。"),
         ("transport", "交通安排", "优先确认当天主交通和接驳方式。"),
         ("alerts", "温馨提示", "把预约、排队和天气提醒单独列出。"),
         ("sources", "信息来源", "保留可追溯来源，方便二次核对。"),
@@ -43,9 +43,17 @@ STYLE_LABELS = {
     "default": "Layered Guide",
     "classic": "Classic Print",
     "minimalist": "Minimalist",
+    "original": "Original",
     "vintage": "Vintage",
     "zen": "Zen",
-    "original": "Original",
+}
+RENDER_STYLES = ["classic", "minimalist", "original", "vintage", "zen"]
+STYLE_THEMES = {
+    "classic": {"font": '"Microsoft YaHei", "PingFang SC", sans-serif', "accent": "#9a4b2f", "bg": "#f4efe6", "surface": "#fffaf4", "ink": "#272117"},
+    "minimalist": {"font": '"Noto Sans SC", "Microsoft YaHei", sans-serif', "accent": "#1d1d1d", "bg": "#f6f6f3", "surface": "#ffffff", "ink": "#151515"},
+    "original": {"font": '"Source Han Serif SC", "STSong", serif', "accent": "#1c6b72", "bg": "#ecf5f3", "surface": "#fbfffe", "ink": "#173033"},
+    "vintage": {"font": '"STKaiti", "KaiTi", serif', "accent": "#7e5a2f", "bg": "#f0e5d2", "surface": "#fff8ec", "ink": "#2f2416"},
+    "zen": {"font": '"Source Han Sans SC", "Microsoft YaHei", sans-serif', "accent": "#426b5f", "bg": "#edf3ee", "surface": "#f9fcf8", "ink": "#182620"},
 }
 
 
@@ -74,10 +82,299 @@ def _safe_href(value) -> str:
     return raw if parsed.scheme.lower() in {"http", "https"} else ""
 
 
+def _render_media_image(entry: dict) -> str:
+    if not isinstance(entry, dict):
+        return ""
+    image_url = _safe_href(entry.get("image_url"))
+    if not image_url:
+        return ""
+    alt = _safe_text(entry.get("image_hint")) or "旅行插图"
+    return (
+        '<figure class="media-figure">'
+        f'<img class="media-image" src="{html.escape(image_url, quote=True)}" alt="{html.escape(alt, quote=True)}" loading="lazy" />'
+        "</figure>"
+    )
+
+
 def _guide_content_script(payload: dict) -> str:
     data = json.dumps(payload, ensure_ascii=False, indent=2)
     data = data.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
     return f"window.__TRAVEL_GUIDE__ = {data};\n"
+
+
+def _style_override_css(style: str, device: str) -> str:
+    theme = STYLE_THEMES.get(style, STYLE_THEMES["classic"])
+    mobile_grid = "1fr" if device == "mobile" else "repeat(2, minmax(0, 1fr))"
+    return f"""
+    :root {{
+      --theme-bg: {theme['bg']};
+      --theme-surface: {theme['surface']};
+      --theme-ink: {theme['ink']};
+      --theme-accent: {theme['accent']};
+      --theme-accent-soft: {theme['accent']}1f;
+      --theme-line: {theme['ink']}1a;
+      --theme-shadow: 0 18px 42px {theme['ink']}24;
+    }}
+    body {{
+      font-family: {theme['font']};
+    }}
+    .page-shell {{
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }}
+    .hero,
+    .hero-media,
+    .section-block,
+    .card,
+    .source-card {{
+      background: var(--theme-surface);
+      border: 1px solid var(--theme-line);
+      border-radius: 28px;
+      box-shadow: var(--theme-shadow);
+    }}
+    .hero,
+    .hero-media,
+    .section-block {{
+      padding: 24px;
+      margin-bottom: 18px;
+    }}
+    .hero-summary,
+    .section-lead,
+    .card-summary,
+    .source-meta,
+    .source-url,
+    .empty-text {{
+      color: color-mix(in srgb, var(--theme-ink) 68%, white);
+    }}
+    .content-shell {{
+      display: grid;
+      gap: 18px;
+    }}
+    .section-nav {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px;
+      position: sticky;
+      top: 12px;
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(12px);
+      border-radius: 18px;
+      border: 1px solid var(--theme-line);
+    }}
+    .section-nav a,
+    .meta-chip {{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      text-decoration: none;
+      border: 1px solid var(--theme-line);
+      background: rgba(255, 255, 255, 0.74);
+      color: inherit;
+    }}
+    .meta-row {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }}
+    .section-head {{
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }}
+    .section-body {{
+      display: grid;
+      grid-template-columns: {mobile_grid};
+      gap: 14px;
+    }}
+    .card,
+    .source-card {{
+      padding: 18px;
+    }}
+    .timeline-stack {{
+      display: grid;
+      gap: 18px;
+      position: relative;
+      padding-left: 22px;
+    }}
+    .timeline-stack::before {{
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--theme-line);
+    }}
+    .timeline-card {{
+      position: relative;
+      padding: 18px 18px 18px 22px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid var(--theme-line);
+      box-shadow: var(--theme-shadow);
+    }}
+    .timeline-card::before {{
+      content: "";
+      position: absolute;
+      left: -20px;
+      top: 24px;
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--theme-accent);
+      border: 3px solid var(--theme-surface);
+      box-shadow: 0 0 0 1px var(--theme-line);
+    }}
+    .card-points {{
+      list-style: none;
+      padding: 0;
+      margin: 14px 0 0;
+      display: grid;
+      gap: 10px;
+    }}
+    .card-points li {{
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.7);
+    }}
+    .transport-matrix {{
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+    }}
+    .transport-row {{
+      display: grid;
+      gap: 6px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid var(--theme-line);
+    }}
+    .transport-row strong {{
+      color: var(--theme-accent);
+    }}
+    .transport-meta {{
+      margin: 0;
+      font-size: 14px;
+      color: color-mix(in srgb, var(--theme-ink) 76%, white);
+    }}
+    .transport-access-card,
+    .food-group-card {{
+      position: relative;
+      overflow: hidden;
+      border-width: 1px;
+    }}
+    .transport-access-card {{
+      background: linear-gradient(180deg, rgba(154, 75, 47, 0.09), rgba(255, 255, 255, 0.9));
+    }}
+    .food-group-card {{
+      background: linear-gradient(180deg, rgba(154, 75, 47, 0.06), rgba(255, 250, 244, 0.98));
+    }}
+    .transport-access-card::before,
+    .food-group-card::before {{
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--theme-accent);
+    }}
+    .card-source-meta {{
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--theme-line);
+      display: grid;
+      gap: 6px;
+    }}
+    .card-source-line {{
+      margin: 0;
+      font-size: 13px;
+      color: color-mix(in srgb, var(--theme-ink) 70%, white);
+      word-break: break-all;
+    }}
+    .card-inline-media {{
+      margin-top: 14px;
+      display: grid;
+      gap: 8px;
+    }}
+    .card-comment-strip {{
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: var(--theme-accent-soft);
+      border: 1px solid var(--theme-line);
+      display: grid;
+      gap: 10px;
+    }}
+    .card-comment-list {{
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 8px;
+    }}
+    .card-comment-list li {{
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.76);
+    }}
+    .card-inline-media .media-label {{
+      margin: 0;
+    }}
+    .media-note {{
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid var(--theme-line);
+      margin-bottom: 12px;
+    }}
+    .media-figure {{
+      margin: 0 0 12px;
+    }}
+    .media-image {{
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 18px;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      border: 1px solid var(--theme-line);
+      box-shadow: var(--theme-shadow);
+    }}
+    .media-label,
+    .eyebrow {{
+      margin: 0 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 12px;
+      color: var(--theme-accent);
+    }}
+    h1, h2, h3, h4 {{
+      margin: 0;
+    }}
+    h1 {{
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1.08;
+    }}
+    a {{
+      color: inherit;
+    }}
+    .source-url {{
+      word-break: break-all;
+    }}
+    @media (max-width: 900px) {{
+      .section-body {{
+        grid-template-columns: 1fr;
+      }}
+    }}
+    """
 
 
 def _meta_chips(meta: dict) -> str:
@@ -89,7 +386,7 @@ def _meta_chips(meta: dict) -> str:
     ]
     if sample_reference.get("path"):
         chips.append(("对标样本", _safe_text(sample_reference.get("path"))))
-    if meta.get("transport_rule"):
+    if isinstance(meta.get("transport_rule"), dict):
         chips.append(("距离规则", _safe_text(meta["transport_rule"].get("long_distance"))))
     if traveler_constraints.get("requires_accessible_pace"):
         chips.append(("行程节奏", "亲子/长辈友好"))
@@ -106,14 +403,112 @@ def _render_points(points: list[str]) -> str:
     return '<ul class="card-points">' + "".join(f"<li>{_escape(point)}</li>" for point in entries) + "</ul>"
 
 
-def _render_content_card(item: dict) -> str:
+def _render_transport_matrix(rows: list[dict]) -> str:
+    valid_rows = [row for row in rows if isinstance(row, dict)]
+    if not valid_rows:
+        return ""
+    cards = []
+    for row in valid_rows:
+        cards.append(
+            '<div class="transport-row">'
+            f"<strong>{_escape(row.get('name') or '交通方案')}</strong>"
+            f'<p class="transport-meta">{_escape(row.get("schedule"))}</p>'
+            f'<p class="transport-meta">{_escape(row.get("price"))}</p>'
+            f'<p class="transport-meta">{_escape(row.get("duration"))}</p>'
+            f'<p class="transport-meta">{_escape(row.get("notes"))}</p>'
+            "</div>"
+        )
+    return '<div class="transport-matrix">' + "".join(cards) + "</div>"
+
+
+def _render_card_source_meta(meta: dict) -> str:
+    if not isinstance(meta, dict):
+        return ""
+    raw_url = _safe_text(meta.get("url"))
+    safe_url = _safe_href(raw_url)
+    lines = [
+        f"site: {_safe_text(meta.get('site')) or 'unknown'}",
+        f"checked_at: {_safe_text(meta.get('checked_at')) or 'unknown'}",
+        f"title: {_safe_text(meta.get('title')) or 'unknown'}",
+    ]
+    if safe_url:
+        lines.append(safe_url)
+    elif raw_url:
+        lines.append(raw_url)
+    return '<div class="card-source-meta">' + "".join(
+        f'<p class="card-source-line">{_escape(line)}</p>' for line in lines if _safe_text(line)
+    ) + "</div>"
+
+
+def _render_card_media(media: dict) -> str:
+    if not isinstance(media, dict):
+        return ""
+    image_url = _safe_href(media.get("image_url"))
+    if not image_url:
+        return ""
+    hint = _safe_text(media.get("image_hint")) or "卡片配图"
+    source_ref = _safe_text(media.get("source_ref"))
+    source_kind = _safe_text(media.get("image_source_kind"))
     return (
-        '<article class="card">'
+        '<div class="card-inline-media">'
+        f"{_render_media_image({'image_url': image_url, 'image_hint': hint})}"
+        f'<p class="media-label">{_escape(hint)}</p>'
+        f'<p class="card-source-line">{_escape(source_ref or source_kind)}</p>'
+        "</div>"
+    )
+
+
+def _render_comment_highlights(items: list[str]) -> str:
+    comments = [item for item in items if isinstance(item, str) and item.strip()]
+    if not comments:
+        return ""
+    return (
+        '<div class="card-comment-strip">'
+        '<p class="media-label">Comment Highlights</p>'
+        + '<ul class="card-comment-list">'
+        + "".join(f"<li>{_escape(comment)}</li>" for comment in comments)
+        + "</ul>"
+        + "</div>"
+    )
+
+
+def _render_content_card(item: dict) -> str:
+    matrix_html = _render_transport_matrix(_safe_list(item.get("transport_matrix")))
+    card_media_html = _render_card_media(item.get("card_media"))
+    comment_html = _render_comment_highlights(_safe_list(item.get("comment_highlights")))
+    source_meta_html = _render_card_source_meta(item.get("source_meta"))
+    card_kind = _safe_text(item.get("card_kind"))
+    extra_class = ""
+    if card_kind == "transport-access":
+        extra_class = " transport-access-card"
+    elif card_kind == "food-group":
+        extra_class = " food-group-card"
+    return (
+        f'<article class="card{extra_class}">'
         f"<h3>{_escape(item.get('title') or '内容条目')}</h3>"
         f'<p class="card-summary">{_escape(item.get("summary"))}</p>'
+        f"{card_media_html}"
+        f"{comment_html}"
         f"{_render_points(_safe_list(item.get('points')))}"
+        f"{matrix_html}"
+        f"{source_meta_html}"
         "</article>"
     )
+
+
+def _render_timeline_cards(items: list[dict]) -> str:
+    cards = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        cards.append(
+            '<article class="timeline-card">'
+            f"<h3>{_escape(item.get('title') or '行程节点')}</h3>"
+            f'<p class="card-summary">{_escape(item.get("summary"))}</p>'
+            f"{_render_points(_safe_list(item.get('points')))}"
+            "</article>"
+        )
+    return '<div class="timeline-stack">' + "".join(cards) + "</div>"
 
 
 def _render_source_card(source: dict) -> str:
@@ -160,6 +555,7 @@ def _render_media_block(image_plan: dict, section_id: str) -> str:
     for entry in entries:
         blocks.append(
             '<aside class="media-note">'
+            f'{_render_media_image(entry)}'
             '<p class="media-label">参考画面</p>'
             f"<h4>{_escape(entry.get('image_hint') or '待补充画面')}</h4>"
             f'<p>{_escape(entry.get("source_ref") or "")}</p>'
@@ -178,12 +574,13 @@ def _render_hero_media(meta: dict, image_plan: dict, style: str) -> str:
         detail_lines.append(f"来源参考：{cover.get('source_ref')}")
     if sample_reference.get("path"):
         detail_lines.append(f"样本对标：{sample_reference.get('path')}")
-    if meta.get("transport_rule"):
+    if isinstance(meta.get("transport_rule"), dict):
         detail_lines.append(f"距离规则：{meta['transport_rule'].get('long_distance')}")
     if not detail_lines:
         return ""
     return (
         '<section class="hero-media">'
+        f"{_render_media_image(cover)}"
         f"<p class=\"eyebrow\">{_escape(STYLE_LABELS.get(style, style.title()))}</p>"
         + "".join(f"<p>{_escape(line)}</p>" for line in detail_lines)
         + "</section>"
@@ -192,9 +589,12 @@ def _render_hero_media(meta: dict, image_plan: dict, style: str) -> str:
 
 def _render_section(section_id: str, title: str, lead: str, items: list[dict], image_plan: dict, source_mode: bool) -> str:
     media = _render_media_block(image_plan, section_id)
-    cards = "".join(_render_source_card(item) for item in items) if source_mode else "".join(
-        _render_content_card(item) for item in items
-    )
+    if source_mode:
+        cards = "".join(_render_source_card(item) for item in items)
+    elif section_id == "days":
+        cards = _render_timeline_cards(items)
+    else:
+        cards = "".join(_render_content_card(item) for item in items)
     return (
         f'<section id="{section_id}" class="section-block">'
         '<div class="section-head">'
@@ -207,7 +607,21 @@ def _render_section(section_id: str, title: str, lead: str, items: list[dict], i
     )
 
 
-def _render_layer_html(payload: dict, layer_name: str, device: str, style: str) -> str:
+def _group_sources(payload: dict) -> list[tuple[str, list[tuple[str, list[dict]]]]]:
+    grouped: dict[str, dict[str, list[dict]]] = {}
+    for source in _safe_list(payload.get("sources")):
+        if not isinstance(source, dict):
+            continue
+        site = _safe_text(source.get("site")) or "unknown"
+        topic = _safe_text(source.get("topic")) or "unknown"
+        grouped.setdefault(site, {}).setdefault(topic, []).append(source)
+    return [
+        (site, [(topic, grouped[site][topic]) for topic in sorted(grouped[site])])
+        for site in sorted(grouped)
+    ]
+
+
+def _render_layer_html(payload: dict, layer_name: str, device: str, style: str, asset_prefix: str) -> str:
     meta = payload.get("meta", {})
     layer_payload = payload.get("outputs", {}).get(layer_name, {})
     title = _safe_text(meta.get("title")) or "旅行攻略"
@@ -229,7 +643,8 @@ def _render_layer_html(payload: dict, layer_name: str, device: str, style: str) 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{_escape(title)} · {_escape(LAYER_TITLES[layer_name])}</title>
-    <link rel="stylesheet" href="../../assets/base.css" />
+    <link rel="stylesheet" href="{asset_prefix}/assets/base.css" />
+    <style>{_style_override_css(style, device)}</style>
   </head>
   <body data-device="{_escape(device)}" data-layer="{_escape(layer_name)}" data-style="{_escape(style)}">
     <div class="page-shell style-{_escape(style)} device-{_escape(device)}">
@@ -246,8 +661,8 @@ def _render_layer_html(payload: dict, layer_name: str, device: str, style: str) 
         {''.join(sections)}
       </main>
     </div>
-    <script src="../../assets/guide-content.js"></script>
-    <script src="../../assets/render-guide.js"></script>
+    <script src="{asset_prefix}/assets/guide-content.js"></script>
+    <script src="{asset_prefix}/assets/render-guide.js"></script>
   </body>
 </html>
 """
@@ -263,25 +678,43 @@ def _sources_markdown(payload: dict) -> str:
         f"- source_count: {meta.get('source_count', 0)}",
         "",
     ]
-    for source in _safe_list(payload.get("sources")):
-        lines.extend(
-            [
-                f"## {_safe_text(source.get('site')) or 'unknown'} | {_safe_text(source.get('topic')) or 'unknown'} | {_safe_text(source.get('title')) or '待补充来源'}",
-                f"- url: {_safe_text(source.get('url')) or '(no url)'}",
-                f"- type: {_safe_text(source.get('type')) or 'unknown'}",
-                f"- checked_at: {_safe_text(source.get('checked_at')) or 'unknown'}",
-                f"- site: {_safe_text(source.get('site')) or 'unknown'}",
-                f"- topic: {_safe_text(source.get('topic')) or 'unknown'}",
-                f"- time_sensitive: {_safe_text(source.get('time_sensitive')) or 'no'}",
-                "",
-            ]
-        )
+    for site, topics in _group_sources(payload):
+        lines.append(f"## {site}")
+        lines.append("")
+        for topic, items in topics:
+            lines.append(f"### {topic}")
+            lines.append("")
+            for source in items:
+                lines.extend(
+                    [
+                        f"- title: {_safe_text(source.get('title')) or '待补充来源'}",
+                        f"- url: {_safe_text(source.get('url')) or '(no url)'}",
+                        f"- type: {_safe_text(source.get('type')) or 'unknown'}",
+                        f"- checked_at: {_safe_text(source.get('checked_at')) or 'unknown'}",
+                        f"- site: {_safe_text(source.get('site')) or 'unknown'}",
+                        f"- topic: {_safe_text(source.get('topic')) or 'unknown'}",
+                        f"- time_sensitive: {_safe_text(source.get('time_sensitive')) or 'no'}",
+                        "",
+                    ]
+                )
     return "\n".join(lines).strip() + "\n"
 
 
 def _sources_html(payload: dict) -> str:
     meta = payload.get("meta", {})
-    cards = "".join(_render_source_card(source) for source in _safe_list(payload.get("sources")))
+    sections = []
+    for site, topics in _group_sources(payload):
+        for topic, items in topics:
+            cards = "".join(_render_source_card(source) for source in items)
+            sections.append(
+                '<section class="section-block">'
+                '<div class="section-head">'
+                f"<h2>{_escape(site)} · {_escape(topic)}</h2>"
+                '<p class="section-lead">按站点、主题、checked_at 与 time-sensitive 组织来源。</p>'
+                "</div>"
+                f'<div class="section-body">{cards}</div>'
+                "</section>"
+            )
     return f"""<!doctype html>
 <html lang="zh-CN">
   <head>
@@ -289,6 +722,7 @@ def _sources_html(payload: dict) -> str:
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{_escape(_safe_text(meta.get('title')) or '旅行攻略')} · 来源说明</title>
     <link rel="stylesheet" href="../assets/base.css" />
+    <style>{_style_override_css('classic', 'desktop')}</style>
   </head>
   <body data-page="sources" data-style="reference">
     <div class="page-shell style-reference">
@@ -297,15 +731,7 @@ def _sources_html(payload: dict) -> str:
         <h1>{_escape(_safe_text(meta.get('title')) or '旅行攻略')}</h1>
         <p class="hero-summary">按 site、topic、checked_at 和 time-sensitive 组织的来源页。</p>
       </header>
-      <main class="content-shell">
-        <section class="section-block">
-          <div class="section-head">
-            <h2>来源说明</h2>
-            <p class="section-lead">方便二次核实和后续补采。</p>
-          </div>
-          <div class="section-body">{cards}</div>
-        </section>
-      </main>
+      <main class="content-shell">{''.join(sections)}</main>
     </div>
   </body>
 </html>
@@ -321,14 +747,23 @@ def render_site(payload: dict, output_root: Path, style: str = "default") -> Pat
     assets_dir.mkdir(parents=True, exist_ok=True)
     notes_dir.mkdir(parents=True, exist_ok=True)
 
+    selected_styles = RENDER_STYLES if style == "all" else [style if style != "default" else "classic"]
+    legacy_style = selected_styles[0]
     for device in ["desktop", "mobile"]:
         for layer_name in LAYER_TITLES:
-            output_dir = trip_root / device / layer_name
-            output_dir.mkdir(parents=True, exist_ok=True)
-            output_dir.joinpath("index.html").write_text(
-                _render_layer_html(payload, layer_name, device, style),
+            legacy_dir = trip_root / device / layer_name
+            legacy_dir.mkdir(parents=True, exist_ok=True)
+            legacy_dir.joinpath("index.html").write_text(
+                _render_layer_html(payload, layer_name, device, legacy_style, "../.."),
                 encoding="utf-8",
             )
+            for current_style in selected_styles:
+                style_dir = trip_root / device / current_style / layer_name
+                style_dir.mkdir(parents=True, exist_ok=True)
+                style_dir.joinpath("index.html").write_text(
+                    _render_layer_html(payload, layer_name, device, current_style, "../../.."),
+                    encoding="utf-8",
+                )
 
     assets_dir.joinpath("base.css").write_text(_load_asset("base.css"), encoding="utf-8")
     assets_dir.joinpath("render-guide.js").write_text(_load_asset("render-guide.js"), encoding="utf-8")

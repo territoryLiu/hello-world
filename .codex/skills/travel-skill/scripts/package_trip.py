@@ -5,9 +5,15 @@ import zipfile
 
 def build_summary(guide_root: Path, portal: Path, recommended_html: Path, share_html: Path) -> str:
     slug = guide_root.name
+    style_dirs = sorted(
+        child.name
+        for child in (guide_root / "desktop").iterdir()
+        if child.is_dir() and child.name in {"classic", "minimalist", "original", "vintage", "zen"}
+    ) if (guide_root / "desktop").exists() else []
     return "\n".join(
         [
             f"trip_slug: {slug}",
+            f"styles: {', '.join(style_dirs) if style_dirs else 'legacy-only'}",
             "included_files:",
             f"- {portal.name}",
             f"- {recommended_html.name}",

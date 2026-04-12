@@ -128,6 +128,13 @@ class ResearchPacketTest(unittest.TestCase):
                     {"time": "00:05", "label": "鏃╁競鎽婁綅"},
                     {"time": "00:21", "label": "鍖呴キ鐗瑰啓"},
                 ],
+                "image_candidates": [
+                    {
+                        "url": "https://cdn.example.com/xhs-cover.jpg",
+                        "label": "小红书封面图",
+                        "source_kind": "gallery"
+                    }
+                ],
                 "recommended_usage": "recommended.food",
             }
         ]
@@ -144,9 +151,12 @@ class ResearchPacketTest(unittest.TestCase):
         self.assertEqual(media_payload["items"][0]["platform"], "xiaohongshu")
         self.assertIn("timeline", media_payload["items"][0])
         self.assertIn("recommended_usage", media_payload["items"][0])
+        self.assertIn("image_candidates", media_payload["items"][0])
         self.assertIn("cover", image_payload)
         self.assertTrue(image_payload["section_images"])
         self.assertEqual(image_payload["section_images"][0]["section"], "recommended")
+        self.assertEqual(image_payload["cover"]["image_url"], "https://cdn.example.com/xhs-cover.jpg")
+        self.assertEqual(image_payload["section_images"][0]["image_url"], "https://cdn.example.com/xhs-cover.jpg")
 
 
 if __name__ == "__main__":
