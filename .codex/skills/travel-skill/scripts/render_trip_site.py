@@ -222,7 +222,7 @@ def _render_layer_html(payload: dict, layer_name: str, device: str) -> str:
     return output
 
 
-def render_site(payload: dict, output_root: Path) -> Path:
+def render_site(payload: dict, output_root: Path, style: str = "default") -> Path:
     meta = payload.get("meta", {})
     slug = _safe_text(meta.get("trip_slug")) or "travel-guide"
 
@@ -236,7 +236,47 @@ def render_site(payload: dict, output_root: Path) -> Path:
         for layer_name in LAYER_TITLES:
             output_dir = trip_root / device / layer_name
             output_dir.mkdir(parents=True, exist_ok=True)
-            html_text = _render_layer_html(payload, layer_name, device)
+            
+            # Select template based on style and device
+            if device == "mobile" and style != "default":
+                template_name = f"mobile-{style}.html"
+                # Fallback to mobile-index.html if the styled template doesn't exist
+                template_path = Path(__file__).resolve().parents[1] / "assets" / "templates" / template_name
+                if not template_path.exists():
+                    template_name = "mobile-index.html"
+            else:
+                template_name = "mobile-index.html" if device == "mobile" else "desktop-index.html"
+                
+            template = _load_template(template_name)
+            
+            labels = LAYER_SECTION_LABELS[layer_name]
+            title = _safe_text(meta.get("title")) or "旅游攻略"
+            layer_payload = payload.get("outputs", {}).get(layer_name, {})
+            summary = _safe_text(layer_payload.get("summary")) or f"{title} · {LAYER_TITLES[layer_name]}"
+            sources = _safe_list(layer_payload.get("sources")) or _safe_list(payload.get("sources"))
+            
+            sections = []
+            page_index = 1
+            for section_id, (section_title, lead) in labels.items():
+                items = sources if section_id == "sources" else _safe_list(layer_payload.get(section_id))
+                sections.append(_render_section(section_id, section_title, lead, items, device == "mobile", page_index))
+                page_index += 1
+                
+            replacements = {
+                "{{TITLE}}": _escape(title),
+                "{{LAYER_TITLE}}": _escape(LAYER_TITLES[layer_name]),
+                "{{SUMMARY}}": _escape(summary),
+                "{{META_CHIPS}}": _meta_chips(payload, layer_name),
+                "{{NAV_ITEMS}}": _layer_nav(layer_name),
+                "{{SECTION_CONTENT}}": "\n".join(sections),
+                "{{DEVICE}}": _escape(device),
+                "{{LAYER}}": _escape(layer_name),
+            }
+            
+            html_text = template
+            for key, value in replacements.items():
+                html_text = html_text.replace(key, value)
+                
             (output_dir / "index.html").write_text(html_text, encoding="utf-8")
 
     (assets_dir / "base.css").write_text(_load_template("base.css"), encoding="utf-8")
@@ -250,10 +290,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True)
     parser.add_argument("--output-root", required=True)
+    parser.add_argument("--style", default="default", help="Design style (e.g., classic, minimalist, zen, vintage, original)")
     args = parser.parse_args()
 
     payload = json.loads(Path(args.input).read_text(encoding="utf-8"))
-    render_site(payload if isinstance(payload, dict) else {}, Path(args.output_root))
+    render_site(payload if isinstance(payload, dict) else {}, Path(args.output_root), args.style)
 
 
 if __name__ == "__main__":

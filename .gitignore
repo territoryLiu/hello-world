@@ -4,3 +4,8 @@ tests/artifacts/
 .worktrees/
 __pycache__/
 *.py[cod]
+.tmp-check/
+*.log
+*.tmp
+*.bak
+.tmp-tests/

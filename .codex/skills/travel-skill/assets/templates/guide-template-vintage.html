@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>旅游攻略 - 复古手帐风</title>
+  <style>
+    :root {
+      --bg: #F0E6D2; /* 牛皮纸黄 */
+      --card-bg: #FCF9F2; /* 白卡纸 */
+      --text: #3E3B32;
+      --accent: #D2691E; /* 砖红色印泥 */
+      --tape: rgba(255, 248, 220, 0.6);
+      --shadow-base: 2px 4px 10px rgba(62, 59, 50, 0.15);
+      --shadow-hover: 8px 16px 24px rgba(62, 59, 50, 0.25);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      background-color: var(--bg);
+      /* 简单的纸张纹理感 */
+      background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+    }
+    a { color: #0056b3; text-decoration: none; border-bottom: 1px dashed #0056b3; }
+    a:hover { color: var(--accent); border-color: var(--accent); }
+    
+    h1, h2, h3, .typewriter { font-family: "Courier New", Courier, monospace; font-weight: bold; }
+    
+    .notebook {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    
+    header { margin-bottom: 40px; text-align: center; position: relative; }
+    header h1 { font-size: clamp(36px, 6vw, 64px); letter-spacing: -2px; margin: 0 0 16px; transform: rotate(-2deg); display: inline-block; color: #2A2A2A; text-shadow: 2px 2px 0px rgba(0,0,0,0.1); }
+    .hero-meta { background: var(--card-bg); display: inline-block; padding: 8px 16px; border: 2px dashed #B8B09B; transform: rotate(1deg); font-size: 14px; box-shadow: var(--shadow-base); }
+    
+    nav { margin-bottom: 40px; text-align: center; }
+    .nav-links { display: inline-flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+    .nav-links a { 
+      background: #E8DFCD; padding: 6px 12px; border: 1px solid #C4BCA8; 
+      font-family: "Courier New", monospace; font-size: 14px; box-shadow: 2px 2px 0 rgba(0,0,0,0.1); 
+      border-bottom: none; transform: rotate(-1deg); transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .nav-links a:hover { transform: translateY(-2px) rotate(1deg); box-shadow: 4px 4px 0 rgba(0,0,0,0.15); background: #FCF9F2; }
+    
+    .section-title { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
+    .section-title h2 { font-size: 28px; margin: 0; background: var(--text); color: var(--bg); padding: 4px 12px; transform: rotate(-1deg); }
+    .section-title::after { content: ""; flex: 1; border-top: 2px dashed var(--text); }
+    
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
+    
+    /* 手帐卡片样式 */
+    .polaroid, .journal-card {
+      background: var(--card-bg);
+      padding: 24px;
+      position: relative;
+      box-shadow: var(--shadow-base);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s;
+    }
+    .polaroid { padding: 16px 16px 40px; transform: rotate(-2deg); }
+    .polaroid:nth-child(even) { transform: rotate(1deg); }
+    
+    .journal-card { border: 2px solid #D6CEBC; }
+    
+    /* 悬停放大与阴影加深 */
+    .polaroid:hover, .journal-card:hover {
+      transform: translateY(-8px) rotate(0deg) scale(1.02);
+      box-shadow: var(--shadow-hover);
+      z-index: 10;
+    }
+    
+    /* 胶带装饰 */
+    .tape {
+      position: absolute;
+      top: -10px; left: 50%;
+      transform: translateX(-50%) rotate(-3deg);
+      width: 100px; height: 25px;
+      background-color: var(--tape);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border-left: 2px dotted rgba(0,0,0,0.1);
+      border-right: 2px dotted rgba(0,0,0,0.1);
+      z-index: 5;
+    }
+    
+    /* 票根样式 */
+    .ticket {
+      background: #FFF; border: 2px dashed #AAA; border-radius: 8px; padding: 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      position: relative; overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .ticket:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+    .ticket::before, .ticket::after {
+      content: ""; position: absolute; top: 50%; transform: translateY(-50%);
+      width: 20px; height: 20px; background: var(--bg); border-radius: 50%;
+    }
+    .ticket::before { left: -12px; border-right: 2px dashed #AAA; }
+    .ticket::after { right: -12px; border-left: 2px dashed #AAA; }
+    
+    /* 盖章 Badge */
+    .badge {
+      position: absolute; right: 10px; top: 10px;
+      border: 3px solid var(--accent); color: var(--accent);
+      font-size: 14px; font-weight: bold; padding: 4px 8px;
+      border-radius: 4px; transform: rotate(15deg);
+      font-family: "Courier New", monospace;
+      opacity: 0.8;
+    }
+    .badge.warn { border-color: #D32F2F; color: #D32F2F; transform: rotate(-10deg); }
+    
+    .journal-card h3 { font-size: 20px; margin: 0 0 12px; border-bottom: 2px solid #EAE3D1; padding-bottom: 8px; }
+    .price-tag { font-size: 24px; font-family: "Courier New", monospace; color: var(--accent); font-weight: bold; }
+    
+    .day-timeline { border-left: 3px solid #D6CEBC; padding-left: 24px; margin-left: 12px; }
+    .day-marker { position: relative; margin-bottom: 32px; background: var(--card-bg); padding: 20px; box-shadow: var(--shadow-base); transition: transform 0.3s; }
+    .day-marker:hover { transform: translateY(-4px) translateX(4px); box-shadow: var(--shadow-hover); }
+    .day-marker::before {
+      content: ""; position: absolute; left: -34px; top: 20px;
+      width: 14px; height: 14px; background: var(--bg); border: 3px solid var(--accent); border-radius: 50%;
+    }
+    .day-date { font-family: "Courier New", monospace; font-size: 14px; color: #888; margin-bottom: 4px; display: block; }
+    
+    section { margin-bottom: 60px; }
+    
+    footer { text-align: center; margin-top: 60px; padding-bottom: 40px; font-family: "Courier New", monospace; font-size: 14px; color: #777; }
+    
+    @media (max-width: 768px) {
+      .grid { grid-template-columns: 1fr; }
+      header h1 { font-size: 40px; }
+      .polaroid { transform: rotate(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="notebook">
+    <header>
+      <h1>{{ TITLE }}</h1>
+      <div class="hero-meta">
+        <strong>Route:</strong> {{ ROUTE_SUMMARY }} <br>
+        <strong>Date:</strong> {{ START_DATE }} to {{ END_DATE }}
+      </div>
+    </header>
+
+    <nav class="nav-links">
+      <a href="#summary">手帐速览</a>
+      <a href="#days">每日足迹</a>
+      <a href="#transport">车票与花费</a>
+      <a href="#places">探店打卡</a>
+      <a href="#alerts">避雷笔记</a>
+      <a href="#sources">收集来源</a>
+    </nav>
+
+    <!-- 手帐速览 -->
+    <section id="summary">
+      <div class="section-title"><h2>手帐速览 Summary</h2></div>
+      <div class="grid">
+        <div class="polaroid">
+          <div class="tape"></div>
+          <div class="badge">必看!</div>
+          <h3>{{ SUMMARY_ITEM_TITLE }}</h3>
+          <p>{{ SUMMARY_ITEM_DESC }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 每日足迹 -->
+    <section id="days">
+      <div class="section-title"><h2>每日足迹 Timeline</h2></div>
+      <div class="day-timeline">
+        <!-- 循环渲染 -->
+        <div class="day-marker">
+          <span class="day-date">{{ DATE }} // DAY {{ DAY_INDEX }}</span>
+          <h3>{{ DAY_TITLE }}</h3>
+          <p>{{ DAY_DESC }}</p>
+          <ul style="padding-left: 20px; font-family: 'Courier New', monospace; font-size: 14px; margin-top: 12px; color: #555;">
+            <li>[AM] {{ MORNING_ACT }}</li>
+            <li>[PM] {{ AFTERNOON_ACT }}</li>
+            <li>[EVE] {{ EVENING_ACT }}</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 车票与花费 -->
+    <section id="transport">
+      <div class="section-title"><h2>车票与花费 Budget</h2></div>
+      <div class="ticket" style="margin-bottom: 24px;">
+        <div>
+          <span style="font-family: Courier New; color: #888;">TOTAL EST.</span><br>
+          <span class="price-tag">¥{{ BUDGET_MIN }} - ¥{{ BUDGET_MAX }}</span>
+        </div>
+        <div style="text-align: right; max-width: 60%;">
+          <p style="margin:0; font-size: 14px;">{{ BUDGET_EXPLANATION }}</p>
+        </div>
+      </div>
+      
+      <div class="journal-card">
+        <div class="tape"></div>
+        <h3>交通接驳 Transport</h3>
+        <p>{{ TRANSPORT_TIPS }}</p>
+      </div>
+    </section>
+
+    <!-- 探店打卡 -->
+    <section id="places">
+      <div class="section-title"><h2>探店打卡 Places</h2></div>
+      <div class="grid">
+        <div class="journal-card">
+          <div class="badge">推荐!</div>
+          <h3>吃住指南</h3>
+          <p><strong>住宿：</strong>{{ STAY_TIPS }}</p>
+          <p><strong>门票/寻味：</strong>{{ TICKET_TIPS }}</p>
+        </div>
+        <div class="journal-card">
+          <h3>行囊装备</h3>
+          <p>{{ WEARING_TIPS }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 避雷笔记 -->
+    <section id="alerts">
+      <div class="section-title"><h2>避雷笔记 Alerts</h2></div>
+      <div class="polaroid" style="border: 2px dashed #D32F2F;">
+        <div class="tape"></div>
+        <div class="badge warn">避雷!</div>
+        <h3 style="color: #D32F2F;">管家急电</h3>
+        <p>{{ ALERT_TEXT }}</p>
+      </div>
+    </section>
+
+    <!-- 收集来源 -->
+    <section id="sources">
+      <div class="section-title"><h2>收集来源 Sources</h2></div>
+      <div class="journal-card">
+        <div class="tape"></div>
+        <h3>{{ SOURCE_TITLE }}</h3>
+        <p>🔗 <a href="{{ SOURCE_URL }}" target="_blank">{{ SOURCE_LINK_TEXT }}</a></p>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    [ TRAVEL-SKILL LOGBOOK // GENERATED FIELD JOURNAL ]
+  </footer>
+
+</body>
+</html>

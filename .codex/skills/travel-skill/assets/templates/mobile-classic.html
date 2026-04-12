@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{TITLE}} · {{LAYER_TITLE}} / Mobile</title>
+    <style>
+      :root {
+        --bg: #f4efe5;
+        --card-bg: rgba(255, 250, 243, 0.95);
+        --ink: #1e241f;
+        --muted: #5f685f;
+        --accent: #294231;
+        --deep: #15231a;
+        --red: #8b3a2b;
+        --line: rgba(0, 0, 0, 0.1);
+        --shadow-sm: 0 4px 12px rgba(21, 35, 26, 0.04);
+        --shadow-hover: 0 12px 24px rgba(21, 35, 26, 0.12);
+        --r: 8px;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; font-family: "Baskerville Old Face", Georgia, "Songti SC", "STSong", serif;
+        color: var(--ink); line-height: 1.7; background-color: var(--bg);
+        background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 20px 20px;
+        overflow-x: hidden;
+      }
+      .page-shell { display: flex; flex-direction: column; height: 100vh; }
+      
+      .hero-mobile { padding: 32px 20px 24px; border-bottom: 2px solid var(--ink); background: var(--bg); flex-shrink: 0; }
+      .eyebrow { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 12px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+      .hero-mobile h1 { font-size: 32px; line-height: 1.2; margin: 0 0 8px; font-weight: normal; color: var(--deep); }
+      .layer-title { font-size: 16px; color: var(--accent); margin: 0 0 12px; font-style: italic; }
+      .hero-summary { font-size: 15px; color: var(--muted); margin: 0 0 16px; }
+      .meta-row { display: flex; gap: 8px; flex-wrap: wrap; }
+      .meta-chip { font-size: 11px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 4px; background: rgba(255,249,240,0.8); }
+      .meta-chip strong { display: block; color: var(--muted); text-transform: uppercase; font-size: 9px; margin-bottom: 2px; }
+      
+      .content-shell { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+      
+      .section-nav { 
+        display: flex; overflow-x: auto; padding: 12px 20px; background: var(--card-bg); 
+        border-bottom: 1px solid var(--line); box-shadow: var(--shadow-sm); z-index: 10;
+        scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+        flex-shrink: 0;
+      }
+      .section-nav::-webkit-scrollbar { display: none; }
+      .section-nav a { 
+        color: var(--muted); text-decoration: none; font-size: 14px; padding: 6px 16px; 
+        white-space: nowrap; scroll-snap-align: start; border: 1px solid transparent; border-radius: 999px;
+      }
+      .section-nav a.active { color: var(--red); background: rgba(139, 58, 43, 0.1); border-color: rgba(139, 58, 43, 0.2); }
+      
+      /* Pagination Container */
+      .sections-container { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 60px; }
+      
+      .section-block { display: none; animation: fadeIn 0.3s ease; }
+      .section-block.active { display: block; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      
+      .section-head h2 { font-size: 24px; font-weight: normal; color: var(--deep); border-bottom: 2px solid var(--accent); padding-bottom: 8px; display: inline-block; margin: 0 0 8px; }
+      .section-lead { font-size: 14px; color: var(--muted); font-style: italic; margin: 0 0 24px; }
+      
+      .section-body { display: flex; flex-direction: column; gap: 16px; }
+      .card { background: var(--card-bg); border: 1px solid var(--line); padding: 20px; border-radius: var(--r); box-shadow: var(--shadow-sm); }
+      .card-header h3 { font-size: 18px; margin: 0 0 8px; font-weight: normal; color: var(--accent); }
+      .card-summary { font-size: 14px; margin: 0; color: var(--ink); }
+      .card-points { margin: 12px 0 0; padding-left: 20px; font-size: 14px; color: var(--muted); }
+      .card-points li { margin-bottom: 6px; }
+      
+      .source-card { background: var(--card-bg); border: 1px solid var(--line); padding: 16px; border-radius: var(--r); }
+      .source-header h3 { font-size: 16px; margin: 0 0 8px; font-weight: normal; color: var(--deep); }
+      .source-meta { font-size: 12px; color: var(--muted); margin: 0 0 4px; }
+      .source-url { font-size: 12px; color: var(--accent); word-break: break-all; text-decoration: underline dotted; }
+      .source-badge { display: inline-block; font-size: 10px; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; }
+    </style>
+  </head>
+  <body data-device="{{DEVICE}}" data-layer="{{LAYER}}">
+    <div class="page-shell">
+      <header class="hero hero-mobile">
+        <p class="eyebrow">Classic Print / Mobile</p>
+        <h1>{{TITLE}}</h1>
+        <p class="layer-title">{{LAYER_TITLE}}</p>
+        <p class="hero-summary">{{SUMMARY}}</p>
+        <div class="meta-row">{{META_CHIPS}}</div>
+      </header>
+      <main class="content-shell mobile-shell">
+        <nav class="section-nav" id="mobile-nav">{{NAV_ITEMS}}</nav>
+        <div class="sections-container" id="sections-container">
+          {{SECTION_CONTENT}}
+        </div>
+      </main>
+    </div>
+    
+    <script>
+      // Pagination Logic
+      document.addEventListener('DOMContentLoaded', () => {
+        const navLinks = document.querySelectorAll('#mobile-nav a');
+        const sections = document.querySelectorAll('.section-block');
+        
+        function activateSection(hash) {
+          if (!hash) return;
+          
+          // Update Nav
+          navLinks.forEach(link => {
+            if (link.getAttribute('href') === hash) {
+              link.classList.add('active');
+              link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            } else {
+              link.classList.remove('active');
+            }
+          });
+          
+          // Update Sections
+          sections.forEach(sec => {
+            if ('#' + sec.id === hash) {
+              sec.classList.add('active');
+            } else {
+              sec.classList.remove('active');
+            }
+          });
+        }
+        
+        navLinks.forEach(link => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const hash = link.getAttribute('href');
+            history.pushState(null, null, hash);
+            activateSection(hash);
+            document.getElementById('sections-container').scrollTop = 0;
+          });
+        });
+        
+        // Initial state
+        if (window.location.hash && document.querySelector(window.location.hash)) {
+          activateSection(window.location.hash);
+        } else if (navLinks.length > 0) {
+          activateSection(navLinks[0].getAttribute('href'));
+        }
+      });
+    </script>
+    <script src="../../assets/guide-content.js"></script>
+    <script src="../../assets/render-guide.js"></script>
+  </body>
+</html>
