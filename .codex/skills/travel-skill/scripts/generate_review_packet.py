@@ -5,6 +5,13 @@ import argparse
 import json
 
 
+REQUIRED_SITE_MATRIX = {
+    "food": ["meituan", "dianping", "xiaohongshu"],
+    "attractions": ["official", "xiaohongshu", "douyin", "bilibili"],
+    "risks": ["xiaohongshu", "douyin", "bilibili"],
+}
+
+
 def _safe_text(value) -> str:
     return str(value or "").strip()
 
@@ -43,6 +50,7 @@ def _normalized_facts(category: str, items) -> list[dict]:
                     "checked_at": _safe_text(raw.get("checked_at")),
                     "source_type": _safe_text(raw.get("source_type")),
                     "source_title": _safe_text(raw.get("source_title")),
+                    "site": _safe_text(raw.get("site")),
                 }
             )
             continue
@@ -64,6 +72,7 @@ def _normalized_facts(category: str, items) -> list[dict]:
                         "checked_at": checked_at,
                         "source_type": source_type,
                         "source_title": source_title,
+                        "site": _safe_text(raw.get("site")),
                     }
                 )
             continue
@@ -75,9 +84,34 @@ def _normalized_facts(category: str, items) -> list[dict]:
                 "checked_at": "",
                 "source_type": "",
                 "source_title": "",
+                "site": "",
             }
         )
     return [fact for fact in result if fact["text"]]
+
+
+def _coverage(payload: dict) -> dict:
+    by_place = payload.get("by_place", {})
+    seen_by_topic = {}
+    if not isinstance(by_place, dict):
+        return {}
+    for topics in by_place.values():
+        topic_map = topics if isinstance(topics, dict) else {}
+        for topic, items in topic_map.items():
+            for fact in _normalized_facts(str(topic), items):
+                site = _safe_text(fact.get("site"))
+                if not site:
+                    continue
+                seen_by_topic.setdefault(str(topic), set()).add(site)
+
+    coverage = {}
+    for topic, required_sites in REQUIRED_SITE_MATRIX.items():
+        seen = sorted(seen_by_topic.get(topic, set()))
+        coverage[topic] = {
+            "seen": seen,
+            "missing": [site for site in required_sites if site not in seen],
+        }
+    return coverage
 
 
 def build_markdown(payload: dict) -> str:
@@ -102,6 +136,12 @@ def build_markdown(payload: dict) -> str:
                 if fact["source_url"]:
                     lines.append(f"    - url: {_escape_markdown(fact['source_url'])}")
         lines.append("")
+    lines.extend(["## Site Coverage", ""])
+    for topic, data in _coverage(payload).items():
+        lines.append(f"- topic: {_escape_markdown(topic)}")
+        lines.append(f"  - seen: {', '.join(data['seen']) or '(none)'}")
+        lines.append(f"  - missing: {', '.join(data['missing']) or '(none)'}")
+    lines.append("")
     lines.extend(["## Pending Confirmation", "", "- Recheck volatile transport and weather data before departure.", ""])
     return "\n".join(lines)
 

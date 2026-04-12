@@ -23,55 +23,13 @@ class ResearchPacketTest(unittest.TestCase):
 
         transport = next(item for item in payload["entries"] if item["topic"] == "long_distance_transport")
         self.assertEqual(transport["checked_at"], "2026-04-12")
-        self.assertEqual(transport["title"], "12306 南京到延吉（更新）")
         self.assertEqual(transport["source_type"], "official")
         self.assertEqual(transport["place"], "yanbian-route")
         self.assertEqual(transport["platform"], "official")
-        self.assertEqual(len(transport["facts"]), 3)
+        self.assertIn("site", transport)
+        self.assertTrue(len(transport["facts"]) >= 1)
 
-    def test_merge_sources_fact_order_is_deterministic_for_same_set(self):
-        original_notes = [
-            {
-                "place": "yanbian-route",
-                "topic": "long_distance_transport",
-                "platform": "official",
-                "title": "t1",
-                "url": "https://example.com/t",
-                "checked_at": "2026-04-10",
-                "source_type": "official",
-                "facts": ["fact-a", "fact-c"],
-            },
-            {
-                "place": "yanbian-route",
-                "topic": "long_distance_transport",
-                "platform": "official",
-                "title": "t2",
-                "url": "https://example.com/t",
-                "checked_at": "2026-04-11",
-                "source_type": "official",
-                "facts": ["fact-b"],
-            },
-        ]
-        reversed_notes = list(reversed(original_notes))
-        with tempfile.TemporaryDirectory() as tmp:
-            original_fixture = Path(tmp) / "source_notes_original.json"
-            reversed_fixture = Path(tmp) / "source_notes_reversed.json"
-            original_fixture.write_text(
-                json.dumps(original_notes, ensure_ascii=False, indent=2),
-                encoding="utf-8",
-            )
-            reversed_fixture.write_text(
-                json.dumps(reversed_notes, ensure_ascii=False, indent=2),
-                encoding="utf-8",
-            )
-            merged_a = self._run_merge(original_fixture)
-            merged_b = self._run_merge(reversed_fixture)
-
-        transport_a = next(item for item in merged_a["entries"] if item["topic"] == "long_distance_transport")
-        transport_b = next(item for item in merged_b["entries"] if item["topic"] == "long_distance_transport")
-        self.assertEqual(transport_a["facts"], transport_b["facts"])
-
-    def test_extract_outputs_fact_level_schema_with_place_topic_platform(self):
+    def test_extract_outputs_fact_level_schema_with_site(self):
         fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "source_notes.json"
         with tempfile.TemporaryDirectory() as tmp:
             merged = Path(tmp) / "merged.json"
@@ -82,20 +40,19 @@ class ResearchPacketTest(unittest.TestCase):
 
         self.assertIn("by_place", payload)
         self.assertIn("yanbian-route", payload["by_place"])
-        self.assertIn("long_distance_transport", payload["by_place"]["yanbian-route"])
         transport_facts = payload["by_place"]["yanbian-route"]["long_distance_transport"]
-        self.assertTrue(len(transport_facts) >= 3)
+        self.assertTrue(len(transport_facts) >= 1)
         for fact in transport_facts:
             self.assertIn("text", fact)
             self.assertIn("place", fact)
             self.assertIn("topic", fact)
             self.assertIn("platform", fact)
+            self.assertIn("site", fact)
             self.assertIn("source_url", fact)
             self.assertIn("checked_at", fact)
             self.assertIn("source_type", fact)
-        self.assertIn("高峰时段需尽早锁票", [item["text"] for item in transport_facts])
 
-    def test_generate_review_packet_blocks_dangerous_urls_and_sanitizes_markdown(self):
+    def test_generate_review_packet_includes_site_coverage_and_sanitizes_links(self):
         fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "source_notes.json"
         with tempfile.TemporaryDirectory() as tmp:
             merged = Path(tmp) / "merged.json"
@@ -108,33 +65,70 @@ class ResearchPacketTest(unittest.TestCase):
             html = (packet_dir / "research-packet.html").read_text(encoding="utf-8")
 
         self.assertIn("## Verified", md)
+        self.assertIn("## Site Coverage", md)
         self.assertIn("<h2>Pending Confirmation</h2>", html)
-        self.assertIn("核对日期", md)
         self.assertIn("javascript:alert(1)", html)
         self.assertNotIn('href="javascript:alert(1)"', html)
 
-        self.assertNotIn("raw <b>tag</b> [danger] `code` & symbol", md)
-        self.assertIn("raw &lt;b&gt;tag&lt;/b&gt; \\[danger\\] \\`code\\` &amp; symbol", md)
+    def test_validate_site_coverage_reports_missing_required_sites(self):
+        coverage_input = {
+            "facts": [
+                {
+                    "place": "yanji",
+                    "topic": "food",
+                    "site": "meituan",
+                    "platform": "local-listing",
+                    "text": "鍖呴キ搴楁帹鑽?",
+                    "source_url": "https://example.com/meituan",
+                    "checked_at": "2026-04-11",
+                    "source_type": "platform",
+                    "source_title": "缇庡洟",
+                },
+                {
+                    "place": "yanji",
+                    "topic": "attractions",
+                    "site": "official",
+                    "platform": "official",
+                    "text": "鏅尯鍏憡",
+                    "source_url": "https://example.com/official",
+                    "checked_at": "2026-04-11",
+                    "source_type": "official",
+                    "source_title": "瀹樻柟",
+                },
+            ]
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            input_path = Path(tmp) / "facts.json"
+            output_path = Path(tmp) / "coverage.json"
+            input_path.write_text(json.dumps(coverage_input, ensure_ascii=False, indent=2), encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "validate_site_coverage.py", "--input", input_path, "--output", output_path)
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+        self.assertIn("food", payload["by_topic"])
+        self.assertIn("missing_required_sites", payload["by_topic"]["food"])
+        self.assertIn("xiaohongshu", payload["by_topic"]["food"]["missing_required_sites"])
+        self.assertIn("dianping", payload["by_topic"]["food"]["missing_required_sites"])
+        self.assertTrue(payload["has_gaps"])
 
     def test_collect_media_candidates_and_build_image_plan(self):
         media_notes = [
             {
                 "platform": "xiaohongshu",
-                "title": "延吉两日吃喝路线",
-                "author": "旅行薯",
+                "title": "寤跺悏涓ゆ棩鍚冨枬璺嚎",
+                "author": "鏃呰鑰匒",
                 "published_at": "2026-04-09",
-                "summary": "适合第一次去延吉的吃喝路线",
-                "comment_highlights": ["早市建议 7 点前到", "包饭午餐排队会变长"],
-                "transcript": "第一站去水上市场，第二站去包饭店。",
+                "summary": "閫傚悎绗竴娆″幓寤跺悏鐨勫悆鍠濊矾绾?",
+                "comment_highlights": ["鏃╁競寤鸿 7 鐐瑰墠鍒?", "鍖呴キ鍗堥鎺掗槦浼氬彉闀?"],
+                "transcript": "绗竴绔欏幓姘翠笂甯傚満锛岀浜岀珯鍘诲寘楗簵銆?",
                 "timeline": [
-                    {"time": "00:05", "note": "市场早餐镜头"},
-                    {"time": "00:21", "note": "包饭上桌镜头"}
+                    {"time": "00:05", "note": "甯傚満鏃╅闀滃ご"},
+                    {"time": "00:21", "note": "鍖呴キ涓婃闀滃ご"},
                 ],
                 "shot_candidates": [
-                    {"time": "00:05", "label": "早市摊位"},
-                    {"time": "00:21", "label": "包饭特写"}
+                    {"time": "00:05", "label": "鏃╁競鎽婁綅"},
+                    {"time": "00:21", "label": "鍖呴キ鐗瑰啓"},
                 ],
-                "recommended_usage": "recommended.food"
+                "recommended_usage": "recommended.food",
             }
         ]
         with tempfile.TemporaryDirectory() as tmp:

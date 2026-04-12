@@ -11,6 +11,7 @@
 - `traveler_profile`
 - `budget`
 - `preferences`
+- `sample_reference`
 - `required_topics`
 - `missing_core_fields`
 - `missing_preference_fields`
@@ -22,13 +23,19 @@
 - `place`
 - `topic`
 - `platform`
+- `site`
 - `required_sources`
 - `query_hint`
+- `site_query`
+- `collection_method`
+- `must_capture_fields`
+- `evidence_level`
 
 ## fact_item
 
 - `place`
 - `topic`
+- `site`
 - `text`
 - `source_url`
 - `source_title`

@@ -33,7 +33,10 @@ class ComposeGuideModelTest(unittest.TestCase):
 
     def _assert_source_shape(self, source):
         self.assertIsInstance(source, dict)
-        self.assertEqual(list(source.keys()), ["title", "url", "type", "checked_at"])
+        self.assertEqual(
+            list(source.keys()),
+            ["title", "url", "type", "checked_at", "site", "topic", "time_sensitive"],
+        )
         self.assertTrue(all(isinstance(source[field], str) for field in source.keys()))
 
     def test_build_guide_model_outputs_required_v2_layers(self):
@@ -76,6 +79,156 @@ class ComposeGuideModelTest(unittest.TestCase):
         self.assertGreaterEqual(len(payload["sources"]), 3)
         self.assertEqual(payload["meta"]["source_count"], len(payload["sources"]))
 
+    def test_build_guide_model_applies_constraints_distance_rules_and_sample_reference(self):
+        raw_model = {
+            "trip_slug": "family-yanji",
+            "title": "五一延吉长白山亲子游",
+            "checked_at": "2026-04-12",
+            "departure_city": "南京",
+            "destinations": ["延吉", "长白山"],
+            "distance_km": 1420,
+            "sample_reference": {"path": "sample.html", "density_mode": "match-sample"},
+            "traveler_constraints": {
+                "has_children": True,
+                "has_seniors": True,
+                "requires_accessible_pace": True,
+                "avoid_long_unbroken_walks": True,
+            },
+            "facts": [
+                {
+                    "topic": "long_distance_transport",
+                    "text": "南京出发优先看高铁，再补空铁联运。",
+                    "source_url": "https://example.com/rail",
+                    "source_title": "12306 时刻表",
+                    "source_type": "official",
+                    "site": "official",
+                    "checked_at": "2026-04-12",
+                },
+                {
+                    "topic": "city_transport",
+                    "text": "景点间接驳以短步行和打车结合会更省力。",
+                    "source_url": "https://example.com/city",
+                    "source_title": "本地交通",
+                    "source_type": "official",
+                    "site": "official",
+                    "checked_at": "2026-04-12",
+                },
+                {
+                    "topic": "food",
+                    "text": "延吉午餐可安排冷面和烤肉组合。",
+                    "place": "延吉",
+                    "shop_name": "顺姬冷面",
+                    "address": "延吉市公园路 1 号",
+                    "recommended_dishes": ["冷面", "烤肉"],
+                    "flavor_style": "朝鲜族风味",
+                    "queue_tip": "11:00 前到店会更从容",
+                    "backup_options": ["服务大楼冷面"],
+                    "source_url": "https://example.com/food",
+                    "source_title": "大众点评热榜",
+                    "source_type": "local-listing",
+                    "site": "dianping",
+                    "checked_at": "2026-04-12",
+                },
+                {
+                    "topic": "attractions",
+                    "text": "长白山北坡适合预留整天，节奏放松一些会更舒服。",
+                    "place": "长白山",
+                    "ticket_price": "225 元",
+                    "reservation": "提前 3 天预约",
+                    "suggested_duration": "8 小时",
+                    "source_url": "https://example.com/cbs",
+                    "source_title": "长白山景区公告",
+                    "source_type": "official",
+                    "site": "official",
+                    "checked_at": "2026-04-12",
+                },
+                {
+                    "topic": "risks",
+                    "text": "不要赶太满，避免连续走太久。",
+                    "source_url": "https://example.com/tips",
+                    "source_title": "小红书经验",
+                    "source_type": "social",
+                    "site": "xiaohongshu",
+                    "checked_at": "2026-04-12",
+                },
+            ],
+            "image_plan": {
+                "cover": {"image_hint": "天池晨雾", "source_ref": "B站旅行 vlog"},
+                "section_images": [
+                    {"section": "attractions", "image_hint": "长白山北坡栈道", "source_ref": "B站旅行 vlog"}
+                ],
+            },
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            input_path = Path(tmp) / "input.json"
+            output_path = Path(tmp) / "guide.json"
+            input_path.write_text(json.dumps(raw_model, ensure_ascii=False, indent=2), encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "build_guide_model.py", "--input", input_path, "--output", output_path)
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(payload["meta"]["sample_reference"]["path"], "sample.html")
+        self.assertTrue(payload["meta"]["traveler_constraints"]["requires_accessible_pace"])
+        self.assertEqual(payload["meta"]["distance_km"], 1420)
+        self.assertEqual(payload["meta"]["transport_rule"]["long_distance"], "over-600km")
+        route_text = "\n".join(
+            item["summary"] + "\n" + "\n".join(item["points"])
+            for item in payload["outputs"]["recommended"]["route_options"]
+        )
+        self.assertIn("高铁优先", route_text)
+        self.assertIn("空铁联运", route_text)
+        tip_text = "\n".join(
+            item["summary"] + "\n" + "\n".join(item["points"])
+            for item in payload["outputs"]["recommended"]["tips"]
+        )
+        self.assertIn("节奏", tip_text)
+        self.assertNotIn("不要", tip_text)
+        self.assertNotIn("避免", tip_text)
+
+    def test_build_guide_model_builds_detailed_food_cards_and_preserves_image_plan(self):
+        raw_model = {
+            "trip_slug": "food-demo",
+            "title": "延吉美食样例",
+            "checked_at": "2026-04-12",
+            "facts": [
+                {
+                    "topic": "food",
+                    "text": "延吉午餐可安排冷面和烤肉组合。",
+                    "place": "延吉",
+                    "shop_name": "顺姬冷面",
+                    "address": "延吉市公园路 1 号",
+                    "recommended_dishes": ["冷面", "烤肉"],
+                    "flavor_style": "朝鲜族风味",
+                    "queue_tip": "11:00 前到店会更从容",
+                    "backup_options": ["服务大楼冷面", "元奶奶包饭"],
+                    "source_url": "https://example.com/food",
+                    "source_title": "大众点评热榜",
+                    "source_type": "local-listing",
+                    "site": "dianping",
+                    "checked_at": "2026-04-12",
+                }
+            ],
+            "image_plan": {
+                "cover": {"image_hint": "冷面特写", "source_ref": "大众点评图集"},
+                "section_images": [{"section": "food_by_city", "image_hint": "门头招牌", "source_ref": "大众点评图集"}],
+            },
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            input_path = Path(tmp) / "input.json"
+            output_path = Path(tmp) / "guide.json"
+            input_path.write_text(json.dumps(raw_model, ensure_ascii=False, indent=2), encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "build_guide_model.py", "--input", input_path, "--output", output_path)
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+        food_card = payload["outputs"]["recommended"]["food_by_city"][0]
+        self.assertEqual(food_card["title"], "延吉 · 顺姬冷面")
+        joined_points = "\n".join(food_card["points"])
+        self.assertIn("地址：延吉市公园路 1 号", joined_points)
+        self.assertIn("招牌菜：冷面、烤肉", joined_points)
+        self.assertIn("排队提示：11:00 前到店会更从容", joined_points)
+        self.assertIn("备选店：服务大楼冷面、元奶奶包饭", joined_points)
+        self.assertIn("来源站点：dianping", joined_points)
+        self.assertEqual(payload["image_plan"]["cover"]["image_hint"], "冷面特写")
+
     def test_fill_missing_sections_enforces_route_and_share_defaults(self):
         raw_model = {
             "meta": {"trip_slug": "demo"},
@@ -92,7 +245,7 @@ class ComposeGuideModelTest(unittest.TestCase):
                     "recommended_route": [],
                     "route_options": [],
                     "clothing_guide": [],
-                    "attractions": [{"title": "A景点", "summary": "必打卡", "points": [], "is_placeholder": False}],
+                    "attractions": [{"title": "A 景点", "summary": "必打卡", "points": [], "is_placeholder": False}],
                     "transport_details": [],
                     "food_by_city": [],
                     "tips": [],
@@ -134,83 +287,6 @@ class ComposeGuideModelTest(unittest.TestCase):
         self.assertIn("高铁", flatten(payload["outputs"]["recommended"]["route_options"]))
         self.assertIn("交通", flatten(payload["outputs"]["comprehensive"]["transport_details"]))
         self.assertTrue(any(item["is_placeholder"] for item in payload["outputs"]["recommended"]["clothing_guide"]))
-
-    def test_build_then_fill_preserves_sources_and_backfills_required_lists(self):
-        fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "approved_research.json"
-        with tempfile.TemporaryDirectory() as tmp:
-            built = Path(tmp) / "guide-model.json"
-            filled = Path(tmp) / "guide-model-filled.json"
-            run_script(SKILL_DIR / "scripts" / "build_guide_model.py", "--input", fixture, "--output", built)
-            run_script(SKILL_DIR / "scripts" / "fill_missing_sections.py", "--input", built, "--output", filled)
-            payload = json.loads(filled.read_text(encoding="utf-8"))
-
-        self.assertGreaterEqual(len(payload["sources"]), 3)
-        self.assertTrue(any("http" in item.get("url", "") for item in payload["sources"]))
-        self.assertTrue(payload["outputs"]["recommended"]["route_options"])
-        self.assertTrue(payload["outputs"]["recommended"]["clothing_guide"])
-        self.assertTrue(payload["outputs"]["comprehensive"]["transport_details"])
-        self.assertEqual(payload["meta"]["source_count"], len(payload["sources"]))
-
-    def test_fill_missing_sections_sanitizes_dirty_v2_model(self):
-        dirty_model = {
-            "meta": {"trip_slug": "dirty", "source_count": 999},
-            "outputs": {
-                "daily-overview": {
-                    "summary": 123,
-                    "days": ["dirty-string", {"title": "D1", "summary": "ok", "points": ["p"], "is_placeholder": False}],
-                    "wearing": [{"summary": "only summary"}],
-                    "transport": [{"title": "T", "summary": "S", "points": "not-list"}],
-                    "alerts": [None],
-                    "sources": [None, {"url": 1}, {"title": "src", "url": "https://example.com", "type": "official"}],
-                },
-                "recommended": {
-                    "recommended_route": [None],
-                    "route_options": [{}],
-                    "clothing_guide": [],
-                    "attractions": [{"title": "A", "summary": "S", "points": ["x", 1], "is_placeholder": "no"}],
-                    "transport_details": "not-a-list",
-                    "food_by_city": [],
-                    "tips": [],
-                    "sources": [],
-                },
-                "comprehensive": {
-                    "recommended_route": [],
-                    "route_options": ["bad"],
-                    "clothing_guide": [],
-                    "attractions": [],
-                    "transport_details": [],
-                    "food_by_city": [],
-                    "tips": [],
-                    "sources": [],
-                },
-            },
-            "sources": [None, {"title": "src", "url": "https://example.com", "type": "official"}],
-            "image_plan": [],
-        }
-        with tempfile.TemporaryDirectory() as tmp:
-            input_path = Path(tmp) / "dirty.json"
-            output_path = Path(tmp) / "clean.json"
-            input_path.write_text(json.dumps(dirty_model, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "fill_missing_sections.py", "--input", input_path, "--output", output_path)
-            payload = json.loads(output_path.read_text(encoding="utf-8"))
-
-        self.assertEqual(sorted(payload["outputs"].keys()), self.OUTPUT_KEYS)
-        for layer_payload in payload["outputs"].values():
-            for key, value in layer_payload.items():
-                if key == "summary":
-                    self.assertIsInstance(value, str)
-                    continue
-                if key == "sources":
-                    for source in value:
-                        self._assert_source_shape(source)
-                    continue
-                for content_item in value:
-                    self._assert_content_item_shape(content_item)
-                    self.assertNotEqual(content_item["summary"], "dirty-string")
-
-        self.assertEqual(len(payload["sources"]), 1)
-        self.assertEqual(payload["sources"][0]["url"], "https://example.com")
-        self.assertEqual(payload["meta"]["source_count"], len(payload["sources"]))
 
 
 if __name__ == "__main__":

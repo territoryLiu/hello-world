@@ -2,20 +2,67 @@ from pathlib import Path
 import argparse
 import json
 
-PLATFORM_MAP = {
-    "weather": ["official", "history"],
-    "clothing": ["history", "social"],
-    "packing": ["official", "social"],
-    "long_distance_transport": ["official", "platform"],
-    "city_transport": ["official", "map"],
-    "tickets_and_booking": ["official"],
-    "attractions": ["official", "social"],
-    "food": ["local-listing", "social"],
-    "lodging_area": ["platform", "map"],
-    "seasonality": ["official", "social"],
-    "risks": ["official", "social"],
-    "sources": ["official", "social"],
+
+TOPIC_SITE_RULES = {
+    "weather": [
+        {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary", "checked_at"], "evidence_level": "primary"},
+        {"platform": "history", "site": "history", "collection_method": "search+fetch", "must_capture_fields": ["summary", "temperature_range"], "evidence_level": "secondary"},
+    ],
+    "clothing": [
+        {"platform": "history", "site": "history", "collection_method": "search+fetch", "must_capture_fields": ["summary", "temperature_range"], "evidence_level": "secondary"},
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", "comment_highlights", "facts"], "evidence_level": "supporting"},
+        {"platform": "social", "site": "douyin", "collection_method": "web-access", "must_capture_fields": ["summary", "transcript", "timeline", "facts"], "evidence_level": "supporting"},
+    ],
+    "packing": [
+        {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary", "facts"], "evidence_level": "primary"},
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", "comment_highlights", "facts"], "evidence_level": "supporting"},
+    ],
+    "long_distance_transport": [
+        {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary", "schedule", "price_range", "facts"], "evidence_level": "primary"},
+        {"platform": "platform", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", "comment_highlights", "facts"], "evidence_level": "supporting"},
+    ],
+    "city_transport": [
+        {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary", "facts"], "evidence_level": "primary"},
+        {"platform": "map", "site": "map", "collection_method": "search+fetch", "must_capture_fields": ["summary", "facts"], "evidence_level": "primary"},
+    ],
+    "tickets_and_booking": [
+        {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary", "reservation_rules", "checked_at"], "evidence_level": "primary"},
+    ],
+    "attractions": [
+        {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary", "price_range", "reservation_rules", "facts"], "evidence_level": "primary"},
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", "comment_highlights", "shot_candidates", "facts"], "evidence_level": "supporting"},
+        {"platform": "social", "site": "douyin", "collection_method": "web-access", "must_capture_fields": ["summary", "transcript", "timeline", "shot_candidates", "facts"], "evidence_level": "supporting"},
+        {"platform": "social", "site": "bilibili", "collection_method": "web-access", "must_capture_fields": ["summary", "transcript", "timeline", "shot_candidates", "facts"], "evidence_level": "supporting"},
+    ],
+    "food": [
+        {"platform": "local-listing", "site": "meituan", "collection_method": "web-access", "must_capture_fields": ["shop_name", "address", "recommended_dishes", "queue_pattern", "facts"], "evidence_level": "primary"},
+        {"platform": "local-listing", "site": "dianping", "collection_method": "web-access", "must_capture_fields": ["shop_name", "address", "recommended_dishes", "per_capita_range", "facts"], "evidence_level": "primary"},
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", "comment_highlights", "facts"], "evidence_level": "supporting"},
+    ],
+    "lodging_area": [
+        {"platform": "platform", "site": "platform", "collection_method": "search+fetch", "must_capture_fields": ["summary", "facts"], "evidence_level": "primary"},
+        {"platform": "map", "site": "map", "collection_method": "search+fetch", "must_capture_fields": ["summary", "facts"], "evidence_level": "primary"},
+    ],
+    "seasonality": [
+        {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary", "facts"], "evidence_level": "primary"},
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", "facts"], "evidence_level": "supporting"},
+    ],
+    "risks": [
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", "comment_highlights", "facts"], "evidence_level": "primary"},
+        {"platform": "social", "site": "douyin", "collection_method": "web-access", "must_capture_fields": ["summary", "transcript", "timeline", "facts"], "evidence_level": "supporting"},
+        {"platform": "social", "site": "bilibili", "collection_method": "web-access", "must_capture_fields": ["summary", "transcript", "timeline", "facts"], "evidence_level": "supporting"},
+    ],
+    "sources": [
+        {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["url", "checked_at"], "evidence_level": "primary"},
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["url", "summary"], "evidence_level": "supporting"},
+        {"platform": "social", "site": "douyin", "collection_method": "web-access", "must_capture_fields": ["url", "summary"], "evidence_level": "supporting"},
+        {"platform": "social", "site": "bilibili", "collection_method": "web-access", "must_capture_fields": ["url", "summary"], "evidence_level": "supporting"},
+    ],
 }
+
+
+def site_query(payload: dict, place: str, topic: str, site: str) -> str:
+    return f"{payload['departure_city']} {payload['title']} {place} {topic} {site}"
 
 
 def build_tasks(payload: dict) -> dict:
@@ -24,21 +71,26 @@ def build_tasks(payload: dict) -> dict:
     topics = payload.get("required_topics", [])
     for place in places:
         for topic in topics:
-            platforms = PLATFORM_MAP.get(topic, ["official"])
-            for platform in platforms:
+            site_rules = TOPIC_SITE_RULES.get(topic, [{"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary"], "evidence_level": "primary"}])
+            for rule in site_rules:
                 tasks.append(
                     {
                         "trip_slug": payload["trip_slug"],
                         "place": place,
                         "topic": topic,
-                        "platform": platform,
-                        "required_sources": platforms,
+                        "platform": rule["platform"],
+                        "site": rule["site"],
+                        "required_sources": [item["site"] for item in site_rules],
                         "query_hint": f"{payload['departure_city']} {payload['title']} {place} {topic}",
+                        "site_query": site_query(payload, place, topic, rule["site"]),
+                        "collection_method": rule["collection_method"],
+                        "must_capture_fields": list(rule["must_capture_fields"]),
+                        "evidence_level": rule["evidence_level"],
                     }
                 )
     return {
         "trip_slug": payload["trip_slug"],
-        "research_dimensions": ["place", "topic", "platform"],
+        "research_dimensions": ["place", "topic", "platform", "site"],
         "places": places,
         "tasks": tasks,
     }
