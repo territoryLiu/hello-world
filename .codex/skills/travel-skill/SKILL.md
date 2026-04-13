@@ -96,9 +96,15 @@ Section order for `daily-overview`:
 - Use social and local-life platforms to enrich experience details, food choices, queue patterns, photo spots, and practical tips.
 - `research-run` must use `web-access` with concrete site coverage, not abstract `social` only.
 - Required social and local-life sites include `xiaohongshu`, `douyin`, `bilibili`, `meituan`, and `dianping` when the topic matrix calls for them.
+- For `xiaohongshu`, `douyin`, `bilibili`, `meituan`, and `dianping`, the site is not considered covered unless `web-access` actually reached the page and persisted the required fields for that task.
+- Required social evidence must explicitly cover recent destination experience, practical pitfalls, and current wearing guidance when those topics are in scope.
+- For destination experience tasks, capture recent experience, high-frequency comments, queue pattern, and scenery status.
 - For `xiaohongshu`, `douyin`, and `bilibili`, capture page body plus comment highlights, comment status, and sample size.
 - For `douyin` and `bilibili`, also capture transcript, timeline, and screenshot candidates when the page is video-based.
+- For `meituan` and `dianping`, capture concrete shop names, addresses, recommended dishes, per-capita range, and queue pattern. For this trip type, the published guide should not claim a venue-level recommendation unless those fields were actually collected.
+- If `web-access` cannot reach a required site, the page blocks login, content extraction fails, or the returned evidence is incomplete, tell the user immediately that information collection has a problem before continuing with the next research step.
 - If a required field cannot be collected, mark it as failed and record the failure reason instead of pretending the site was covered.
+- A `coverage note` or placeholder failure record is not valid site coverage. It is only a failure log.
 - Keep `checked_at` on time-sensitive facts.
 - Store research in reusable JSON so later trips can extend the same destination knowledge base.
 - Persist reusable place knowledge under `travel-data/places/<place-slug>/` with raw web research, structured facts, media raw, and site coverage files.
