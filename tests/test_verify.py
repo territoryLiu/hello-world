@@ -6,7 +6,7 @@ import sys
 import tempfile
 import unittest
 
-from tests.helpers import ROOT, SKILL_DIR, run_script
+from tests.helpers import SKILL_DIR, run_script, write_sample_approved_research
 
 
 def load_verify_trip_module():
@@ -20,8 +20,8 @@ def load_verify_trip_module():
 
 class VerifyPipelineTest(unittest.TestCase):
     def test_verify_trip_reports_content_checks_for_guides_root(self):
-        fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "approved_research.json"
         with tempfile.TemporaryDirectory() as tmp:
+            fixture = write_sample_approved_research(Path(tmp) / "approved_research.json")
             model = Path(tmp) / "guide-content.json"
             output_root = Path(tmp) / "out"
             report = output_root / "verify" / "report.json"

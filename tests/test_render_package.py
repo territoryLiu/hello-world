@@ -4,7 +4,7 @@ import tempfile
 import unittest
 import zipfile
 
-from tests.helpers import ROOT, SKILL_DIR, run_script
+from tests.helpers import ROOT, SKILL_DIR, run_script, write_sample_approved_research
 
 
 class RenderPackageTest(unittest.TestCase):
@@ -22,9 +22,30 @@ class RenderPackageTest(unittest.TestCase):
     def _template_html(self, guide_root: Path, template_id: str = "route-first", device: str = "desktop") -> str:
         return (guide_root / device / template_id / "index.html").read_text(encoding="utf-8")
 
+    def test_only_five_template_dash_first_assets_drive_rendering(self):
+        template_dir = SKILL_DIR / "assets" / "templates"
+        active_templates = sorted(path.name for path in template_dir.glob("template-*.html"))
+        legacy_templates = sorted(
+            path.name
+            for path in template_dir.iterdir()
+            if path.is_file() and path.name.startswith(("guide-template-", "desktop-index", "mobile-"))
+        )
+
+        self.assertEqual(
+            active_templates,
+            [
+                "template-decision-first.html",
+                "template-destination-first.html",
+                "template-lifestyle-first.html",
+                "template-route-first.html",
+                "template-transport-first.html",
+            ],
+        )
+        self.assertEqual(legacy_templates, [])
+
     def test_render_trip_site_emits_exactly_five_template_variants_under_guides_root(self):
-        fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "approved_research.json"
         with tempfile.TemporaryDirectory() as tmp:
+            fixture = write_sample_approved_research(Path(tmp) / "approved_research.json")
             model = Path(tmp) / "guide-content.json"
             output_root = Path(tmp) / "out"
             run_script(SKILL_DIR / "scripts" / "build_guide_model.py", "--input", fixture, "--output", model)
@@ -642,8 +663,8 @@ class RenderPackageTest(unittest.TestCase):
         self.assertEqual(image_plan["cover"]["image_url"], "")
 
     def test_export_single_html_and_package_trip_outputs_share_html_zip_and_portal_descriptions(self):
-        fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "approved_research.json"
         with tempfile.TemporaryDirectory() as tmp:
+            fixture = write_sample_approved_research(Path(tmp) / "approved_research.json")
             model = Path(tmp) / "guide-content.json"
             output_root = Path(tmp) / "out"
             dist = output_root / "dist"
@@ -706,8 +727,8 @@ class RenderPackageTest(unittest.TestCase):
         self.assertIn("trip-summary.txt", names)
 
     def test_render_trip_site_can_emit_all_template_variants_and_portal_lists_them(self):
-        fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "approved_research.json"
         with tempfile.TemporaryDirectory() as tmp:
+            fixture = write_sample_approved_research(Path(tmp) / "approved_research.json")
             model = Path(tmp) / "guide-content.json"
             output_root = Path(tmp) / "out"
             dist = output_root / "dist"
