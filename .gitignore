@@ -10,3 +10,4 @@ __pycache__/
 *.bak
 .tmp-tests/
 travel-data/
+.pytest_cache/
