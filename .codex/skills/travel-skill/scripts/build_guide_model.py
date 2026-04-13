@@ -598,6 +598,28 @@ def _daily_plan_cards(
     return cards
 
 
+def _daily_plan_cards_from_planning(planning: dict) -> list[dict]:
+    route_main = planning.get("route_main") if isinstance(planning, dict) else {}
+    days = route_main.get("days") if isinstance(route_main, dict) else []
+    cards = []
+    for day in days if isinstance(days, list) else []:
+        cards.append(
+            _content_item(
+                f"D{day['day']} {day['theme']}",
+                f"落脚 {day['base_city']}，按白天与晚间节奏执行。",
+                [
+                    f"上午：{'；'.join(day.get('morning', []))}",
+                    f"下午：{'；'.join(day.get('afternoon', []))}",
+                    f"晚间：{'；'.join(day.get('evening', []))}",
+                    f"交通：{'；'.join(day.get('transport', []))}",
+                    f"用餐：{'；'.join(day.get('meals', []))}",
+                    f"备选：{'；'.join(day.get('backup_spots', []))}",
+                ],
+            )
+        )
+    return cards
+
+
 def _match_card_media(card: dict, section: str, image_plan: dict) -> dict | None:
     if not isinstance(image_plan, dict):
         return None
@@ -676,6 +698,7 @@ def compose(payload: dict) -> dict:
     attraction_cards = _enrich_attraction_cards(_attraction_cards(attraction_facts), attraction_facts)
     food_cards = _food_cards(food_facts)
     tips_cards = _tips_cards(risk_facts, constraints, weather_facts)
+    planning_payload = payload.get("planning") if isinstance(payload.get("planning"), dict) else {}
     clothing_cards = _attach_card_media(clothing_cards, "clothing_guide", image_plan)
     attraction_cards = _attach_card_media(attraction_cards, "attractions", image_plan)
     transport_details = _attach_card_media(transport_details, "transport_details", image_plan)
@@ -684,7 +707,9 @@ def compose(payload: dict) -> dict:
     summary_candidates = [fact["text"] for fact in (transport_facts + weather_facts)[:2] if fact.get("text")]
     summary = " ".join(summary_candidates) if summary_candidates else "先看每日节奏，再按路线和来源逐层展开。"
 
-    daily_day_cards = _daily_plan_cards(attraction_facts, food_facts, transport_facts, lodging_facts, traveler_notes)
+    daily_day_cards = _daily_plan_cards_from_planning(planning_payload) or _daily_plan_cards(
+        attraction_facts, food_facts, transport_facts, lodging_facts, traveler_notes
+    )
 
     daily_overview = {
         "summary": summary,

@@ -1,3 +1,4 @@
+import importlib.util
 from pathlib import Path
 import json
 import tempfile
@@ -78,6 +79,42 @@ class ComposeGuideModelTest(unittest.TestCase):
 
         self.assertGreaterEqual(len(payload["sources"]), 3)
         self.assertEqual(payload["meta"]["source_count"], len(payload["sources"]))
+
+    def test_build_guide_model_reads_planning_contract_instead_of_fake_daily_cards(self):
+        module_path = SKILL_DIR / "scripts" / "build_guide_model.py"
+        spec = importlib.util.spec_from_file_location("build_guide_model", module_path)
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(module)
+
+        payload = module.compose(
+            {
+                "trip_slug": "demo-trip",
+                "title": "中文攻略",
+                "checked_at": "2026-04-13",
+                "planning": {
+                    "route_main": {
+                        "days": [
+                            {
+                                "day": 1,
+                                "theme": "延吉初逛",
+                                "base_city": "延吉",
+                                "morning": ["南京出发"],
+                                "afternoon": ["延吉西市场"],
+                                "evening": ["冷面 + 民俗园夜景"],
+                                "transport": ["南京 -> 长春 -> 延吉"],
+                                "meals": ["服务大楼延吉冷面"],
+                                "backup_spots": ["延边大学周边"],
+                            }
+                        ]
+                    }
+                },
+                "facts": [],
+            }
+        )
+        first_day = payload["outputs"]["daily-overview"]["days"][0]
+        self.assertIn("上午：南京出发", " ".join(first_day["points"]))
+        self.assertIn("下午：延吉西市场", " ".join(first_day["points"]))
 
     def test_build_guide_model_applies_constraints_distance_rules_and_sample_reference(self):
         raw_model = {
