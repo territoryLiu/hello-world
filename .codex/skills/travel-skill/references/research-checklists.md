@@ -17,7 +17,7 @@
 
 - outbound and return long-distance plans
 - high-speed-rail-first route
-- `flight + rail` route for trips over `600km`
+- `flight + rail` route for trips over `1000km`
 - pure rail fallback route
 - transfer-city route when direct plans are weak
 - station or airport to hotel and attraction transfers

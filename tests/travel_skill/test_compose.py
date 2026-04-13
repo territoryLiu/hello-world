@@ -116,6 +116,67 @@ class ComposeGuideModelTest(unittest.TestCase):
         self.assertIn("上午：南京出发", " ".join(first_day["points"]))
         self.assertIn("下午：延吉西市场", " ".join(first_day["points"]))
 
+    def test_build_guide_model_uses_planning_route_options_instead_of_transport_cards_only(self):
+        module_path = SKILL_DIR / "scripts" / "build_guide_model.py"
+        spec = importlib.util.spec_from_file_location("build_guide_model", module_path)
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(module)
+
+        payload = module.compose(
+            {
+                "trip_slug": "demo-trip",
+                "title": "短途测试",
+                "planning": {
+                    "route_main": {"days": []},
+                    "route_options": {
+                        "plans": [
+                            {
+                                "title": "高铁优先方案",
+                                "fit_for": "稳妥",
+                                "tradeoffs": ["早起"],
+                                "days": [
+                                    {
+                                        "day": 1,
+                                        "base_city": "吉林",
+                                        "theme": "市区线",
+                                        "morning": ["高铁到达"],
+                                        "afternoon": ["松花湖"],
+                                        "evening": ["乌拉火锅"],
+                                        "transport": ["C123"],
+                                        "meals": ["乌拉火锅"],
+                                        "backup_spots": ["北山"],
+                                    }
+                                ],
+                            },
+                            {
+                                "title": "周边延伸方案",
+                                "fit_for": "想慢一点",
+                                "tradeoffs": ["多住一晚"],
+                                "days": [
+                                    {
+                                        "day": 1,
+                                        "base_city": "吉林",
+                                        "theme": "慢游线",
+                                        "morning": ["午后出发"],
+                                        "afternoon": ["江边散步"],
+                                        "evening": ["地方菜"],
+                                        "transport": ["城际列车"],
+                                        "meals": ["地方菜"],
+                                        "backup_spots": ["博物馆"],
+                                    }
+                                ],
+                            },
+                        ]
+                    },
+                },
+                "facts": [],
+            }
+        )
+        titles = [item["title"] for item in payload["outputs"]["recommended"]["route_options"]]
+        self.assertIn("高铁优先方案", titles)
+        self.assertIn("周边延伸方案", titles)
+
     def test_build_guide_model_applies_constraints_distance_rules_and_sample_reference(self):
         raw_model = {
             "trip_slug": "family-yanji",
@@ -206,7 +267,7 @@ class ComposeGuideModelTest(unittest.TestCase):
         self.assertEqual(payload["meta"]["sample_reference"]["path"], "sample.html")
         self.assertTrue(payload["meta"]["traveler_constraints"]["requires_accessible_pace"])
         self.assertEqual(payload["meta"]["distance_km"], 1420)
-        self.assertEqual(payload["meta"]["transport_rule"]["long_distance"], "over-600km")
+        self.assertEqual(payload["meta"]["transport_rule"]["long_distance"], "over-1000km")
         route_text = "\n".join(
             item["summary"] + "\n" + "\n".join(item["points"])
             for item in payload["outputs"]["recommended"]["route_options"]

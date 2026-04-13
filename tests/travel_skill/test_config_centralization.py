@@ -43,14 +43,14 @@ class TravelConfigCentralizationTest(unittest.TestCase):
         config = load_module("travel_config")
         guide_model = load_module("build_guide_model")
 
-        self.assertEqual(config.FLIGHT_HYBRID_THRESHOLD_KM, 600)
+        self.assertEqual(config.FLIGHT_HYBRID_THRESHOLD_KM, 1000)
         self.assertEqual(
             guide_model._transport_rule(config.FLIGHT_HYBRID_THRESHOLD_KM - 1),
-            {"long_distance": "within-600km"},
+            {"long_distance": "within-1000km"},
         )
         self.assertEqual(
             guide_model._transport_rule(config.FLIGHT_HYBRID_THRESHOLD_KM + 1),
-            {"long_distance": "over-600km"},
+            {"long_distance": "over-1000km"},
         )
 
     def test_output_layers_and_publish_artifacts_come_from_shared_config(self):

@@ -10,6 +10,7 @@ description: Use when producing a shareable travel guide that needs intake, mult
 Turn one trip request into a reusable travel research run plus shareable guide deliverables.
 
 Default outputs:
+- gate report for blocked vs ready intake
 - desktop guide
 - mobile guide
 - `portal.html`
@@ -39,14 +40,23 @@ Default share format is `single-file HTML` plus ZIP packaging.
 
 ## Execution Order
 
-1. `intake`
+1. `intake-gate`
 2. `research-plan`
 3. `research-run`
 4. `review-gate`
-5. `compose`
-6. `render`
-7. `package-share`
-8. `verify`
+5. `planning`
+6. `localize`
+7. `compose`
+8. `render`
+9. `package-share`
+10. `verify`
+
+## Intake Gate Rules
+
+- Run a request gate before any research work.
+- Missing `title`, `departure_city`, `destinations`, `date_range`, `travelers`, or `budget` must block the trip.
+- Blocked requests must emit follow-up questions instead of entering research or render steps.
+- `sample_reference` can exist for internal review but must not leak into published guide metadata.
 
 ## Guide Contract
 
@@ -88,18 +98,34 @@ Section order for `daily-overview`:
 ## Transport Defaults
 
 - Always include a high-speed-rail-first route when feasible.
-- For trips over `600km`, also provide `flight + rail` and `pure rail` options.
+- For trips over `1000km`, also provide `flight + rail` and `pure rail` options.
 - When direct transport is weak, add a transfer-city option and note whether half-day or one-day stopover play is suitable.
 - When future schedules are not yet on sale, use the nearest searchable schedule, keep the checked date, and give price ranges.
 - When future rail tickets are not yet on sale, explicitly show the latest searchable date, example train numbers, checked date context, and a reminder to re-check once formal sale opens.
+
+## Planning Rules
+
+- Planning is day-by-day first, not transport-card first.
+- `route_main.days` and every `route_options[].days` must be independently authored, not shallow copies.
+- `recommended.route_options` in the published guide should prefer planning output and only fall back to transport-derived cards when planning is absent.
+- Add a localization pass before compose so guide正文优先使用 `text_zh`.
 
 ## Rendering Rules
 
 - Desktop and mobile must contain the same facts.
 - Mobile can paginate for readability.
 - Publish exactly five guide templates: `route-first`, `decision-first`, `destination-first`, `transport-first`, `lifestyle-first`.
+- Default render behavior must emit all five templates for both desktop and mobile.
 - Single-file sharing is the default share target.
 - ZIP is the default archive target.
+- Never render sample-reference chips, search-query traces, or `text-citation-only` fake media blocks into publish pages.
+
+## Verification Rules
+
+- Verification must check both desktop and mobile template completeness.
+- Verification must confirm `notes/sources.md` and `notes/sources.html` are present.
+- Browser-aware verification should exist even when unit-test mode downgrades it to `warn`.
+- Do not claim completion until render, package, and verify outputs are freshly checked.
 
 ## Python Execution Policy
 

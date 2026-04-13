@@ -75,7 +75,7 @@ class RenderPackageTest(unittest.TestCase):
                     "avoid_long_unbroken_walks": True,
                 },
                 "distance_km": 1420,
-                "transport_rule": {"long_distance": "over-600km"},
+                "transport_rule": {"long_distance": "over-1000km"},
             },
             "outputs": {
                 "daily-overview": {
@@ -97,7 +97,7 @@ class RenderPackageTest(unittest.TestCase):
                     "recommended_route": [
                         {
                             "title": "南京出发高铁优先",
-                            "summary": "超 600km 时同步提供空铁联运备选。",
+                            "summary": "超 1000km 时同步提供空铁联运备选。",
                             "points": ["步行段拆短，午后留出休息时间"],
                             "is_placeholder": False,
                         }
@@ -176,7 +176,7 @@ class RenderPackageTest(unittest.TestCase):
 
         self.assertIn("天池晨雾", html)
         self.assertIn("长白山北坡栈道", html)
-        self.assertIn("over-600km", html)
+        self.assertIn("over-1000km", html)
         self.assertIn("bilibili", html)
         self.assertIn("https://cdn.example.com/bili-cover.jpg", html)
         self.assertIn("https://cdn.example.com/bili-shot.jpg", html)
@@ -568,6 +568,78 @@ class RenderPackageTest(unittest.TestCase):
         self.assertIn("card-comment-list", html)
         self.assertIn("arrive before 08:30 for a smoother shuttle queue", html)
         self.assertIn("the boardwalk photos look best before noon", html)
+
+    def test_render_trip_site_default_emits_all_five_templates(self):
+        model_payload = {
+            "meta": {"trip_slug": "render-default-demo", "title": "Render Default Demo", "checked_at": "2026-04-13", "source_count": 0},
+            "outputs": {
+                "daily-overview": {"summary": "", "days": [], "wearing": [], "transport": [], "alerts": [], "sources": []},
+                "recommended": {"recommended_route": [], "route_options": [], "clothing_guide": [], "attractions": [], "transport_details": [], "food_by_city": [], "tips": [], "sources": []},
+                "comprehensive": {"recommended_route": [], "route_options": [], "clothing_guide": [], "attractions": [], "transport_details": [], "food_by_city": [], "tips": [], "sources": []},
+            },
+            "sources": [],
+            "image_plan": {},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            input_path = Path(tmp) / "model.json"
+            output_root = Path(tmp) / "out"
+            input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root)
+            desktop_dirs = sorted(
+                p.name for p in (output_root / "guides" / "render-default-demo" / "desktop").iterdir() if p.is_dir()
+            )
+
+        self.assertEqual(desktop_dirs, self.TEMPLATE_IDS)
+
+    def test_render_trip_site_never_renders_sample_reference_chip(self):
+        model_payload = {
+            "meta": {
+                "trip_slug": "sample-leak-demo",
+                "title": "Sample Leak Demo",
+                "checked_at": "2026-04-13",
+                "source_count": 0,
+                "sample_reference": {"path": "sample.html", "density_mode": "match-sample"},
+            },
+            "outputs": {
+                "daily-overview": {"summary": "", "days": [], "wearing": [], "transport": [], "alerts": [], "sources": []},
+                "recommended": {"recommended_route": [], "route_options": [], "clothing_guide": [], "attractions": [], "transport_details": [], "food_by_city": [], "tips": [], "sources": []},
+                "comprehensive": {"recommended_route": [], "route_options": [], "clothing_guide": [], "attractions": [], "transport_details": [], "food_by_city": [], "tips": [], "sources": []},
+            },
+            "sources": [],
+            "image_plan": {},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            input_path = Path(tmp) / "model.json"
+            output_root = Path(tmp) / "out"
+            input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root)
+            html = (
+                output_root / "guides" / "sample-leak-demo" / "desktop" / "route-first" / "index.html"
+            ).read_text(encoding="utf-8")
+
+        self.assertNotIn("对标样本", html)
+        self.assertNotIn("sample.html", html)
+
+    def test_build_image_plan_preserves_publish_state_for_render_gate(self):
+        payload = {
+            "items": [
+                {
+                    "title": "B站攻略",
+                    "publish_state": "text-citation-only",
+                    "recommended_usage": "attractions.hero",
+                    "shot_candidates": [{"label": "无真实图片"}],
+                }
+            ]
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            input_path = Path(tmp) / "input.json"
+            output_path = Path(tmp) / "output.json"
+            input_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "build_image_plan.py", "--input", input_path, "--output", output_path)
+            image_plan = json.loads(output_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(image_plan["cover"]["publish_state"], "text-citation-only")
+        self.assertEqual(image_plan["cover"]["image_url"], "")
 
     def test_export_single_html_and_package_trip_outputs_share_html_zip_and_portal_descriptions(self):
         fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "approved_research.json"

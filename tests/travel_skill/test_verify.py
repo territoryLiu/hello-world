@@ -60,6 +60,18 @@ class VerifyPipelineTest(unittest.TestCase):
         self.assertFalse(payload["content_checks"]["no_fake_media_blocks"])
         self.assertFalse(payload["content_checks"]["exactly_five_templates"])
 
+    def test_verify_trip_fails_when_mobile_output_is_missing(self):
+        module = load_verify_trip_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            guide_root = Path(tmp) / "guides" / "demo-trip"
+            for template_id in ["decision-first", "destination-first", "lifestyle-first", "route-first", "transport-first"]:
+                (guide_root / "desktop" / template_id).mkdir(parents=True)
+                (guide_root / "desktop" / template_id / "index.html").write_text("中文页面", encoding="utf-8")
+            payload = module.verify_trip(guide_root)
+
+        self.assertEqual(payload["status"], "fail")
+        self.assertFalse(payload["content_checks"]["mobile_templates_complete"])
+
     def test_verify_trip_returns_nonzero_when_required_artifacts_are_missing(self):
         with tempfile.TemporaryDirectory() as tmp:
             guide_root = Path(tmp) / "missing-guide"

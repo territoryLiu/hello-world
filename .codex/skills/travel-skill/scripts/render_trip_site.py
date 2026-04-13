@@ -357,14 +357,11 @@ def _style_override_css(style: str, device: str) -> str:
 
 
 def _meta_chips(meta: dict) -> str:
-    sample_reference = meta.get("sample_reference") if isinstance(meta.get("sample_reference"), dict) else {}
     traveler_constraints = meta.get("traveler_constraints") if isinstance(meta.get("traveler_constraints"), dict) else {}
     chips = [
         ("核对日期", _safe_text(meta.get("checked_at")) or "待补充"),
         ("来源数量", str(meta.get("source_count", 0))),
     ]
-    if sample_reference.get("path"):
-        chips.append(("对标样本", _safe_text(sample_reference.get("path"))))
     if isinstance(meta.get("transport_rule"), dict):
         chips.append(("距离规则", _safe_text(meta["transport_rule"].get("long_distance"))))
     if traveler_constraints.get("requires_accessible_pace"):
@@ -762,7 +759,7 @@ def _render_template_page(payload: dict, template_id: str, device: str) -> str:
 """
 
 
-def render_site(payload: dict, output_root: Path, style: str = "route-first") -> Path:
+def render_site(payload: dict, output_root: Path, style: str = "all") -> Path:
     meta = payload.get("meta", {})
     slug = _safe_text(meta.get("trip_slug")) or "travel-guide"
     guide_root = output_root / "guides" / slug
@@ -771,7 +768,7 @@ def render_site(payload: dict, output_root: Path, style: str = "route-first") ->
     assets_dir.mkdir(parents=True, exist_ok=True)
     notes_dir.mkdir(parents=True, exist_ok=True)
 
-    selected_templates = RENDER_TEMPLATES if style == "all" else [style or "route-first"]
+    selected_templates = RENDER_TEMPLATES if not style or style in {"all", "default"} else [style]
     for device in ["desktop", "mobile"]:
         for template_id in selected_templates:
             template_dir = guide_root / device / template_id
@@ -793,7 +790,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True)
     parser.add_argument("--output-root", required=True)
-    parser.add_argument("--style", default="route-first")
+    parser.add_argument("--style", default="all")
     args = parser.parse_args()
 
     payload = json.loads(Path(args.input).read_text(encoding="utf-8"))

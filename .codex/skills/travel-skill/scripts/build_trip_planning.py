@@ -3,6 +3,7 @@ import argparse
 import json
 
 from travel_paths import ensure_trip_layout
+from travel_config import FLIGHT_HYBRID_THRESHOLD_KM
 
 
 def _clean_text(value) -> str:
@@ -82,6 +83,28 @@ def _transport_lines(payload: dict, departure_city: str, base_city: str, transpo
     return lines
 
 
+def _copy_day(day: dict) -> dict:
+    copied = {}
+    for key, value in day.items():
+        if isinstance(value, list):
+            copied[key] = list(value)
+        else:
+            copied[key] = value
+    return copied
+
+
+def _distance_km(payload: dict) -> int | None:
+    value = payload.get("distance_km")
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        digits = "".join(ch for ch in value if ch.isdigit())
+        return int(digits) if digits else None
+    return None
+
+
 def build_main_plan(payload: dict) -> dict:
     departure_city = _clean_text(payload.get("departure_city")) or "出发地待补充"
     destinations = _destinations(payload)
@@ -138,33 +161,83 @@ def build_main_plan(payload: dict) -> dict:
     }
 
 
-def build_option_plans(payload: dict) -> dict:
+def build_rail_days(payload: dict) -> list[dict]:
+    days = []
+    for day in build_main_plan(payload)["days"]:
+        day_copy = _copy_day(day)
+        day_copy["theme"] = f"{day_copy['base_city']} 稳妥主线"
+        day_copy["morning"] = ["先锁定高铁或城际主交通。"] + day_copy.get("morning", [])
+        day_copy["transport"] = ["优先一次锁定大交通，再补短接驳。"] + day_copy.get("transport", [])
+        day_copy["backup_spots"] = day_copy.get("backup_spots", []) + [f"{day_copy['base_city']} 市区轻量备选"]
+        days.append(day_copy)
+    return days
+
+
+def build_flight_hybrid_days(payload: dict) -> list[dict]:
+    departure_city = _clean_text(payload.get("departure_city")) or "出发地"
+    days = []
+    for index, day in enumerate(build_main_plan(payload)["days"]):
+        day_copy = _copy_day(day)
+        day_copy["theme"] = f"{day_copy['base_city']} 空铁联运线"
+        if index == 0:
+            day_copy["morning"] = [f"{departure_city} 先走飞机或高铁快线，再衔接到 {day_copy['base_city']}。"]
+        else:
+            day_copy["morning"] = [f"把更多完整白天留给 {day_copy['base_city']}，减少折返。"] + day_copy.get("morning", [])
+        day_copy["transport"] = ["优先压缩远距离移动，把重交通集中在同一天。"] + day_copy.get("transport", [])
+        day_copy["evening"] = day_copy.get("evening", []) + ["晚间尽量住在次日出发更顺手的落脚点。"]
+        days.append(day_copy)
+    return days
+
+
+def build_extended_days(payload: dict) -> list[dict]:
     main_days = build_main_plan(payload)["days"]
-    return {
-        "plans": [
-            {
-                "plan_id": "rail-first",
-                "title": "高铁优先方案",
-                "fit_for": "节奏稳定",
-                "tradeoffs": ["耗时更长"],
-                "days": main_days,
-            },
+    days = []
+    for index, day in enumerate(main_days):
+        day_copy = _copy_day(day)
+        day_copy["theme"] = f"{day_copy['base_city']} 慢游线"
+        if index == 0:
+            day_copy["morning"] = ["出发时间放宽一点，把首日改成轻量进城。"] + day_copy.get("morning", [])
+        day_copy["afternoon"] = ["下午优先留给沿线散步或周边补点。"] + day_copy.get("afternoon", [])
+        day_copy["transport"] = ["允许多住一晚，减少频繁换酒店。"] + day_copy.get("transport", [])
+        day_copy["backup_spots"] = day_copy.get("backup_spots", []) + [f"{day_copy['base_city']} 江边/老城慢游"]
+        days.append(day_copy)
+    if days:
+        last_day = days[-1]
+        last_day["evening"] = last_day.get("evening", []) + ["如果体力允许，可把周边点放到最后半天。"]
+    return days
+
+
+def build_option_plans(payload: dict) -> dict:
+    distance_km = _distance_km(payload)
+    plans = [
+        {
+            "plan_id": "rail-first",
+            "title": "高铁优先方案",
+            "fit_for": "节奏稳定，适合先把大交通锁死",
+            "tradeoffs": ["需要更早出发，但整体更稳妥"],
+            "days": build_rail_days(payload),
+        }
+    ]
+    if isinstance(distance_km, int) and distance_km > FLIGHT_HYBRID_THRESHOLD_KM:
+        plans.append(
             {
                 "plan_id": "flight-hybrid",
                 "title": "空铁联运方案",
-                "fit_for": "压缩远程移动",
-                "tradeoffs": ["成本更高"],
-                "days": main_days,
-            },
-            {
-                "plan_id": "extended-nearby",
-                "title": "周边延伸方案",
-                "fit_for": "想多留半天到一天做周边延展",
-                "tradeoffs": ["总天数更长"],
-                "days": main_days,
-            },
-        ]
-    }
+                "fit_for": "想压缩超长距离移动时间",
+                "tradeoffs": ["成本更高，换乘节点更多"],
+                "days": build_flight_hybrid_days(payload),
+            }
+        )
+    plans.append(
+        {
+            "plan_id": "extended-nearby",
+            "title": "周边延伸方案",
+            "fit_for": "想放慢节奏并补一个周边点",
+            "tradeoffs": ["总时长更长，住宿切换更慢"],
+            "days": build_extended_days(payload),
+        }
+    )
+    return {"plans": plans}
 
 
 def main() -> None:

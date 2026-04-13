@@ -30,6 +30,14 @@ TOPIC_DEFAULTS = [
     "risks",
     "sources",
 ]
+FOLLOW_UP_BY_FIELD = {
+    "title": "请补充这次行程的标题或核心主题。",
+    "departure_city": "请补充出发城市。",
+    "destinations": "请补充目的地城市或景区。",
+    "date_range": "请补充预计出行日期范围。",
+    "travelers": "请补充出行人数和同行人信息。",
+    "budget": "请补充预算范围。",
+}
 
 
 def slugify(text: str) -> str:
@@ -84,19 +92,34 @@ def sample_reference(payload: dict) -> dict:
     return dict(DEFAULT_SAMPLE_REFERENCE)
 
 
-def normalize(payload: dict) -> dict:
-    trip_slug = slugify(payload["title"])
-    normalized_travelers = payload["travelers"]
+def build_gate(payload: dict) -> dict:
+    payload = payload if isinstance(payload, dict) else {}
+    blocking_fields = [field for field in CORE_FIELDS if not payload.get(field)]
     return {
-        "title": payload["title"],
+        "can_proceed": not blocking_fields,
+        "blocking_fields": blocking_fields,
+        "warning_fields": [],
+        "follow_up_questions": [FOLLOW_UP_BY_FIELD[field] for field in blocking_fields if field in FOLLOW_UP_BY_FIELD],
+        "traveler_constraints": traveler_constraints(payload.get("travelers", {})),
+    }
+
+
+def normalize(payload: dict) -> dict:
+    payload = payload if isinstance(payload, dict) else {}
+    gate = build_gate(payload)
+    trip_slug = slugify(payload.get("title", ""))
+    normalized_travelers = payload.get("travelers", {})
+    blocking_fields = gate["blocking_fields"]
+    return {
+        "title": payload.get("title", ""),
         "trip_slug": trip_slug,
-        "departure_city": payload["departure_city"],
+        "departure_city": payload.get("departure_city", ""),
         "destinations": payload.get("destinations", []),
-        "date_range": payload["date_range"],
+        "date_range": payload.get("date_range", {}),
         "travelers": normalized_travelers,
         "traveler_profile": traveler_profile(payload.get("travelers", {})),
         "traveler_constraints": traveler_constraints(payload.get("travelers", {})),
-        "budget": payload["budget"],
+        "budget": payload.get("budget", {}),
         "preferences": {
             "stay": payload.get("stay_preference", ""),
             "pace": payload.get("pace_preference", ""),
@@ -107,6 +130,10 @@ def normalize(payload: dict) -> dict:
         "share_mode": payload.get("share_mode", DEFAULT_SHARE_MODE),
         "review_mode": payload.get("review_mode", DEFAULT_REVIEW_MODE),
         "missing_core_fields": [key for key in CORE_FIELDS if key not in payload],
+        "intake_status": "blocked" if blocking_fields else "ready",
+        "blocking_fields": blocking_fields,
+        "warning_fields": gate["warning_fields"],
+        "follow_up_questions": [],
         "missing_preference_fields": [key for key in PREFERENCE_FIELDS if key not in payload],
         "research_dimensions": ["place", "topic", "platform", "site"],
         "data_layout": {

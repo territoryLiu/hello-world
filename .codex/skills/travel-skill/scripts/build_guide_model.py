@@ -84,7 +84,7 @@ def _content_item(
 def _with_common_fields(raw: dict, topic: str, payload: dict) -> dict:
     fact = dict(raw)
     fact["topic"] = _clean_text(raw.get("topic") or topic)
-    fact["text"] = _normalize_copy(raw.get("text", ""))
+    fact["text"] = _normalize_copy(raw.get("text_zh") or raw.get("text", ""))
     fact["source_url"] = _clean_text(raw.get("source_url"))
     fact["source_title"] = _clean_text(raw.get("source_title"))
     fact["source_type"] = _clean_text(raw.get("source_type") or raw.get("platform"))
@@ -431,6 +431,29 @@ def _route_option_cards(payload: dict, transport_facts: list[dict]) -> list[dict
     return cards
 
 
+def _route_option_cards_from_planning(planning: dict) -> list[dict]:
+    route_options = planning.get("route_options") if isinstance(planning, dict) else {}
+    plans = route_options.get("plans") if isinstance(route_options, dict) else []
+    cards = []
+    for plan in plans if isinstance(plans, list) else []:
+        day_lines = []
+        for day in plan.get("days", []) if isinstance(plan.get("days"), list) else []:
+            if not isinstance(day, dict):
+                continue
+            day_no = day.get("day")
+            theme = _clean_text(day.get("theme"))
+            if day_no is not None and theme:
+                day_lines.append(f"D{day_no}：{theme}")
+        cards.append(
+            _content_item(
+                plan.get("title", "备选方案"),
+                plan.get("fit_for", ""),
+                [*(_clean_list(plan.get("tradeoffs"))), *day_lines],
+            )
+        )
+    return cards
+
+
 def _food_cards(food_facts: list[dict]) -> list[dict]:
     cards = []
     multi_shop_mode = len(food_facts) > 1
@@ -693,7 +716,8 @@ def compose(payload: dict) -> dict:
     lodging_facts = _facts(grouped, "lodging", "lodging_area")
     image_plan = payload.get("image_plan") if isinstance(payload.get("image_plan"), dict) else {}
 
-    route_options = _route_option_cards(payload, transport_facts)
+    planning_payload = payload.get("planning") if isinstance(payload.get("planning"), dict) else {}
+    route_options = _route_option_cards_from_planning(planning_payload) or _route_option_cards(payload, transport_facts)
     traveler_notes = _traveler_notes(constraints)
     recommended_route = [
         _content_item(
@@ -714,7 +738,6 @@ def compose(payload: dict) -> dict:
     attraction_cards = _enrich_attraction_cards(_attraction_cards(attraction_facts), attraction_facts)
     food_cards = _food_cards(food_facts)
     tips_cards = _tips_cards(risk_facts, constraints, weather_facts)
-    planning_payload = payload.get("planning") if isinstance(payload.get("planning"), dict) else {}
     clothing_cards = _attach_card_media(clothing_cards, "clothing_guide", image_plan)
     attraction_cards = _attach_card_media(attraction_cards, "attractions", image_plan)
     transport_details = _attach_card_media(transport_details, "transport_details", image_plan)

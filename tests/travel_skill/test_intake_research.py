@@ -96,6 +96,43 @@ class IntakeResearchTest(unittest.TestCase):
         self.assertEqual(missing_case["missing_preference_fields"], ["must_go", "transport_preference"])
         self.assertEqual(explicit_empty_case["missing_preference_fields"], [])
 
+    def test_validate_request_gate_blocks_missing_core_fields(self):
+        payload = {
+            "title": "五一延吉长白山",
+            "departure_city": "南京",
+            "destinations": ["延吉", "长白山"],
+            "travelers": {"count": 2, "adults": 2, "children": 0, "age_notes": ""},
+            "budget": {"mode": "total", "min": 3000, "max": 6000},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            input_path = Path(tmp) / "input.json"
+            output_path = Path(tmp) / "gate.json"
+            input_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            run_script(
+                SKILL_DIR / "scripts" / "validate_request_gate.py",
+                "--input",
+                input_path,
+                "--output",
+                output_path,
+            )
+            gate = json.loads(output_path.read_text(encoding="utf-8"))
+
+        self.assertFalse(gate["can_proceed"])
+        self.assertIn("date_range", gate["blocking_fields"])
+        self.assertTrue(gate["follow_up_questions"])
+
+    def test_normalize_request_does_not_crash_when_core_fields_are_missing(self):
+        payload = {
+            "title": "测试行程",
+            "departure_city": "南京",
+            "destinations": ["延吉"],
+            "travelers": {"count": 2, "adults": 2, "children": 0, "age_notes": ""},
+            "budget": {"mode": "total", "min": 1000, "max": 2000},
+        }
+        normalized = self._normalize_payload(payload)
+        self.assertEqual(normalized["intake_status"], "blocked")
+        self.assertIn("date_range", normalized["blocking_fields"])
+
     def test_build_research_tasks_expands_place_topic_platform_site_dimensions(self):
         with tempfile.TemporaryDirectory() as tmp:
             normalized = Path(tmp) / "normalized.json"
