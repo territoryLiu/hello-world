@@ -37,9 +37,12 @@ def slugify(text: str) -> str:
     ascii_map = {
         "五一": "wuyi",
         "端午": "duanwu",
+        "南京": "nanjing",
         "延吉": "yanji",
+        "长春": "changchun",
         "长白山": "changbaishan",
         "吉林": "jilin",
+        "图们": "tumen",
     }
     result = source_text
     for source, target in ascii_map.items():

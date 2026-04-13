@@ -6,10 +6,13 @@ import re
 
 
 PLACE_ASCII_MAP = {
+    "南京": "nanjing",
     "延吉": "yanji",
+    "长春": "changchun",
     "长白山": "changbaishan",
     "长白山北坡": "changbaishan",
     "长白山西坡": "changbaishan",
+    "图们": "tumen",
 }
 
 
@@ -59,10 +62,33 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def clean_text(value) -> str:
+    return value.strip() if isinstance(value, str) else ""
+
+
+def corridor_slug(from_place: str, to_place: str) -> str:
+    return f"{_place_slug(from_place)}-to-{_place_slug(to_place)}"
+
+
+def split_facts(facts: list[dict]) -> tuple[dict[str, list[dict]], dict[str, list[dict]]]:
+    by_place: dict[str, list[dict]] = {}
+    by_corridor: dict[str, list[dict]] = {}
+    for fact in facts:
+        place = clean_text(fact.get("place"))
+        from_place = clean_text(fact.get("from"))
+        to_place = clean_text(fact.get("to"))
+        if place:
+            by_place.setdefault(_place_slug(place), []).append(fact)
+        elif from_place and to_place:
+            by_corridor.setdefault(corridor_slug(from_place, to_place), []).append(fact)
+    return by_place, by_corridor
+
+
 def persist(raw_payload, approved_payload, media_payload, coverage_payload, output_root: Path) -> None:
     raw_records = _iter_records(raw_payload, "records")
     approved_facts = _iter_records(approved_payload, "facts")
     media_records = _iter_records(media_payload, "items")
+    places_from_facts, corridors = split_facts(approved_facts)
     coverage_by_topic = coverage_payload.get("by_topic") if isinstance(coverage_payload, dict) else {}
     coverage_by_topic = coverage_by_topic if isinstance(coverage_by_topic, dict) else {}
 
@@ -108,13 +134,20 @@ def persist(raw_payload, approved_payload, media_payload, coverage_payload, outp
         )
         _write_json(
             place_root / "structured-facts.json",
-            {"trip_slug": trip_slug, "place": place, "facts": place_facts},
+            {"trip_slug": trip_slug, "place": place, "facts": place_facts or places_from_facts.get(place_slug, [])},
         )
         _write_json(
             place_root / "media-raw.json",
             {"trip_slug": trip_slug, "place": place, "items": place_media},
         )
         _write_json(place_root / "site-coverage.json", place_coverage)
+
+    for slug, corridor_facts in corridors.items():
+        corridor_root = output_root / "corridors" / slug
+        _write_json(
+            corridor_root / "transport.json",
+            {"trip_slug": trip_slug, "facts": corridor_facts},
+        )
 
 
 def main() -> None:

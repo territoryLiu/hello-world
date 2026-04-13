@@ -243,6 +243,83 @@ class IntakeResearchTest(unittest.TestCase):
             self.assertEqual(len(yanji_facts["facts"]), 1)
             self.assertEqual(yanji_facts["facts"][0]["place"], "延吉")
 
+    def test_persist_research_knowledge_splits_places_and_corridors(self):
+        approved_payload = {
+            "trip_slug": "demo-trip",
+            "facts": [
+                {"place": "延吉", "topic": "food", "text": "冷面", "source_url": "https://example.com/a"},
+                {"place": "长白山", "topic": "attractions", "text": "北坡", "source_url": "https://example.com/b"},
+                {
+                    "topic": "long_distance_transport",
+                    "from": "南京",
+                    "to": "长春",
+                    "text": "高铁转乘",
+                    "source_url": "https://example.com/c",
+                },
+            ],
+        }
+        media_payload = [
+            {"place": "延吉", "platform": "bilibili", "url": "https://www.bilibili.com/video/BV1xx"},
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            approved_path = tmp_path / "approved.json"
+            media_path = tmp_path / "media.json"
+            coverage_path = tmp_path / "coverage.json"
+            raw_path = tmp_path / "raw.json"
+            output_root = tmp_path / "travel-data"
+            approved_path.write_text(json.dumps(approved_payload, ensure_ascii=False), encoding="utf-8")
+            media_path.write_text(json.dumps(media_payload, ensure_ascii=False), encoding="utf-8")
+            coverage_path.write_text(json.dumps({"trip_slug": "demo-trip"}, ensure_ascii=False), encoding="utf-8")
+            raw_path.write_text(json.dumps({"trip_slug": "demo-trip", "records": []}, ensure_ascii=False), encoding="utf-8")
+
+            run_script(
+                SKILL_DIR / "scripts" / "persist_research_knowledge.py",
+                "--raw-research",
+                raw_path,
+                "--approved-research",
+                approved_path,
+                "--media-raw",
+                media_path,
+                "--site-coverage",
+                coverage_path,
+                "--output-root",
+                output_root,
+            )
+
+            self.assertTrue((output_root / "places" / "yanji" / "structured-facts.json").exists())
+            self.assertTrue((output_root / "corridors" / "nanjing-to-changchun" / "transport.json").exists())
+
+    def test_build_trip_snapshots_writes_linked_knowledge_and_corridors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data_root = Path(tmp) / "travel-data"
+            trip_root = data_root / "trips" / "demo-trip"
+            (data_root / "places" / "yanji").mkdir(parents=True)
+            (data_root / "corridors" / "nanjing-to-changchun").mkdir(parents=True)
+            input_path = Path(tmp) / "request.json"
+            input_path.write_text(
+                json.dumps(
+                    {
+                        "trip_slug": "demo-trip",
+                        "departure_city": "南京",
+                        "destinations": ["延吉"],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+
+            run_script(
+                SKILL_DIR / "scripts" / "build_trip_snapshots.py",
+                "--input",
+                input_path,
+                "--data-root",
+                data_root,
+            )
+
+            self.assertTrue((trip_root / "snapshots" / "linked-knowledge.json").exists())
+            self.assertTrue((trip_root / "snapshots" / "linked-corridors.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
