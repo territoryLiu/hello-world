@@ -105,6 +105,6 @@ Section order for `daily-overview`:
 
 - Prefer an existing conda environment when available.
 - Current preferred environment: `py313`.
-- Browser verification environment: `paper2any` when Playwright is needed.
+- Browser verification environment: `travel` when Playwright is needed.
 - If a dependency is missing, install it with the Tsinghua mirror:
   - `pip install -i https://pypi.tuna.tsinghua.edu.cn/simple <package>`
