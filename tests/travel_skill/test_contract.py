@@ -1,3 +1,5 @@
+import importlib.util
+from pathlib import Path
 import unittest
 
 from tests.travel_skill.helpers import ROOT, SKILL_DIR
@@ -104,6 +106,21 @@ class TravelSkillContractTest(unittest.TestCase):
             content = path.read_text(encoding="utf-8") if path.exists() else ""
             for needle in needles:
                 self.assertIn(needle, content, f"{filename} missing keyword: {needle}")
+
+
+class PathContractTest(unittest.TestCase):
+    def test_travel_paths_exposes_dual_track_roots(self):
+        module_path = ROOT / ".codex" / "skills" / "travel-skill" / "scripts" / "travel_paths.py"
+        spec = importlib.util.spec_from_file_location("travel_paths", module_path)
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(module)
+
+        roots = module.travel_roots(ROOT / "travel-data", "demo-trip")
+        self.assertEqual(roots["places_root"], ROOT / "travel-data" / "places")
+        self.assertEqual(roots["corridors_root"], ROOT / "travel-data" / "corridors")
+        self.assertEqual(roots["trip_root"], ROOT / "travel-data" / "trips" / "demo-trip")
+        self.assertEqual(roots["guides_root"], ROOT / "travel-data" / "guides" / "demo-trip")
 
 
 if __name__ == "__main__":
