@@ -542,7 +542,11 @@ def _find_section_media(image_plan: dict, section_id: str) -> list[dict]:
         return []
     result = []
     for item in _safe_list(image_plan.get("section_images")):
-        if isinstance(item, dict) and _safe_text(item.get("section")) == section_id:
+        if (
+            isinstance(item, dict)
+            and _safe_text(item.get("section")) == section_id
+            and _safe_text(item.get("publish_state")) != "text-citation-only"
+        ):
             result.append(item)
     return result
 
@@ -566,6 +570,8 @@ def _render_media_block(image_plan: dict, section_id: str) -> str:
 
 def _render_hero_media(meta: dict, image_plan: dict, style: str) -> str:
     cover = image_plan.get("cover") if isinstance(image_plan, dict) and isinstance(image_plan.get("cover"), dict) else {}
+    if _safe_text(cover.get("publish_state")) == "text-citation-only":
+        return ""
     sample_reference = meta.get("sample_reference") if isinstance(meta.get("sample_reference"), dict) else {}
     detail_lines = []
     if cover.get("image_hint"):

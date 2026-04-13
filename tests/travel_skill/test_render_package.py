@@ -170,6 +170,34 @@ class RenderPackageTest(unittest.TestCase):
         self.assertIn("attractions", sources_html)
         self.assertIn("time-sensitive", sources_html)
 
+    def test_render_trip_site_skips_media_block_when_asset_not_publishable(self):
+        model_payload = {
+            "meta": {"trip_slug": "gate-demo", "title": "Gate Demo", "checked_at": "2026-04-13", "source_count": 1},
+            "outputs": {
+                "daily-overview": {"summary": "", "days": [], "wearing": [], "transport": [], "alerts": [], "sources": []},
+                "recommended": {"recommended_route": [], "route_options": [], "clothing_guide": [], "attractions": [], "transport_details": [], "food_by_city": [], "tips": [], "sources": []},
+                "comprehensive": {"recommended_route": [], "route_options": [], "clothing_guide": [], "attractions": [], "transport_details": [], "food_by_city": [], "tips": [], "sources": []},
+            },
+            "sources": [],
+            "image_plan": {
+                "cover": {
+                    "image_hint": "B站搜索：长白山北坡攻略",
+                    "source_ref": "B站搜索：长白山北坡攻略",
+                    "image_url": "",
+                    "publish_state": "text-citation-only",
+                }
+            },
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            input_path = Path(tmp) / "model.json"
+            output_root = Path(tmp) / "out"
+            input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            html = (output_root / "trips" / "gate-demo" / "desktop" / "recommended" / "index.html").read_text(encoding="utf-8")
+
+        self.assertNotIn("参考画面", html)
+        self.assertNotIn("B站搜索：长白山北坡攻略", html)
+
     def test_render_trip_site_sanitizes_script_boundaries_and_unsafe_urls(self):
         model_payload = {
             "meta": {
