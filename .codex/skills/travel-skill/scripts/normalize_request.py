@@ -98,10 +98,11 @@ def sample_reference(payload: dict) -> dict:
 
 
 def normalize(payload: dict) -> dict:
+    trip_slug = slugify(payload["title"])
     normalized_travelers = payload["travelers"]
     return {
         "title": payload["title"],
-        "trip_slug": slugify(payload["title"]),
+        "trip_slug": trip_slug,
         "departure_city": payload["departure_city"],
         "destinations": payload.get("destinations", []),
         "date_range": payload["date_range"],
@@ -121,6 +122,12 @@ def normalize(payload: dict) -> dict:
         "missing_core_fields": [key for key in CORE_FIELDS if key not in payload],
         "missing_preference_fields": [key for key in PREFERENCE_FIELDS if key not in payload],
         "research_dimensions": ["place", "topic", "platform", "site"],
+        "data_layout": {
+            "places_root": "travel-data/places",
+            "corridors_root": "travel-data/corridors",
+            "trip_root": f"travel-data/trips/{trip_slug}",
+            "guides_root": f"travel-data/guides/{trip_slug}",
+        },
     }
 
 

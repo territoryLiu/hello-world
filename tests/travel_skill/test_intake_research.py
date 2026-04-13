@@ -28,6 +28,15 @@ class IntakeResearchTest(unittest.TestCase):
         self.assertEqual(payload["missing_core_fields"], [])
         self.assertEqual(payload["missing_preference_fields"], ["must_go", "transport_preference"])
         self.assertEqual(payload["research_dimensions"], ["place", "topic", "platform", "site"])
+        self.assertEqual(
+            payload["data_layout"],
+            {
+                "places_root": "travel-data/places",
+                "corridors_root": "travel-data/corridors",
+                "trip_root": "travel-data/trips/wuyi-yanji-changbaishan",
+                "guides_root": "travel-data/guides/wuyi-yanji-changbaishan",
+            },
+        )
         self.assertEqual(payload["sample_reference"]["path"], "sample.html")
         self.assertEqual(payload["sample_reference"]["density_mode"], "match-sample")
         self.assertEqual(

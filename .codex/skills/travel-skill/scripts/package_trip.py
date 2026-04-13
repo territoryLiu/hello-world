@@ -3,17 +3,24 @@ import argparse
 import zipfile
 
 
+TEMPLATES = [
+    "decision-first",
+    "destination-first",
+    "lifestyle-first",
+    "route-first",
+    "transport-first",
+]
+
+
 def build_summary(guide_root: Path, portal: Path, recommended_html: Path, share_html: Path) -> str:
     slug = guide_root.name
-    style_dirs = sorted(
-        child.name
-        for child in (guide_root / "desktop").iterdir()
-        if child.is_dir() and child.name in {"classic", "minimalist", "original", "vintage", "zen"}
+    template_dirs = sorted(
+        child.name for child in (guide_root / "desktop").iterdir() if child.is_dir() and child.name in TEMPLATES
     ) if (guide_root / "desktop").exists() else []
     return "\n".join(
         [
             f"trip_slug: {slug}",
-            f"styles: {', '.join(style_dirs) if style_dirs else 'legacy-only'}",
+            f"templates: {', '.join(template_dirs) if template_dirs else 'missing'}",
             "included_files:",
             f"- {portal.name}",
             f"- {recommended_html.name}",
@@ -24,7 +31,7 @@ def build_summary(guide_root: Path, portal: Path, recommended_html: Path, share_
             "",
             "share_notes:",
             "- share.html 是优先转发的完整单文件分享版。",
-            "- recommended.html 适合更轻量的最推荐阅读版本。",
+            "- recommended.html 适合更轻量的路线优先阅读版本。",
             "- notes/sources.html 用于按 site、topic、checked_at 和 time-sensitive 快速复核。",
             "- ZIP 适合归档和整包分发。",
         ]

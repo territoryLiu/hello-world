@@ -39,6 +39,11 @@ class TravelSkillContractTest(unittest.TestCase):
             "bilibili",
             "meituan",
             "dianping",
+            "travel-data/places/",
+            "travel-data/corridors/",
+            "travel-data/trips/",
+            "travel-data/guides/",
+            "text citation only",
         ]:
             self.assertIn(needle, content)
 

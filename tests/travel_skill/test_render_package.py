@@ -8,7 +8,21 @@ from tests.travel_skill.helpers import ROOT, SKILL_DIR, run_script
 
 
 class RenderPackageTest(unittest.TestCase):
-    def test_render_trip_site_creates_required_layered_structure_and_sources_page(self):
+    TEMPLATE_IDS = [
+        "decision-first",
+        "destination-first",
+        "lifestyle-first",
+        "route-first",
+        "transport-first",
+    ]
+
+    def _guide_root(self, output_root: Path, slug: str) -> Path:
+        return output_root / "guides" / slug
+
+    def _template_html(self, guide_root: Path, template_id: str = "route-first", device: str = "desktop") -> str:
+        return (guide_root / device / template_id / "index.html").read_text(encoding="utf-8")
+
+    def test_render_trip_site_emits_exactly_five_template_variants_under_guides_root(self):
         fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "approved_research.json"
         with tempfile.TemporaryDirectory() as tmp:
             model = Path(tmp) / "guide-content.json"
@@ -16,31 +30,31 @@ class RenderPackageTest(unittest.TestCase):
             run_script(SKILL_DIR / "scripts" / "build_guide_model.py", "--input", fixture, "--output", model)
             run_script(SKILL_DIR / "scripts" / "fill_missing_sections.py", "--input", model, "--output", model)
             payload = json.loads(model.read_text(encoding="utf-8"))
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", model, "--output-root", output_root, "--style", "classic")
-            trip_root = output_root / "trips" / payload["meta"]["trip_slug"]
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", model, "--output-root", output_root, "--style", "all")
+            guide_root = self._guide_root(output_root, payload["meta"]["trip_slug"])
             required = [
-                trip_root / "desktop" / "daily-overview" / "index.html",
-                trip_root / "desktop" / "recommended" / "index.html",
-                trip_root / "desktop" / "comprehensive" / "index.html",
-                trip_root / "mobile" / "daily-overview" / "index.html",
-                trip_root / "mobile" / "recommended" / "index.html",
-                trip_root / "mobile" / "comprehensive" / "index.html",
-                trip_root / "assets" / "base.css",
-                trip_root / "assets" / "render-guide.js",
-                trip_root / "assets" / "guide-content.js",
-                trip_root / "notes" / "sources.md",
-                trip_root / "notes" / "sources.html",
+                guide_root / "assets" / "base.css",
+                guide_root / "assets" / "render-guide.js",
+                guide_root / "assets" / "guide-content.js",
+                guide_root / "notes" / "sources.md",
+                guide_root / "notes" / "sources.html",
             ]
-            desktop_html = (trip_root / "desktop" / "recommended" / "index.html").read_text(encoding="utf-8")
-            mobile_html = (trip_root / "mobile" / "recommended" / "index.html").read_text(encoding="utf-8")
-            sources_md = (trip_root / "notes" / "sources.md").read_text(encoding="utf-8")
+            required.extend(guide_root / "desktop" / template_id / "index.html" for template_id in self.TEMPLATE_IDS)
+            required.extend(guide_root / "mobile" / template_id / "index.html" for template_id in self.TEMPLATE_IDS)
+            desktop_html = self._template_html(guide_root, "route-first", "desktop")
+            mobile_html = self._template_html(guide_root, "route-first", "mobile")
+            sources_md = (guide_root / "notes" / "sources.md").read_text(encoding="utf-8")
             missing = [str(path) for path in required if not path.exists()]
+            desktop_dirs = sorted(p.name for p in (guide_root / "desktop").iterdir() if p.is_dir())
+            mobile_dirs = sorted(p.name for p in (guide_root / "mobile").iterdir() if p.is_dir())
 
         self.assertEqual(missing, [])
-        self.assertIn('data-layer="recommended"', desktop_html)
+        self.assertEqual(desktop_dirs, self.TEMPLATE_IDS)
+        self.assertEqual(mobile_dirs, self.TEMPLATE_IDS)
+        self.assertFalse((output_root / "trips").exists())
+        self.assertIn('data-template="route-first"', desktop_html)
         self.assertIn('data-device="desktop"', desktop_html)
-        self.assertIn('data-style="classic"', desktop_html)
-        self.assertIn('data-layer="recommended"', mobile_html)
+        self.assertIn('data-template="route-first"', mobile_html)
         self.assertIn('data-device="mobile"', mobile_html)
         self.assertIn("site:", sources_md)
         self.assertIn("topic:", sources_md)
@@ -155,13 +169,13 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "media-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "classic")
-            html = (output_root / "trips" / "media-demo" / "desktop" / "recommended" / "index.html").read_text(encoding="utf-8")
-            sources_html = (output_root / "trips" / "media-demo" / "notes" / "sources.html").read_text(encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            guide_root = self._guide_root(output_root, "media-demo")
+            html = self._template_html(guide_root, "route-first", "desktop")
+            sources_html = (guide_root / "notes" / "sources.html").read_text(encoding="utf-8")
 
         self.assertIn("天池晨雾", html)
         self.assertIn("长白山北坡栈道", html)
-        self.assertIn("sample.html", html)
         self.assertIn("over-600km", html)
         self.assertIn("bilibili", html)
         self.assertIn("https://cdn.example.com/bili-cover.jpg", html)
@@ -193,7 +207,8 @@ class RenderPackageTest(unittest.TestCase):
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
             run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
-            html = (output_root / "trips" / "gate-demo" / "desktop" / "recommended" / "index.html").read_text(encoding="utf-8")
+            guide_root = self._guide_root(output_root, "gate-demo")
+            html = self._template_html(guide_root, "route-first", "desktop")
 
         self.assertNotIn("参考画面", html)
         self.assertNotIn("B站搜索：长白山北坡攻略", html)
@@ -271,8 +286,9 @@ class RenderPackageTest(unittest.TestCase):
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
             run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root)
-            html = (output_root / "trips" / "unsafe-demo" / "desktop" / "daily-overview" / "index.html").read_text(encoding="utf-8")
-            guide_js = (output_root / "trips" / "unsafe-demo" / "assets" / "guide-content.js").read_text(encoding="utf-8")
+            guide_root = self._guide_root(output_root, "unsafe-demo")
+            html = self._template_html(guide_root, "route-first", "desktop")
+            guide_js = (guide_root / "assets" / "guide-content.js").read_text(encoding="utf-8")
 
         self.assertNotIn("</script><script>alert(1)</script>", html)
         self.assertIn("\\u003c/script\\u003e\\u003cscript\\u003ealert(1)\\u003c/script\\u003e", guide_js)
@@ -304,8 +320,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "timeline-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "classic")
-            html = (output_root / "trips" / "timeline-demo" / "desktop" / "daily-overview" / "index.html").read_text(encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            guide_root = self._guide_root(output_root, "timeline-demo")
+            html = self._template_html(guide_root, "route-first", "desktop")
 
         self.assertIn("timeline-stack", html)
         self.assertIn("timeline-card", html)
@@ -349,8 +366,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "matrix-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "classic")
-            html = (output_root / "trips" / "matrix-demo" / "desktop" / "recommended" / "index.html").read_text(encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            guide_root = self._guide_root(output_root, "matrix-demo")
+            html = self._template_html(guide_root, "route-first", "desktop")
 
         self.assertIn("transport-matrix", html)
         self.assertIn("高铁优先", html)
@@ -403,8 +421,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "density-render-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "classic")
-            html = (output_root / "trips" / "density-render-demo" / "desktop" / "recommended" / "index.html").read_text(encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            guide_root = self._guide_root(output_root, "density-render-demo")
+            html = self._template_html(guide_root, "route-first", "desktop")
 
         self.assertIn("transport-access-card", html)
         self.assertIn("food-group-card", html)
@@ -451,8 +470,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "inline-source-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "classic")
-            html = (output_root / "trips" / "inline-source-demo" / "desktop" / "recommended" / "index.html").read_text(encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            guide_root = self._guide_root(output_root, "inline-source-demo")
+            html = self._template_html(guide_root, "route-first", "desktop")
 
         self.assertIn("card-source-meta", html)
         self.assertIn("景区公告", html)
@@ -497,8 +517,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "card-media-render-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "classic")
-            html = (output_root / "trips" / "card-media-render-demo" / "desktop" / "recommended" / "index.html").read_text(encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            guide_root = self._guide_root(output_root, "card-media-render-demo")
+            html = self._template_html(guide_root, "route-first", "desktop")
 
         self.assertIn("card-inline-media", html)
         self.assertIn("北坡栈道", html)
@@ -539,8 +560,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "comment-render-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "classic")
-            html = (output_root / "trips" / "comment-render-demo" / "desktop" / "recommended" / "index.html").read_text(encoding="utf-8")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            guide_root = self._guide_root(output_root, "comment-render-demo")
+            html = self._template_html(guide_root, "route-first", "desktop")
 
         self.assertIn("card-comment-strip", html)
         self.assertIn("card-comment-list", html)
@@ -556,31 +578,31 @@ class RenderPackageTest(unittest.TestCase):
             run_script(SKILL_DIR / "scripts" / "build_guide_model.py", "--input", fixture, "--output", model)
             run_script(SKILL_DIR / "scripts" / "fill_missing_sections.py", "--input", model, "--output", model)
             payload = json.loads(model.read_text(encoding="utf-8"))
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", model, "--output-root", output_root)
-            trip_root = output_root / "trips" / payload["meta"]["trip_slug"]
-            run_script(SKILL_DIR / "scripts" / "build_portal.py", "--guide-root", trip_root, "--output", dist / "portal.html")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", model, "--output-root", output_root, "--style", "all")
+            guide_root = self._guide_root(output_root, payload["meta"]["trip_slug"])
+            run_script(SKILL_DIR / "scripts" / "build_portal.py", "--guide-root", guide_root, "--output", dist / "portal.html")
             run_script(
                 SKILL_DIR / "scripts" / "export_single_html.py",
                 "--guide-root",
-                trip_root,
-                "--layer",
-                "recommended",
+                guide_root,
+                "--template",
+                "route-first",
                 "--output",
                 dist / "recommended.html",
             )
             run_script(
                 SKILL_DIR / "scripts" / "export_single_html.py",
                 "--guide-root",
-                trip_root,
-                "--layer",
-                "comprehensive",
+                guide_root,
+                "--template",
+                "decision-first",
                 "--output",
                 dist / "share.html",
             )
             run_script(
                 SKILL_DIR / "scripts" / "package_trip.py",
                 "--guide-root",
-                trip_root,
+                guide_root,
                 "--portal",
                 dist / "portal.html",
                 "--recommended-html",
@@ -611,7 +633,7 @@ class RenderPackageTest(unittest.TestCase):
         self.assertIn("notes/sources.html", names)
         self.assertIn("trip-summary.txt", names)
 
-    def test_render_trip_site_can_emit_all_style_variants_and_portal_lists_them(self):
+    def test_render_trip_site_can_emit_all_template_variants_and_portal_lists_them(self):
         fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "approved_research.json"
         with tempfile.TemporaryDirectory() as tmp:
             model = Path(tmp) / "guide-content.json"
@@ -621,26 +643,24 @@ class RenderPackageTest(unittest.TestCase):
             run_script(SKILL_DIR / "scripts" / "fill_missing_sections.py", "--input", model, "--output", model)
             payload = json.loads(model.read_text(encoding="utf-8"))
             run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", model, "--output-root", output_root, "--style", "all")
-            trip_root = output_root / "trips" / payload["meta"]["trip_slug"]
-            run_script(SKILL_DIR / "scripts" / "build_portal.py", "--guide-root", trip_root, "--output", dist / "portal.html")
+            guide_root = self._guide_root(output_root, payload["meta"]["trip_slug"])
+            run_script(SKILL_DIR / "scripts" / "build_portal.py", "--guide-root", guide_root, "--output", dist / "portal.html")
             run_script(
                 SKILL_DIR / "scripts" / "export_single_html.py",
                 "--guide-root",
-                trip_root,
-                "--layer",
-                "recommended",
-                "--style",
-                "zen",
+                guide_root,
+                "--template",
+                "lifestyle-first",
                 "--output",
-                dist / "recommended-zen.html",
+                dist / "lifestyle-first.html",
             )
             portal_html = (dist / "portal.html").read_text(encoding="utf-8")
-            zen_html = (dist / "recommended-zen.html").read_text(encoding="utf-8")
-            for style in ["classic", "minimalist", "original", "vintage", "zen"]:
-                self.assertTrue((trip_root / "desktop" / style / "recommended" / "index.html").exists())
-                self.assertTrue((trip_root / "mobile" / style / "recommended" / "index.html").exists())
-                self.assertIn(style, portal_html)
-            self.assertNotIn('href="../../assets/base.css"', zen_html)
+            lifestyle_html = (dist / "lifestyle-first.html").read_text(encoding="utf-8")
+            for template_id in self.TEMPLATE_IDS:
+                self.assertTrue((guide_root / "desktop" / template_id / "index.html").exists())
+                self.assertTrue((guide_root / "mobile" / template_id / "index.html").exists())
+                self.assertIn(template_id, portal_html)
+            self.assertNotIn('href="../../assets/base.css"', lifestyle_html)
 
 
 if __name__ == "__main__":

@@ -3,11 +3,13 @@ import argparse
 import html
 
 
-LAYER_LABELS = {
-    "daily-overview": "每日行程速览",
-    "recommended": "最推荐攻略",
-    "comprehensive": "最全面攻略",
-}
+TEMPLATES = [
+    "decision-first",
+    "destination-first",
+    "lifestyle-first",
+    "route-first",
+    "transport-first",
+]
 
 
 def _render_links(items: list[tuple[str, str]]) -> str:
@@ -17,53 +19,26 @@ def _render_links(items: list[tuple[str, str]]) -> str:
     )
 
 
-def _discover_styles(guide_root: Path, device: str) -> list[str]:
-    device_root = guide_root / device
-    if not device_root.exists():
-        return []
-    styles = []
-    for child in sorted(device_root.iterdir()):
-        if child.is_dir() and child.name in {"classic", "minimalist", "original", "vintage", "zen"}:
-            styles.append(child.name)
-    return styles
-
-
-def _layer_links(guide_root: Path, device: str) -> list[tuple[str, str]]:
-    return [(label, f"../trips/{guide_root.name}/{device}/{layer}/index.html") for layer, label in LAYER_LABELS.items()]
-
-
-def _style_links(guide_root: Path, device: str, style: str) -> list[tuple[str, str]]:
+def _template_links(guide_root: Path, device: str) -> list[tuple[str, str]]:
     return [
-        (f"{style} · {label}", f"../trips/{guide_root.name}/{device}/{style}/{layer}/index.html")
-        for layer, label in LAYER_LABELS.items()
+        (template_id, f"../guides/{guide_root.name}/{device}/{template_id}/index.html")
+        for template_id in TEMPLATES
+        if (guide_root / device / template_id / "index.html").exists()
     ]
 
 
 def build_portal(guide_root: Path, output_path: Path) -> Path:
     title = guide_root.name
-    desktop_styles = _discover_styles(guide_root, "desktop")
-    mobile_styles = _discover_styles(guide_root, "mobile")
-    desktop_links = _layer_links(guide_root, "desktop")
-    mobile_links = _layer_links(guide_root, "mobile")
-    style_sections = []
-    for style in sorted(set(desktop_styles + mobile_styles)):
-        style_sections.append(
-            f"""
-        <section class="group">
-          <h2>{html.escape(style)}</h2>
-          <p>同一份事实内容生成的独立风格版本，方便客户自行挑选。</p>
-          {_render_links(_style_links(guide_root, "desktop", style) + _style_links(guide_root, "mobile", style))}
-        </section>
-        """
-        )
+    desktop_links = _template_links(guide_root, "desktop")
+    mobile_links = _template_links(guide_root, "mobile")
     share_links = [
         ("单文件分享版", "share.html"),
-        ("最推荐单文件", "recommended.html"),
-        ("来源说明", f"../trips/{guide_root.name}/notes/sources.html"),
+        ("路线优先单文件", "recommended.html"),
+        ("来源说明", f"../guides/{guide_root.name}/notes/sources.html"),
     ]
     package_links = [
         ("ZIP 打包说明", "#zip-notes"),
-        ("来源 Markdown", f"../trips/{guide_root.name}/notes/sources.md"),
+        ("来源 Markdown", f"../guides/{guide_root.name}/notes/sources.md"),
     ]
 
     html_text = f"""<!doctype html>
@@ -91,17 +66,13 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
         padding: 24px;
         box-shadow: 0 16px 36px rgba(43, 36, 29, 0.08);
       }}
-      .hero {{
-        margin-bottom: 18px;
-      }}
+      .hero {{ margin-bottom: 18px; }}
       .grid {{
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 14px;
       }}
-      .group h2 {{
-        margin: 0 0 10px;
-      }}
+      .group h2 {{ margin: 0 0 10px; }}
       .group p {{
         margin: 0 0 12px;
         color: #5c5348;
@@ -127,9 +98,9 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
   <body>
     <div class="shell">
       <section class="hero">
-        <p>Travel Skill Portal</p>
+        <p>旅行分享入口</p>
         <h1>{html.escape(title)}</h1>
-        <p>这个入口页把桌面端、手机端、单文件、来源说明和 ZIP 打包说明放在一起，并附上五套 style 版本的独立入口。</p>
+        <p>这里汇总桌面端、手机端、单文件分享页、来源说明和 ZIP 交付入口。固定只发布五套模板版本。</p>
       </section>
       <div class="grid">
         <section class="group">
@@ -139,20 +110,19 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
         </section>
         <section class="group">
           <h2>手机端</h2>
-          <p>适合触屏阅读和碎片化查看，结构与桌面端保持同一事实集。</p>
+          <p>适合触屏阅读和碎片化查看，结构与桌面端共用同一事实集。</p>
           {_render_links(mobile_links)}
         </section>
         <section class="group">
           <h2>单文件</h2>
-          <p>适合直接转发，`share.html` 默认用于完整分享，`recommended.html` 更轻量。</p>
+          <p>`share.html` 适合直接转发，`recommended.html` 保留最核心的一版。</p>
           {_render_links(share_links)}
         </section>
         <section class="group" id="zip-notes">
           <h2>ZIP</h2>
-          <p>适合归档和整包交付，压缩包里包含单文件、来源说明和摘要文本。</p>
+          <p>适合归档和整包交付，压缩包会附带来源说明和摘要。</p>
           {_render_links(package_links)}
         </section>
-        {''.join(style_sections)}
       </div>
     </div>
   </body>

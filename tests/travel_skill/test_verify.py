@@ -6,7 +6,6 @@ import sys
 import tempfile
 import unittest
 
-import tests.playwright_trip_render_check as render_check
 from tests.travel_skill.helpers import ROOT, SKILL_DIR, run_script
 
 
@@ -20,87 +19,50 @@ def load_verify_trip_module():
 
 
 class VerifyPipelineTest(unittest.TestCase):
-    def test_verify_trip_reports_required_files_without_browser(self):
+    def test_verify_trip_reports_content_checks_for_guides_root(self):
         fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "approved_research.json"
         with tempfile.TemporaryDirectory() as tmp:
             model = Path(tmp) / "guide-content.json"
             output_root = Path(tmp) / "out"
             report = output_root / "verify" / "report.json"
-            portal = output_root / "dist" / "portal.html"
-            recommended_html = output_root / "dist" / "recommended.html"
-            comprehensive_html = output_root / "dist" / "comprehensive.html"
-            guide_root = output_root / "trips" / "wuyi-yanji-changbaishan"
+            guide_root = output_root / "guides" / "wuyi-yanji-changbaishan"
             run_script(SKILL_DIR / "scripts" / "build_guide_model.py", "--input", fixture, "--output", model)
             run_script(SKILL_DIR / "scripts" / "fill_missing_sections.py", "--input", model, "--output", model)
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", model, "--output-root", output_root)
-            run_script(SKILL_DIR / "scripts" / "build_portal.py", "--guide-root", guide_root, "--output", portal)
-            run_script(
-                SKILL_DIR / "scripts" / "export_single_html.py",
-                "--guide-root",
-                guide_root,
-                "--layer",
-                "recommended",
-                "--output",
-                recommended_html,
-            )
-            run_script(
-                SKILL_DIR / "scripts" / "export_single_html.py",
-                "--guide-root",
-                guide_root,
-                "--layer",
-                "comprehensive",
-                "--output",
-                comprehensive_html,
-            )
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", model, "--output-root", output_root, "--style", "all")
             run_script(
                 SKILL_DIR / "scripts" / "verify_trip.py",
                 "--guide-root",
                 guide_root,
-                "--portal",
-                portal,
-                "--recommended-html",
-                recommended_html,
-                "--comprehensive-html",
-                comprehensive_html,
-                "--report",
+                "--output",
                 report,
-                "--skip-browser",
             )
             payload = json.loads(report.read_text(encoding="utf-8"))
 
-        self.assertTrue(payload["static_checks"]["desktop_daily_exists"])
-        self.assertTrue(payload["static_checks"]["desktop_recommended_exists"])
-        self.assertTrue(payload["static_checks"]["desktop_comprehensive_exists"])
-        self.assertTrue(payload["static_checks"]["mobile_daily_exists"])
-        self.assertTrue(payload["static_checks"]["mobile_recommended_exists"])
-        self.assertTrue(payload["static_checks"]["mobile_comprehensive_exists"])
-        self.assertTrue(payload["static_checks"]["portal_exists"])
-        self.assertTrue(payload["static_checks"]["recommended_single_exists"])
-        self.assertTrue(payload["static_checks"]["comprehensive_single_exists"])
-        self.assertTrue(payload["static_checks"]["sources_exists"])
-        self.assertEqual(payload["browser_check"], "skipped")
+        self.assertIn("content_checks", payload)
+        self.assertTrue(payload["content_checks"]["exactly_five_templates"])
+        self.assertTrue(payload["content_checks"]["no_sample_reference_in_publish"])
+        self.assertTrue(payload["content_checks"]["no_fake_media_blocks"])
+        self.assertIn(payload["status"], {"pass", "warn"})
 
-    def test_playwright_checker_resolves_relative_guide_root(self):
-        guide_root = render_check.resolve_guide_root(Path(".\\trips\\jilin-yanji-changbaishan"))
-        pages = render_check.pages_for(guide_root)
-
-        self.assertTrue(guide_root.is_absolute())
-        self.assertTrue(all(page.is_absolute() for page in pages))
-        self.assertEqual(len(pages), 6)
-
-    def test_verify_trip_resolves_existing_checker_script(self):
+    def test_verify_trip_flags_fake_media_and_legacy_outputs(self):
         module = load_verify_trip_module()
-        checker_path = module.checker_script_path()
+        with tempfile.TemporaryDirectory() as tmp:
+            guide_root = Path(tmp) / "guides" / "demo-trip"
+            (guide_root / "desktop" / "route-first").mkdir(parents=True)
+            (guide_root / "desktop" / "route-first" / "index.html").write_text(
+                "对标样本 B站搜索：长白山北坡攻略",
+                encoding="utf-8",
+            )
+            payload = module.verify_trip(guide_root)
 
-        self.assertTrue(checker_path.exists())
-        self.assertEqual(checker_path.name, "playwright_trip_render_check.py")
+        self.assertIn("no_sample_reference_in_publish", payload["content_checks"])
+        self.assertFalse(payload["content_checks"]["no_sample_reference_in_publish"])
+        self.assertFalse(payload["content_checks"]["no_fake_media_blocks"])
+        self.assertFalse(payload["content_checks"]["exactly_five_templates"])
 
     def test_verify_trip_returns_nonzero_when_required_artifacts_are_missing(self):
         with tempfile.TemporaryDirectory() as tmp:
             guide_root = Path(tmp) / "missing-guide"
-            portal = Path(tmp) / "portal.html"
-            recommended_html = Path(tmp) / "recommended.html"
-            comprehensive_html = Path(tmp) / "comprehensive.html"
             report = Path(tmp) / "report.json"
             result = subprocess.run(
                 [
@@ -108,15 +70,8 @@ class VerifyPipelineTest(unittest.TestCase):
                     str(SKILL_DIR / "scripts" / "verify_trip.py"),
                     "--guide-root",
                     str(guide_root),
-                    "--portal",
-                    str(portal),
-                    "--recommended-html",
-                    str(recommended_html),
-                    "--comprehensive-html",
-                    str(comprehensive_html),
-                    "--report",
+                    "--output",
                     str(report),
-                    "--skip-browser",
                 ],
                 capture_output=True,
                 text=True,
@@ -125,16 +80,7 @@ class VerifyPipelineTest(unittest.TestCase):
             payload = json.loads(report.read_text(encoding="utf-8"))
 
         self.assertNotEqual(result.returncode, 0)
-        self.assertFalse(payload["static_checks"]["desktop_daily_exists"])
-        self.assertFalse(payload["static_checks"]["desktop_recommended_exists"])
-        self.assertFalse(payload["static_checks"]["desktop_comprehensive_exists"])
-        self.assertFalse(payload["static_checks"]["mobile_daily_exists"])
-        self.assertFalse(payload["static_checks"]["mobile_recommended_exists"])
-        self.assertFalse(payload["static_checks"]["mobile_comprehensive_exists"])
-        self.assertFalse(payload["static_checks"]["portal_exists"])
-        self.assertFalse(payload["static_checks"]["recommended_single_exists"])
-        self.assertFalse(payload["static_checks"]["comprehensive_single_exists"])
-        self.assertFalse(payload["static_checks"]["sources_exists"])
+        self.assertFalse(payload["content_checks"]["exactly_five_templates"])
 
 
 if __name__ == "__main__":

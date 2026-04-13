@@ -5,55 +5,47 @@ import json
 from urllib.parse import urlsplit
 
 
-LAYER_TITLES = {
-    "daily-overview": "每日行程速览",
-    "recommended": "最推荐攻略",
-    "comprehensive": "最全面攻略",
+SECTION_META = {
+    "days": ("每日安排", "先看按天拆分后的主线节奏。"),
+    "wearing": ("穿衣与装备", "把当月体感和必备物品放在一起看。"),
+    "transport": ("交通安排", "优先确认当天主交通和接驳方式。"),
+    "alerts": ("温馨提示", "把预约、排队和天气提醒单独列出。"),
+    "recommended_route": ("最推荐路线", "把最省心的一条执行线放在最前。"),
+    "route_options": ("多方案交通决策", "默认高铁优先，长距离同步给空铁联运。"),
+    "clothing_guide": ("穿衣与装备指南", "把城市体感、景区体感和装备建议放在一起。"),
+    "attractions": ("深度景点解析", "聚焦玩法、费用、预约与停留时长。"),
+    "transport_details": ("交通细节", "把车次、接驳、打车和换乘拆开写清楚。"),
+    "food_by_city": ("地道美食图谱", "按城市整理详细店铺卡片与备选。"),
+    "tips": ("温馨提示", "把节奏、排队、天气和复核提醒集中呈现。"),
+    "sources": ("信息来源", "保留可追溯来源，方便二次核对。"),
 }
-SECTION_LABELS = {
-    "daily-overview": [
-        ("days", "每日安排", "先看按天拆分后的主线节奏。"),
-        ("wearing", "穿衣与装备", "把当月体感和必备物品放在一起看。"),
-        ("transport", "交通安排", "优先确认当天主交通和接驳方式。"),
-        ("alerts", "温馨提示", "把预约、排队和天气提醒单独列出。"),
-        ("sources", "信息来源", "保留可追溯来源，方便二次核对。"),
-    ],
-    "recommended": [
-        ("recommended_route", "最推荐路线", "把最省心的一条执行线放在最前。"),
-        ("route_options", "多方案交通决策", "默认高铁优先，长距离同步给空铁联运。"),
-        ("clothing_guide", "穿衣与装备指南", "把城市体感、景区体感和装备建议放在一起。"),
-        ("attractions", "深度景点解析", "聚焦玩法、费用、预约与停留时长。"),
-        ("transport_details", "交通细节", "把车次、接驳、打车和换乘拆开写清楚。"),
-        ("food_by_city", "地道美食图谱", "按城市整理详细店铺卡片与备选。"),
-        ("tips", "温馨提示", "把节奏、排队、天气和复核提醒集中呈现。"),
-        ("sources", "信息来源", "正文依赖的来源列表与核对时间。"),
-    ],
-    "comprehensive": [
-        ("recommended_route", "最推荐路线", "先看主路线，再按章节展开。"),
-        ("route_options", "多方案交通决策", "集中对比高铁优先、空铁联运和备选。"),
-        ("clothing_guide", "穿衣与装备指南", "补齐当月气温、体感与装备清单。"),
-        ("attractions", "深度景点解析", "完整列出玩法、价格与预约规则。"),
-        ("transport_details", "交通细节", "逐段拆开看大交通、接驳和落脚点。"),
-        ("food_by_city", "地道美食图谱", "按城市整理店名、地址、招牌菜和排队提示。"),
-        ("tips", "温馨提示", "把节奏控制、核对时间和风险提醒写完整。"),
-        ("sources", "信息来源", "保留全量来源便于复核。"),
-    ],
+TEMPLATE_LABELS = {
+    "route-first": "路线优先",
+    "decision-first": "决策优先",
+    "destination-first": "目的地优先",
+    "transport-first": "交通优先",
+    "lifestyle-first": "生活方式优先",
 }
-STYLE_LABELS = {
-    "default": "Layered Guide",
-    "classic": "Classic Print",
-    "minimalist": "Minimalist",
-    "original": "Original",
-    "vintage": "Vintage",
-    "zen": "Zen",
+RENDER_TEMPLATES = [
+    "route-first",
+    "decision-first",
+    "destination-first",
+    "transport-first",
+    "lifestyle-first",
+]
+TEMPLATE_SECTIONS = {
+    "route-first": ["days", "recommended_route", "route_options", "attractions", "transport_details", "food_by_city", "clothing_guide", "tips", "sources"],
+    "decision-first": ["recommended_route", "route_options", "days", "transport_details", "tips", "sources"],
+    "destination-first": ["attractions", "food_by_city", "days", "transport_details", "clothing_guide", "sources"],
+    "transport-first": ["transport_details", "route_options", "days", "attractions", "food_by_city", "sources"],
+    "lifestyle-first": ["food_by_city", "attractions", "tips", "days", "transport_details", "clothing_guide", "sources"],
 }
-RENDER_STYLES = ["classic", "minimalist", "original", "vintage", "zen"]
 STYLE_THEMES = {
-    "classic": {"font": '"Microsoft YaHei", "PingFang SC", sans-serif', "accent": "#9a4b2f", "bg": "#f4efe6", "surface": "#fffaf4", "ink": "#272117"},
-    "minimalist": {"font": '"Noto Sans SC", "Microsoft YaHei", sans-serif', "accent": "#1d1d1d", "bg": "#f6f6f3", "surface": "#ffffff", "ink": "#151515"},
-    "original": {"font": '"Source Han Serif SC", "STSong", serif', "accent": "#1c6b72", "bg": "#ecf5f3", "surface": "#fbfffe", "ink": "#173033"},
-    "vintage": {"font": '"STKaiti", "KaiTi", serif', "accent": "#7e5a2f", "bg": "#f0e5d2", "surface": "#fff8ec", "ink": "#2f2416"},
-    "zen": {"font": '"Source Han Sans SC", "Microsoft YaHei", sans-serif', "accent": "#426b5f", "bg": "#edf3ee", "surface": "#f9fcf8", "ink": "#182620"},
+    "route-first": {"font": '"Microsoft YaHei", "PingFang SC", sans-serif', "accent": "#9a4b2f", "bg": "#f4efe6", "surface": "#fffaf4", "ink": "#272117"},
+    "decision-first": {"font": '"Noto Sans SC", "Microsoft YaHei", sans-serif', "accent": "#1d1d1d", "bg": "#f6f6f3", "surface": "#ffffff", "ink": "#151515"},
+    "destination-first": {"font": '"Source Han Serif SC", "STSong", serif', "accent": "#1c6b72", "bg": "#ecf5f3", "surface": "#fbfffe", "ink": "#173033"},
+    "transport-first": {"font": '"STKaiti", "KaiTi", serif', "accent": "#7e5a2f", "bg": "#f0e5d2", "surface": "#fff8ec", "ink": "#2f2416"},
+    "lifestyle-first": {"font": '"Source Han Sans SC", "Microsoft YaHei", sans-serif', "accent": "#426b5f", "bg": "#edf3ee", "surface": "#f9fcf8", "ink": "#182620"},
 }
 
 
@@ -103,7 +95,7 @@ def _guide_content_script(payload: dict) -> str:
 
 
 def _style_override_css(style: str, device: str) -> str:
-    theme = STYLE_THEMES.get(style, STYLE_THEMES["classic"])
+    theme = STYLE_THEMES.get(style, STYLE_THEMES["route-first"])
     mobile_grid = "1fr" if device == "mobile" else "repeat(2, minmax(0, 1fr))"
     return f"""
     :root {{
@@ -464,7 +456,7 @@ def _render_comment_highlights(items: list[str]) -> str:
         return ""
     return (
         '<div class="card-comment-strip">'
-        '<p class="media-label">Comment Highlights</p>'
+        '<p class="media-label">评论摘录</p>'
         + '<ul class="card-comment-list">'
         + "".join(f"<li>{_escape(comment)}</li>" for comment in comments)
         + "</ul>"
@@ -572,24 +564,19 @@ def _render_hero_media(meta: dict, image_plan: dict, style: str) -> str:
     cover = image_plan.get("cover") if isinstance(image_plan, dict) and isinstance(image_plan.get("cover"), dict) else {}
     if _safe_text(cover.get("publish_state")) == "text-citation-only":
         return ""
-    sample_reference = meta.get("sample_reference") if isinstance(meta.get("sample_reference"), dict) else {}
     detail_lines = []
     if cover.get("image_hint"):
-        detail_lines.append(f"参考画面：{cover.get('image_hint')}")
-    if cover.get("source_ref"):
-        detail_lines.append(f"来源参考：{cover.get('source_ref')}")
-    if sample_reference.get("path"):
-        detail_lines.append(f"样本对标：{sample_reference.get('path')}")
+        detail_lines.append(str(cover.get("image_hint")))
     if isinstance(meta.get("transport_rule"), dict):
         detail_lines.append(f"距离规则：{meta['transport_rule'].get('long_distance')}")
-    if not detail_lines:
+    if not detail_lines and not _safe_href(cover.get("image_url")):
         return ""
     return (
-        '<section class="hero-media">'
+        '<div class="hero-media">'
         f"{_render_media_image(cover)}"
-        f"<p class=\"eyebrow\">{_escape(STYLE_LABELS.get(style, style.title()))}</p>"
+        f"<p class=\"eyebrow\">{_escape(TEMPLATE_LABELS.get(style, style))}</p>"
         + "".join(f"<p>{_escape(line)}</p>" for line in detail_lines)
-        + "</section>"
+        + "</div>"
     )
 
 
@@ -625,53 +612,6 @@ def _group_sources(payload: dict) -> list[tuple[str, list[tuple[str, list[dict]]
         (site, [(topic, grouped[site][topic]) for topic in sorted(grouped[site])])
         for site in sorted(grouped)
     ]
-
-
-def _render_layer_html(payload: dict, layer_name: str, device: str, style: str, asset_prefix: str) -> str:
-    meta = payload.get("meta", {})
-    layer_payload = payload.get("outputs", {}).get(layer_name, {})
-    title = _safe_text(meta.get("title")) or "旅行攻略"
-    summary = _safe_text(layer_payload.get("summary")) or f"{title} · {LAYER_TITLES[layer_name]}"
-    sources = _safe_list(layer_payload.get("sources")) or _safe_list(payload.get("sources"))
-    nav_items = "".join(
-        f'<a href="#{section_id}">{_escape(section_title)}</a>'
-        for section_id, section_title, _ in SECTION_LABELS[layer_name]
-    )
-    sections = []
-    image_plan = payload.get("image_plan") if isinstance(payload.get("image_plan"), dict) else {}
-    for section_id, section_title, lead in SECTION_LABELS[layer_name]:
-        items = sources if section_id == "sources" else _safe_list(layer_payload.get(section_id))
-        sections.append(_render_section(section_id, section_title, lead, items, image_plan, section_id == "sources"))
-
-    return f"""<!doctype html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{_escape(title)} · {_escape(LAYER_TITLES[layer_name])}</title>
-    <link rel="stylesheet" href="{asset_prefix}/assets/base.css" />
-    <style>{_style_override_css(style, device)}</style>
-  </head>
-  <body data-device="{_escape(device)}" data-layer="{_escape(layer_name)}" data-style="{_escape(style)}">
-    <div class="page-shell style-{_escape(style)} device-{_escape(device)}">
-      <header class="hero">
-        <p class="eyebrow">Travel Skill</p>
-        <h1>{_escape(title)}</h1>
-        <p class="layer-title">{_escape(LAYER_TITLES[layer_name])}</p>
-        <p class="hero-summary">{_escape(summary)}</p>
-        <div class="meta-row">{_meta_chips(meta)}</div>
-      </header>
-      {_render_hero_media(meta, image_plan, style)}
-      <main class="content-shell">
-        <nav class="section-nav">{nav_items}</nav>
-        {''.join(sections)}
-      </main>
-    </div>
-    <script src="{asset_prefix}/assets/guide-content.js"></script>
-    <script src="{asset_prefix}/assets/render-guide.js"></script>
-  </body>
-</html>
-"""
 
 
 def _sources_markdown(payload: dict) -> str:
@@ -728,12 +668,12 @@ def _sources_html(payload: dict) -> str:
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{_escape(_safe_text(meta.get('title')) or '旅行攻略')} · 来源说明</title>
     <link rel="stylesheet" href="../assets/base.css" />
-    <style>{_style_override_css('classic', 'desktop')}</style>
+    <style>{_style_override_css('route-first', 'desktop')}</style>
   </head>
-  <body data-page="sources" data-style="reference">
+  <body data-page="sources" data-template="sources">
     <div class="page-shell style-reference">
       <header class="hero">
-        <p class="eyebrow">Travel Skill Sources</p>
+        <p class="eyebrow">来源说明</p>
         <h1>{_escape(_safe_text(meta.get('title')) or '旅行攻略')}</h1>
         <p class="hero-summary">按 site、topic、checked_at 和 time-sensitive 组织的来源页。</p>
       </header>
@@ -744,46 +684,129 @@ def _sources_html(payload: dict) -> str:
 """
 
 
-def render_site(payload: dict, output_root: Path, style: str = "default") -> Path:
+def _section_items(payload: dict, section_id: str) -> list[dict]:
+    outputs = payload.get("outputs") if isinstance(payload.get("outputs"), dict) else {}
+    daily = outputs.get("daily-overview") if isinstance(outputs.get("daily-overview"), dict) else {}
+    recommended = outputs.get("recommended") if isinstance(outputs.get("recommended"), dict) else {}
+    comprehensive = outputs.get("comprehensive") if isinstance(outputs.get("comprehensive"), dict) else {}
+    if section_id in {"days", "wearing", "transport", "alerts"}:
+        return _safe_list(daily.get(section_id))
+    if section_id == "sources":
+        return _safe_list(payload.get("sources")) or _safe_list(recommended.get("sources")) or _safe_list(daily.get("sources"))
+    return _safe_list(recommended.get(section_id)) or _safe_list(comprehensive.get(section_id))
+
+
+def _render_section_block(payload: dict, section_id: str, image_plan: dict) -> str:
+    title, lead = SECTION_META[section_id]
+    return _render_section(
+        section_id,
+        title,
+        lead,
+        _section_items(payload, section_id),
+        image_plan,
+        section_id == "sources",
+    )
+
+
+def _apply_template(template_id: str, replacements: dict[str, str]) -> str:
+    template_html = _load_asset(f"template-{template_id}.html")
+    output = template_html
+    for key, value in replacements.items():
+        output = output.replace(f"{{{{ {key} }}}}", value)
+    return output
+
+
+def _render_template_page(payload: dict, template_id: str, device: str) -> str:
     meta = payload.get("meta", {})
     slug = _safe_text(meta.get("trip_slug")) or "travel-guide"
-    trip_root = output_root / "trips" / slug
-    assets_dir = trip_root / "assets"
-    notes_dir = trip_root / "notes"
+    title = _safe_text(meta.get("title")) or "旅行攻略"
+    image_plan = payload.get("image_plan") if isinstance(payload.get("image_plan"), dict) else {}
+    section_ids = TEMPLATE_SECTIONS[template_id]
+    nav_items = "".join(
+        f'<a href="#{section_id}">{_escape(SECTION_META[section_id][0])}</a>'
+        for section_id in section_ids
+    )
+    summary = _safe_text(
+        (payload.get("outputs", {}).get("daily-overview", {}) if isinstance(payload.get("outputs"), dict) else {}).get("summary")
+    ) or f"{title} · {TEMPLATE_LABELS.get(template_id, template_id)}"
+    hero_inner = (
+        f'<p class="eyebrow">旅行攻略</p>'
+        f"<h1>{_escape(title)}</h1>"
+        f'<p class="layer-title">{_escape(TEMPLATE_LABELS.get(template_id, template_id))}</p>'
+        f'<p class="hero-summary">{_escape(summary)}</p>'
+        f'<div class="meta-row">{_meta_chips(meta)}</div>'
+        f'{_render_hero_media(meta, image_plan, template_id)}'
+    )
+    replacements = {
+        "hero": hero_inner,
+        "daily_overview": "".join(
+            _render_section_block(payload, section_id, image_plan)
+            for section_id in ["days", "wearing", "transport", "alerts"]
+            if section_id in section_ids
+        ),
+        "recommended_route": _render_section_block(payload, "recommended_route", image_plan) if "recommended_route" in section_ids else "",
+        "route_options": _render_section_block(payload, "route_options", image_plan) if "route_options" in section_ids else "",
+        "clothing_guide": _render_section_block(payload, "clothing_guide", image_plan) if "clothing_guide" in section_ids else "",
+        "attractions": _render_section_block(payload, "attractions", image_plan) if "attractions" in section_ids else "",
+        "transport_details": _render_section_block(payload, "transport_details", image_plan) if "transport_details" in section_ids else "",
+        "food_by_city": _render_section_block(payload, "food_by_city", image_plan) if "food_by_city" in section_ids else "",
+        "tips": _render_section_block(payload, "tips", image_plan) if "tips" in section_ids else "",
+        "sources": _render_section_block(payload, "sources", image_plan) if "sources" in section_ids else "",
+    }
+    body_html = _apply_template(template_id, replacements)
+    return f"""<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{_escape(title)} · {_escape(TEMPLATE_LABELS.get(template_id, template_id))}</title>
+    <link rel="stylesheet" href="../../assets/base.css" />
+    <style>{_style_override_css(template_id, device)}</style>
+  </head>
+  <body data-device="{_escape(device)}" data-template="{_escape(template_id)}" data-trip="{_escape(slug)}">
+    <div class="page-shell template-{_escape(template_id)} device-{_escape(device)}">
+      <nav class="section-nav">{nav_items}</nav>
+      {body_html}
+    </div>
+    <script src="../../assets/guide-content.js"></script>
+    <script src="../../assets/render-guide.js"></script>
+  </body>
+</html>
+"""
+
+
+def render_site(payload: dict, output_root: Path, style: str = "route-first") -> Path:
+    meta = payload.get("meta", {})
+    slug = _safe_text(meta.get("trip_slug")) or "travel-guide"
+    guide_root = output_root / "guides" / slug
+    assets_dir = guide_root / "assets"
+    notes_dir = guide_root / "notes"
     assets_dir.mkdir(parents=True, exist_ok=True)
     notes_dir.mkdir(parents=True, exist_ok=True)
 
-    selected_styles = RENDER_STYLES if style == "all" else [style if style != "default" else "classic"]
-    legacy_style = selected_styles[0]
+    selected_templates = RENDER_TEMPLATES if style == "all" else [style or "route-first"]
     for device in ["desktop", "mobile"]:
-        for layer_name in LAYER_TITLES:
-            legacy_dir = trip_root / device / layer_name
-            legacy_dir.mkdir(parents=True, exist_ok=True)
-            legacy_dir.joinpath("index.html").write_text(
-                _render_layer_html(payload, layer_name, device, legacy_style, "../.."),
+        for template_id in selected_templates:
+            template_dir = guide_root / device / template_id
+            template_dir.mkdir(parents=True, exist_ok=True)
+            template_dir.joinpath("index.html").write_text(
+                _render_template_page(payload, template_id, device),
                 encoding="utf-8",
             )
-            for current_style in selected_styles:
-                style_dir = trip_root / device / current_style / layer_name
-                style_dir.mkdir(parents=True, exist_ok=True)
-                style_dir.joinpath("index.html").write_text(
-                    _render_layer_html(payload, layer_name, device, current_style, "../../.."),
-                    encoding="utf-8",
-                )
 
     assets_dir.joinpath("base.css").write_text(_load_asset("base.css"), encoding="utf-8")
     assets_dir.joinpath("render-guide.js").write_text(_load_asset("render-guide.js"), encoding="utf-8")
     assets_dir.joinpath("guide-content.js").write_text(_guide_content_script(payload), encoding="utf-8")
     notes_dir.joinpath("sources.md").write_text(_sources_markdown(payload), encoding="utf-8")
     notes_dir.joinpath("sources.html").write_text(_sources_html(payload), encoding="utf-8")
-    return trip_root
+    return guide_root
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True)
     parser.add_argument("--output-root", required=True)
-    parser.add_argument("--style", default="default")
+    parser.add_argument("--style", default="route-first")
     args = parser.parse_args()
 
     payload = json.loads(Path(args.input).read_text(encoding="utf-8"))

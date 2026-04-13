@@ -20,6 +20,14 @@ Default outputs:
 
 Default share format is `single-file HTML` plus ZIP packaging.
 
+## Output Layout
+
+- Reusable destination knowledge is written under `travel-data/places/`.
+- Reusable city-to-city transport is written under `travel-data/corridors/`.
+- Trip-scoped request, planning, and snapshots are written under `travel-data/trips/<trip-slug>/`.
+- Final guide artifacts are written under `travel-data/guides/<trip-slug>/`.
+- Video parsing is required for publishable video media. If keyframes or clickable source links are missing, the media is downgraded to `text citation only`.
+
 ## Required Skill Coordination
 
 - Use `web-access` for all online collection.
@@ -89,7 +97,7 @@ Section order for `daily-overview`:
 
 - Desktop and mobile must contain the same facts.
 - Mobile can paginate for readability.
-- Generate all five style variants when requested: `classic`, `minimalist`, `original`, `vintage`, `zen`.
+- Publish exactly five guide templates: `route-first`, `decision-first`, `destination-first`, `transport-first`, `lifestyle-first`.
 - Single-file sharing is the default share target.
 - ZIP is the default archive target.
 
