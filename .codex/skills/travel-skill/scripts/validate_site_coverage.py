@@ -1,13 +1,13 @@
 from pathlib import Path
 import argparse
 import json
+import sys
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
-REQUIRED_SITE_MATRIX = {
-    "food": ["meituan", "dianping", "xiaohongshu"],
-    "attractions": ["official", "xiaohongshu", "douyin", "bilibili"],
-    "risks": ["xiaohongshu", "douyin", "bilibili"],
-}
+from travel_config import SITE_COVERAGE_TARGETS as REQUIRED_SITE_MATRIX
 
 
 def validate(payload: dict) -> dict:

@@ -10,18 +10,18 @@ class PlanningTest(unittest.TestCase):
     def test_build_trip_planning_generates_day_expanded_main_and_options(self):
         approved_payload = {
             "trip_slug": "demo-trip",
-            "title": "五一南京延吉长白山",
-            "departure_city": "南京",
-            "destinations": ["延吉", "长白山", "图们"],
+            "title": "端午上海苏州杭州",
+            "departure_city": "上海",
+            "destinations": ["苏州", "杭州"],
             "date_range": {"start": "2026-04-30", "end": "2026-05-05"},
             "facts": [
-                {"topic": "attractions", "place": "长白山北坡", "text": "建议上午进山", "suggested_duration": "整天"},
-                {"topic": "food", "place": "延吉", "shop_name": "服务大楼延吉冷面", "text": "适合落地午餐"},
+                {"topic": "attractions", "place": "拙政园", "text": "适合上午入园", "suggested_duration": "半天"},
+                {"topic": "food", "place": "苏州", "shop_name": "得月楼", "text": "适合落地午餐"},
                 {
                     "topic": "long_distance_transport",
-                    "from": "南京",
-                    "to": "长春",
-                    "schedule": "G1236 10:34-20:12",
+                    "from": "上海",
+                    "to": "苏州",
+                    "schedule": "G7001 09:12-09:42",
                     "checked_at": "2026-04-13",
                 },
             ],
@@ -45,6 +45,12 @@ class PlanningTest(unittest.TestCase):
             self.assertIn("morning", route_main["days"][0])
             self.assertIn("transport", route_main["days"][0])
             self.assertIn("backup_spots", route_main["days"][0])
+            joined = json.dumps(route_main, ensure_ascii=False)
+            self.assertIn("上海", joined)
+            self.assertIn("苏州", joined)
+            self.assertNotIn("延吉", joined)
+            self.assertNotIn("长白山", joined)
+            self.assertNotIn("二道白河", joined)
 
 
 if __name__ == "__main__":

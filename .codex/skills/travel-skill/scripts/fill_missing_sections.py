@@ -3,6 +3,7 @@ import argparse
 import json
 
 from build_guide_model import OUTPUT_KEYS
+from travel_config import FLIGHT_HYBRID_THRESHOLD_LABEL
 
 
 DEFAULT_SOURCE = {
@@ -25,7 +26,7 @@ LAYER_DEFAULTS = {
     },
     "recommended": {
         "recommended_route": {"title": "最推荐路线占位", "summary": "先给一条最省心的执行路线。", "points": ["先看最推荐方案，再看备选。"]},
-        "route_options": {"title": "多方案路线占位", "summary": "补齐高铁优先、空铁联运和备选方案。", "points": ["默认给高铁优先方案。", "超过 600km 再补空铁联运。"]},
+        "route_options": {"title": "多方案路线占位", "summary": "补齐高铁优先、空铁联运和备选方案。", "points": ["默认给高铁优先方案。", f"超过 {FLIGHT_HYBRID_THRESHOLD_LABEL} 再补空铁联运。"]},
         "clothing_guide": {"title": "穿衣指南占位", "summary": "补齐城市与景区的穿衣层次。", "points": ["把城市体感和山上体感分开写。"]},
         "attractions": {"title": "景点信息占位", "summary": "补齐景点特色、票价和预约信息。", "points": ["景点信息建议带上费用和预约口径。"]},
         "transport_details": {"title": "交通详情占位", "summary": "补齐高铁、飞机、公交和打车细节。", "points": ["交通细节里把换乘说明写完整。"]},
@@ -34,7 +35,7 @@ LAYER_DEFAULTS = {
     },
     "comprehensive": {
         "recommended_route": {"title": "最推荐路线占位", "summary": "补齐完整执行线。", "points": ["把最稳妥的主路线放在最前。"]},
-        "route_options": {"title": "多方案路线占位", "summary": "补齐高铁优先与空铁联运备选。", "points": ["默认高铁优先。", "长距离行程再补空铁联运。"]},
+        "route_options": {"title": "多方案路线占位", "summary": "补齐高铁优先与空铁联运备选。", "points": ["默认高铁优先。", f"长距离行程超过 {FLIGHT_HYBRID_THRESHOLD_LABEL} 再补空铁联运。"]},
         "clothing_guide": {"title": "穿衣指南占位", "summary": "补齐气温、体感与必备物品。", "points": ["把城市和景区的体感拆开写。"]},
         "attractions": {"title": "景点信息占位", "summary": "补齐玩法、费用和预约节奏。", "points": ["景点段落建议带上停留时长。"]},
         "transport_details": {"title": "交通详情占位", "summary": "补齐每一段交通、价格与时间。", "points": ["交通细节建议覆盖高铁、空铁联运和接驳。"]},

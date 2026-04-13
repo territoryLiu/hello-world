@@ -22,7 +22,7 @@ class IntakeResearchTest(unittest.TestCase):
             run_script(SKILL_DIR / "scripts" / "normalize_request.py", "--input", fixture, "--output", output)
             payload = json.loads(output.read_text(encoding="utf-8"))
 
-        self.assertEqual(payload["trip_slug"], "wuyi-yanji-changbaishan")
+        self.assertEqual(payload["trip_slug"], "五一延吉长白山")
         self.assertEqual(payload["share_mode"], "single-html")
         self.assertEqual(payload["review_mode"], "manual-gate")
         self.assertEqual(payload["missing_core_fields"], [])
@@ -33,12 +33,12 @@ class IntakeResearchTest(unittest.TestCase):
             {
                 "places_root": "travel-data/places",
                 "corridors_root": "travel-data/corridors",
-                "trip_root": "travel-data/trips/wuyi-yanji-changbaishan",
-                "guides_root": "travel-data/guides/wuyi-yanji-changbaishan",
+                "trip_root": "travel-data/trips/五一延吉长白山",
+                "guides_root": "travel-data/guides/五一延吉长白山",
             },
         )
-        self.assertEqual(payload["sample_reference"]["path"], "sample.html")
-        self.assertEqual(payload["sample_reference"]["density_mode"], "match-sample")
+        self.assertEqual(payload["sample_reference"]["path"], "")
+        self.assertEqual(payload["sample_reference"]["density_mode"], "")
         self.assertEqual(
             payload["traveler_profile"],
             {
@@ -105,7 +105,7 @@ class IntakeResearchTest(unittest.TestCase):
             run_script(SKILL_DIR / "scripts" / "build_research_tasks.py", "--input", normalized, "--output", tasks)
             payload = json.loads(tasks.read_text(encoding="utf-8"))
 
-        self.assertEqual(payload["trip_slug"], "wuyi-yanji-changbaishan")
+        self.assertEqual(payload["trip_slug"], "五一延吉长白山")
         self.assertEqual(payload["research_dimensions"], ["place", "topic", "platform", "site"])
         task_sites = {(item["place"], item["topic"], item["site"]) for item in payload["tasks"]}
         self.assertIn(("延吉", "food", "meituan"), task_sites)
@@ -239,8 +239,8 @@ class IntakeResearchTest(unittest.TestCase):
                 output_root,
             )
 
-            yanji_root = output_root / "places" / "yanji"
-            changbai_root = output_root / "places" / "changbaishan"
+            yanji_root = output_root / "places" / "延吉"
+            changbai_root = output_root / "places" / "长白山"
 
             self.assertTrue((yanji_root / "raw-web-research.json").exists())
             self.assertTrue((yanji_root / "structured-facts.json").exists())
@@ -296,15 +296,15 @@ class IntakeResearchTest(unittest.TestCase):
                 output_root,
             )
 
-            self.assertTrue((output_root / "places" / "yanji" / "structured-facts.json").exists())
-            self.assertTrue((output_root / "corridors" / "nanjing-to-changchun" / "transport.json").exists())
+            self.assertTrue((output_root / "places" / "延吉" / "structured-facts.json").exists())
+            self.assertTrue((output_root / "corridors" / "南京-to-长春" / "transport.json").exists())
 
     def test_build_trip_snapshots_writes_linked_knowledge_and_corridors(self):
         with tempfile.TemporaryDirectory() as tmp:
             data_root = Path(tmp) / "travel-data"
             trip_root = data_root / "trips" / "demo-trip"
-            (data_root / "places" / "yanji").mkdir(parents=True)
-            (data_root / "corridors" / "nanjing-to-changchun").mkdir(parents=True)
+            (data_root / "places" / "延吉").mkdir(parents=True)
+            (data_root / "corridors" / "南京-to-长春").mkdir(parents=True)
             input_path = Path(tmp) / "request.json"
             input_path.write_text(
                 json.dumps(

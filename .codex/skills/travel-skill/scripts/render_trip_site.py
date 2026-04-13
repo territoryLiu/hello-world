@@ -2,7 +2,15 @@ from pathlib import Path
 import argparse
 import html
 import json
+import sys
 from urllib.parse import urlsplit
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from travel_config import TEMPLATE_IDS as RENDER_TEMPLATES
+from travel_config import TEMPLATE_LABELS, TEMPLATE_SECTIONS
 
 
 SECTION_META = {
@@ -18,27 +26,6 @@ SECTION_META = {
     "food_by_city": ("地道美食图谱", "按城市整理详细店铺卡片与备选。"),
     "tips": ("温馨提示", "把节奏、排队、天气和复核提醒集中呈现。"),
     "sources": ("信息来源", "保留可追溯来源，方便二次核对。"),
-}
-TEMPLATE_LABELS = {
-    "route-first": "路线优先",
-    "decision-first": "决策优先",
-    "destination-first": "目的地优先",
-    "transport-first": "交通优先",
-    "lifestyle-first": "生活方式优先",
-}
-RENDER_TEMPLATES = [
-    "route-first",
-    "decision-first",
-    "destination-first",
-    "transport-first",
-    "lifestyle-first",
-]
-TEMPLATE_SECTIONS = {
-    "route-first": ["days", "recommended_route", "route_options", "attractions", "transport_details", "food_by_city", "clothing_guide", "tips", "sources"],
-    "decision-first": ["recommended_route", "route_options", "days", "transport_details", "tips", "sources"],
-    "destination-first": ["attractions", "food_by_city", "days", "transport_details", "clothing_guide", "sources"],
-    "transport-first": ["transport_details", "route_options", "days", "attractions", "food_by_city", "sources"],
-    "lifestyle-first": ["food_by_city", "attractions", "tips", "days", "transport_details", "clothing_guide", "sources"],
 }
 STYLE_THEMES = {
     "route-first": {"font": '"Microsoft YaHei", "PingFang SC", sans-serif', "accent": "#9a4b2f", "bg": "#f4efe6", "surface": "#fffaf4", "ink": "#272117"},

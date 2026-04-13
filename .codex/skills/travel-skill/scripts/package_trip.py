@@ -1,15 +1,13 @@
 from pathlib import Path
 import argparse
+import sys
 import zipfile
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
-TEMPLATES = [
-    "decision-first",
-    "destination-first",
-    "lifestyle-first",
-    "route-first",
-    "transport-first",
-]
+from travel_config import PUBLISH_ARTIFACTS, SORTED_TEMPLATE_IDS as TEMPLATES
 
 
 def build_summary(guide_root: Path, portal: Path, recommended_html: Path, share_html: Path) -> str:
@@ -25,14 +23,14 @@ def build_summary(guide_root: Path, portal: Path, recommended_html: Path, share_
             f"- {portal.name}",
             f"- {recommended_html.name}",
             f"- {share_html.name}",
-            "- notes/sources.md",
-            "- notes/sources.html",
-            "- trip-summary.txt",
+            f"- {PUBLISH_ARTIFACTS['sources_markdown']}",
+            f"- {PUBLISH_ARTIFACTS['sources_html']}",
+            f"- {PUBLISH_ARTIFACTS['summary']}",
             "",
             "share_notes:",
-            "- share.html 是优先转发的完整单文件分享版。",
-            "- recommended.html 适合更轻量的路线优先阅读版本。",
-            "- notes/sources.html 用于按 site、topic、checked_at 和 time-sensitive 快速复核。",
+            f"- {PUBLISH_ARTIFACTS['share']} 是优先转发的完整单文件分享版。",
+            f"- {PUBLISH_ARTIFACTS['recommended']} 适合更轻量的路线优先阅读版本。",
+            f"- {PUBLISH_ARTIFACTS['sources_html']} 用于按 site、topic、checked_at 和 time-sensitive 快速复核。",
             "- ZIP 适合归档和整包分发。",
         ]
     ) + "\n"
@@ -40,16 +38,16 @@ def build_summary(guide_root: Path, portal: Path, recommended_html: Path, share_
 
 def package_trip(guide_root: Path, portal: Path, recommended_html: Path, share_html: Path, output_zip: Path) -> Path:
     output_zip.parent.mkdir(parents=True, exist_ok=True)
-    summary_path = output_zip.parent / "trip-summary.txt"
+    summary_path = output_zip.parent / PUBLISH_ARTIFACTS["summary"]
     summary_path.write_text(build_summary(guide_root, portal, recommended_html, share_html), encoding="utf-8")
 
     with zipfile.ZipFile(output_zip, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.write(portal, arcname=portal.name)
         archive.write(recommended_html, arcname=recommended_html.name)
         archive.write(share_html, arcname=share_html.name)
-        archive.write(summary_path, arcname="trip-summary.txt")
-        archive.write(guide_root / "notes" / "sources.md", arcname="notes/sources.md")
-        archive.write(guide_root / "notes" / "sources.html", arcname="notes/sources.html")
+        archive.write(summary_path, arcname=PUBLISH_ARTIFACTS["summary"])
+        archive.write(guide_root / PUBLISH_ARTIFACTS["sources_markdown"], arcname=PUBLISH_ARTIFACTS["sources_markdown"])
+        archive.write(guide_root / PUBLISH_ARTIFACTS["sources_html"], arcname=PUBLISH_ARTIFACTS["sources_html"])
     return summary_path
 
 

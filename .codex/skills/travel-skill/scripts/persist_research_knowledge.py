@@ -1,20 +1,8 @@
 from pathlib import Path
 import argparse
-import hashlib
 import json
-import re
 
-
-PLACE_ASCII_MAP = {
-    "南京": "nanjing",
-    "延吉": "yanji",
-    "长春": "changchun",
-    "长白山": "changbaishan",
-    "长白山北坡": "changbaishan",
-    "长白山西坡": "changbaishan",
-    "图们": "tumen",
-}
-
+from normalize_request import slugify
 
 def _read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
@@ -24,15 +12,7 @@ def _place_slug(place: str) -> str:
     text = place.strip() if isinstance(place, str) else ""
     if not text:
         return ""
-    result = text
-    for source, target in PLACE_ASCII_MAP.items():
-        result = result.replace(source, f" {target} ")
-    result = re.sub(r"[^a-zA-Z0-9]+", "-", result.lower())
-    result = re.sub(r"-{2,}", "-", result).strip("-")
-    if result:
-        return result
-    digest = hashlib.sha1(text.encode("utf-8")).hexdigest()[:10]
-    return f"place-{digest}"
+    return slugify(text)
 
 
 def _iter_records(payload, key: str) -> list[dict]:

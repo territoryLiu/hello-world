@@ -1,15 +1,13 @@
 from pathlib import Path
 import argparse
 import html
+import sys
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
-TEMPLATES = [
-    "decision-first",
-    "destination-first",
-    "lifestyle-first",
-    "route-first",
-    "transport-first",
-]
+from travel_config import PUBLISH_ARTIFACTS, SORTED_TEMPLATE_IDS as TEMPLATES
 
 
 def _render_links(items: list[tuple[str, str]]) -> str:
@@ -32,13 +30,13 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
     desktop_links = _template_links(guide_root, "desktop")
     mobile_links = _template_links(guide_root, "mobile")
     share_links = [
-        ("单文件分享版", "share.html"),
-        ("路线优先单文件", "recommended.html"),
-        ("来源说明", f"../guides/{guide_root.name}/notes/sources.html"),
+        ("单文件分享版", PUBLISH_ARTIFACTS["share"]),
+        ("路线优先单文件", PUBLISH_ARTIFACTS["recommended"]),
+        ("来源说明", f"../guides/{guide_root.name}/{PUBLISH_ARTIFACTS['sources_html']}"),
     ]
     package_links = [
         ("ZIP 打包说明", "#zip-notes"),
-        ("来源 Markdown", f"../guides/{guide_root.name}/notes/sources.md"),
+        ("来源 Markdown", f"../guides/{guide_root.name}/{PUBLISH_ARTIFACTS['sources_markdown']}"),
     ]
 
     html_text = f"""<!doctype html>
@@ -115,7 +113,7 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
         </section>
         <section class="group">
           <h2>单文件</h2>
-          <p>`share.html` 适合直接转发，`recommended.html` 保留最核心的一版。</p>
+          <p>`{PUBLISH_ARTIFACTS["share"]}` 适合直接转发，`{PUBLISH_ARTIFACTS["recommended"]}` 保留最核心的一版。</p>
           {_render_links(share_links)}
         </section>
         <section class="group" id="zip-notes">

@@ -6,7 +6,7 @@ import re
 
 DEFAULT_SHARE_MODE = "single-html"
 DEFAULT_REVIEW_MODE = "manual-gate"
-DEFAULT_SAMPLE_REFERENCE = {"path": "sample.html", "density_mode": "match-sample"}
+DEFAULT_SAMPLE_REFERENCE = {"path": "", "density_mode": ""}
 CORE_FIELDS = [
     "title",
     "departure_city",
@@ -34,20 +34,7 @@ TOPIC_DEFAULTS = [
 
 def slugify(text: str) -> str:
     source_text = text or ""
-    ascii_map = {
-        "五一": "wuyi",
-        "端午": "duanwu",
-        "南京": "nanjing",
-        "延吉": "yanji",
-        "长春": "changchun",
-        "长白山": "changbaishan",
-        "吉林": "jilin",
-        "图们": "tumen",
-    }
-    result = source_text
-    for source, target in ascii_map.items():
-        result = result.replace(source, f" {target} ")
-    result = re.sub(r"[^a-zA-Z0-9]+", "-", result.lower())
+    result = re.sub(r"[^0-9A-Za-z\u4e00-\u9fff]+", "-", source_text.strip().lower())
     result = re.sub(r"-{2,}", "-", result).strip("-")
     if result:
         return result
@@ -92,7 +79,7 @@ def sample_reference(payload: dict) -> dict:
     if "sample_path" in payload:
         return {
             "path": str(payload.get("sample_path") or DEFAULT_SAMPLE_REFERENCE["path"]),
-            "density_mode": DEFAULT_SAMPLE_REFERENCE["density_mode"],
+            "density_mode": str(payload.get("sample_density_mode") or ""),
         }
     return dict(DEFAULT_SAMPLE_REFERENCE)
 

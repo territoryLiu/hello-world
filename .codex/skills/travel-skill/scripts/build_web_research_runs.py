@@ -1,13 +1,13 @@
 from pathlib import Path
 import argparse
 import json
+import sys
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
-SITE_COVERAGE_TARGETS = {
-    "food": ["meituan", "dianping", "xiaohongshu"],
-    "attractions": ["official", "xiaohongshu", "douyin", "bilibili"],
-    "risks": ["xiaohongshu", "douyin", "bilibili"],
-}
+from travel_config import SITE_COVERAGE_TARGETS
 
 
 def _capture_contract(task: dict) -> str:

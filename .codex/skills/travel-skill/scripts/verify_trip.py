@@ -1,9 +1,13 @@
 from pathlib import Path
 import argparse
 import json
+import sys
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
-EXPECTED_TEMPLATES = ["decision-first", "destination-first", "lifestyle-first", "route-first", "transport-first"]
+from travel_config import SORTED_TEMPLATE_IDS as EXPECTED_TEMPLATES
 
 
 def scan_html_text(root: Path) -> str:

@@ -1,9 +1,19 @@
 from pathlib import Path
 import argparse
 import json
+import sys
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
-OUTPUT_KEYS = ["daily-overview", "recommended", "comprehensive"]
+from travel_config import (
+    FLIGHT_HYBRID_THRESHOLD_KM,
+    FLIGHT_HYBRID_THRESHOLD_LABEL,
+    GUIDE_OUTPUT_KEYS as OUTPUT_KEYS,
+    LONG_DISTANCE_RULE_OVER,
+    LONG_DISTANCE_RULE_WITHIN,
+)
 TIME_SENSITIVE_TOPICS = {
     "weather",
     "seasonality",
@@ -228,7 +238,13 @@ def _distance_km(payload: dict):
 
 def _transport_rule(distance_km) -> dict:
     if isinstance(distance_km, int):
-        return {"long_distance": "over-600km" if distance_km > 600 else "within-600km"}
+        return {
+            "long_distance": (
+                LONG_DISTANCE_RULE_OVER
+                if distance_km > FLIGHT_HYBRID_THRESHOLD_KM
+                else LONG_DISTANCE_RULE_WITHIN
+            )
+        }
     return {"long_distance": "unknown"}
 
 
@@ -305,7 +321,7 @@ def _transport_matrix(fact: dict, transport_rule: dict) -> list[dict]:
             "name": "空铁联运",
             "schedule": f"飞机 + 高铁，经{transfer_city}",
             "price": "通常高于纯高铁，适合压缩总耗时",
-            "duration": "适合超 600km 跨省移动",
+            "duration": f"适合超 {FLIGHT_HYBRID_THRESHOLD_LABEL} 跨省移动",
             "notes": stopover,
         },
         {
@@ -316,7 +332,7 @@ def _transport_matrix(fact: dict, transport_rule: dict) -> list[dict]:
             "notes": f"可行方式：{transport_modes}",
         },
     ]
-    if transport_rule.get("long_distance") != "over-600km":
+    if transport_rule.get("long_distance") != LONG_DISTANCE_RULE_OVER:
         matrix[1]["notes"] = "距离较短时以高铁或直达交通为主，空铁联运作为补充参考。"
     return matrix
 
@@ -392,11 +408,11 @@ def _route_option_cards(payload: dict, transport_facts: list[dict]) -> list[dict
         primary_card["transport_matrix"] = _transport_matrix(primary_fact, rule)
         primary_card["source_meta"] = _source_meta(primary_fact)
     cards = [primary_card]
-    if rule["long_distance"] == "over-600km":
+    if rule["long_distance"] == LONG_DISTANCE_RULE_OVER:
         cards.append(
             _content_item(
                 "空铁联运方案",
-                "行程超过 600km 时同步给出空铁联运，兼顾效率和到站后的接驳稳定性。",
+                f"行程超过 {FLIGHT_HYBRID_THRESHOLD_LABEL} 时同步给出空铁联运，兼顾效率和到站后的接驳稳定性。",
                 [
                     "适合长距离跨省移动时压缩总耗时。",
                     "可结合中转城市安排半日或一日停留。",
@@ -685,7 +701,7 @@ def compose(payload: dict) -> dict:
             "先把大交通和核心景点串起来，再把休息、换乘和用餐节点压进同一条线里。",
             [
                 "默认先看高铁优先方案。",
-                "超过 600km 时同步查看空铁联运。",
+                f"超过 {FLIGHT_HYBRID_THRESHOLD_LABEL} 时同步查看空铁联运。",
                 *traveler_notes[:2],
             ],
         )
