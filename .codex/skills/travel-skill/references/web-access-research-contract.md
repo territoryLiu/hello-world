@@ -1,6 +1,6 @@
 # Web Access Research Contract
 
-All online collection must run through `web-access`.
+All online collection must run through travel-skill built-in online research.
 
 ## Required task fields
 
@@ -27,6 +27,6 @@ All online collection must run through `web-access`.
 
 Start each concrete site task with:
 
-`Use web-access to collect travel evidence for this task.`
+`Use travel-skill built-in online research to collect travel evidence for this task.`
 
-The run must keep `site_query`, preserve raw links, and record whether the site was reached successfully.
+The run must keep `site_query`, preserve raw links, and record `coverage_status` plus `failure_reason` whenever collection is incomplete.

@@ -18,6 +18,11 @@ def build_status(item: dict) -> dict:
     item["whisper_ready"] = whisper_ready()
     item["transcript_status"] = "done" if item["whisper_ready"] else "missing-tool"
     item["keyframe_status"] = "done" if item["ffmpeg_ready"] else "missing-tool"
+    if item["ffmpeg_ready"] and item["whisper_ready"]:
+        item["coverage_status"] = "complete"
+    else:
+        item["coverage_status"] = "partial"
+        item["failure_reason"] = str(item.get("failure_reason") or "missing ffmpeg or whisper")
     return item
 
 

@@ -12,23 +12,23 @@ from travel_config import SITE_COVERAGE_TARGETS
 
 def _capture_contract(task: dict) -> str:
     site = str(task.get("site") or "").lower()
-    method = str(task.get("collection_method") or "web-access")
+    method = str(task.get("collection_method") or "travel-skill")
     required_fields = ", ".join(task.get("must_capture_fields", []))
     instructions = [
         "Open the concrete site result instead of citing generic platform summaries.",
-        "Capture the page body summary and extract structured facts.",
+        "Do page extraction first, capture the page body summary, and extract structured facts.",
         f"Record fields: {required_fields}.",
     ]
     if site in {"xiaohongshu", "douyin", "bilibili"}:
         instructions.append("Read the comments section and capture comments, comment status, and sample size.")
     if site in {"douyin", "bilibili"}:
-        instructions.append("For video pages, capture transcript, timeline, and screenshot candidates.")
+        instructions.append("For video pages, trigger video fallback when needed and capture transcript segments, timeline, visual segments, and screenshot candidates.")
     if task.get("topic") == "long_distance_transport" and site == "official":
         instructions.append(
             "If the target travel date is not yet on sale, collect the latest searchable schedule, keep the checked date context, and mark the fallback strategy."
         )
     instructions.append(
-        f"If any required field cannot be collected with {method}, mark it failed and record the failure reason instead of assuming coverage."
+        f"If any required field cannot be collected with {method}, set coverage_status to partial or failed and record the failure reason instead of assuming coverage."
     )
     return " ".join(instructions)
 
@@ -41,17 +41,18 @@ def build_runs(payload: dict) -> dict:
             continue
         runs.append(
             {
-                "skill": "web-access",
+                "skill": "travel-skill",
                 "task": task,
                 "prompt": (
-                    "Use web-access to collect travel evidence for this task. "
+                    "Use travel-skill built-in online research to collect travel evidence for this task. "
                     f"Search site={task.get('site')} with query={task.get('site_query')}. "
+                    "Use page extraction first and trigger video fallback when the page is insufficient. "
                     f"{_capture_contract(task)}"
                 ),
             }
         )
     return {
-        "runner": "web-access",
+        "runner": "travel-skill",
         "trip_slug": payload.get("trip_slug", ""),
         "site_coverage_targets": SITE_COVERAGE_TARGETS,
         "runs": runs,

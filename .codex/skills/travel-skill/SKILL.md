@@ -26,6 +26,8 @@ Default share format is `single-file HTML` plus ZIP packaging.
 - Schema: `references/content-schema.md`
 - Sharing modes: `references/sharing-modes.md`
 - Research contract: `references/web-access-research-contract.md`
+- Video contract: `references/video-research-contract.md`
+- CDP reference: `references/cdp-api.md`
 - Source priority: `references/source-priority.md`
 - Review checklist: `references/research-checklists.md`
 
@@ -39,7 +41,7 @@ Default share format is `single-file HTML` plus ZIP packaging.
 
 ## Required Skill Coordination
 
-- Use `web-access` for all online collection.
+- Use built-in online research for all online collection.
 - Use `frontend-design` when shaping the final reading experience.
 - Use `ui-ux-pro-max` when finalizing mobile or desktop reading structure and readability.
 - Use `theme-factory` when a themed visual variant is requested.
@@ -94,16 +96,18 @@ Section order for `daily-overview`:
 
 - Prefer official and platform-first sources for transport, weather, tickets, reservation rules, opening status, and notices.
 - Use social and local-life platforms to enrich experience details, food choices, queue patterns, photo spots, and practical tips.
-- `research-run` must use `web-access` with concrete site coverage, not abstract `social` only.
+- `research-run` must use built-in online research with concrete site coverage, not abstract `social` only.
 - Required social and local-life sites include `xiaohongshu`, `douyin`, `bilibili`, `meituan`, and `dianping` when the topic matrix calls for them.
-- For `xiaohongshu`, `douyin`, `bilibili`, `meituan`, and `dianping`, the site is not considered covered unless `web-access` actually reached the page and persisted the required fields for that task.
+- For `xiaohongshu`, `douyin`, `bilibili`, `meituan`, and `dianping`, the site is not considered covered unless the built-in online research flow actually reached the page and persisted the required fields for that task.
 - Required social evidence must explicitly cover recent destination experience, practical pitfalls, and current wearing guidance when those topics are in scope.
 - For destination experience tasks, capture recent experience, high-frequency comments, queue pattern, and scenery status.
 - For `xiaohongshu`, `douyin`, and `bilibili`, capture page body plus comment highlights, comment status, and sample size.
-- For `douyin` and `bilibili`, also capture transcript, timeline, and screenshot candidates when the page is video-based.
+- For `douyin` and `bilibili`, also capture transcript segments, timeline, visual segments, and screenshot candidates when the page is video-based.
 - For `meituan` and `dianping`, capture concrete shop names, addresses, recommended dishes, per-capita range, and queue pattern. For this trip type, the published guide should not claim a venue-level recommendation unless those fields were actually collected.
-- If `web-access` cannot reach a required site, the page blocks login, content extraction fails, or the returned evidence is incomplete, tell the user immediately that information collection has a problem before continuing with the next research step.
-- If a required field cannot be collected, mark it as failed and record the failure reason instead of pretending the site was covered.
+- Use page extraction first. Trigger video fallback when the page body, transcript, or visual evidence is insufficient.
+- Video fallback may use `yt-dlp`, `ffmpeg`, `whisper`, and Codex analysis.
+- If built-in online research cannot reach a required site, the page blocks login, content extraction fails, or the returned evidence is incomplete, tell the user immediately that information collection has a problem before continuing with the next research step.
+- If a required field cannot be collected, mark it as `coverage_status=failed` or `coverage_status=partial` and record the failure reason instead of pretending the site was covered.
 - A `coverage note` or placeholder failure record is not valid site coverage. It is only a failure log.
 - Keep `checked_at` on time-sensitive facts.
 - Store research in reusable JSON so later trips can extend the same destination knowledge base.

@@ -9,15 +9,23 @@ def classify_item(item: dict) -> dict:
     if has_link and keyframes:
         state = "hero-ready" if len(keyframes) >= 2 else "illustrative-media"
         can_render = True
+        coverage_status = str(item.get("coverage_status") or "complete")
+        failure_reason = str(item.get("failure_reason") or "")
     elif has_link:
         state = "text-citation-only"
         can_render = False
+        coverage_status = str(item.get("coverage_status") or "partial")
+        failure_reason = str(item.get("failure_reason") or "")
     else:
         state = "blocked"
         can_render = False
+        coverage_status = "failed"
+        failure_reason = str(item.get("failure_reason") or "missing clickable source url")
     item = dict(item)
     item["publish_state"] = state
     item["can_render_as_visual"] = can_render
+    item["coverage_status"] = coverage_status
+    item["failure_reason"] = failure_reason
     return item
 
 
