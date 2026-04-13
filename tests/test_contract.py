@@ -67,6 +67,25 @@ class TravelSkillContractTest(unittest.TestCase):
         ]:
             self.assertIn(needle, content)
 
+    def test_openai_contract_does_not_hardcode_legacy_600km_rule(self):
+        path = SKILL_DIR / "agents" / "openai.yaml"
+        content = path.read_text(encoding="utf-8") if path.exists() else ""
+
+        self.assertNotIn("600km transport rule", content)
+        self.assertIn("runtime config", content)
+
+    def test_skill_markdown_points_to_canonical_references(self):
+        path = SKILL_DIR / "SKILL.md"
+        content = path.read_text(encoding="utf-8") if path.exists() else ""
+
+        for needle in [
+            "references/content-schema.md",
+            "references/sharing-modes.md",
+            "references/web-access-research-contract.md",
+            "references/source-priority.md",
+        ]:
+            self.assertIn(needle, content)
+
     def test_reference_documents_include_required_keywords(self):
         checks = {
             "source-priority.md": ["# Source Priority", "official", "platform", "social", "checked_at"],
@@ -111,6 +130,21 @@ class TravelSkillContractTest(unittest.TestCase):
             content = path.read_text(encoding="utf-8") if path.exists() else ""
             for needle in needles:
                 self.assertIn(needle, content, f"{filename} missing keyword: {needle}")
+
+    def test_sharing_modes_drops_duplicate_ordered_sections(self):
+        path = SKILL_DIR / "references" / "sharing-modes.md"
+        content = path.read_text(encoding="utf-8") if path.exists() else ""
+
+        self.assertNotIn("## Ordered Sections", content)
+        self.assertIn("content-schema.md", content)
+
+    def test_research_checklists_stays_review_oriented(self):
+        path = SKILL_DIR / "references" / "research-checklists.md"
+        content = path.read_text(encoding="utf-8") if path.exists() else ""
+
+        self.assertNotIn("Required persisted fields", content)
+        self.assertIn("## Delivery", content)
+        self.assertIn("final render passes static checks and Playwright checks", content)
 
 
 class PathContractTest(unittest.TestCase):

@@ -29,13 +29,6 @@
 - `share.html`: single-file comprehensive guide
 - `package.zip`: archive bundle for transfer and backup
 
-## Ordered Sections
+## Canonical Ordering
 
-- `recommended_route`
-- `route_options`
-- `clothing_guide`
-- `attractions`
-- `transport_details`
-- `food_by_city`
-- `tips`
-- `sources`
+Section ordering and layer structure are defined in `content-schema.md` and the runtime template config.

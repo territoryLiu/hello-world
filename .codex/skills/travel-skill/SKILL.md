@@ -21,6 +21,14 @@ Default outputs:
 
 Default share format is `single-file HTML` plus ZIP packaging.
 
+## Canonical References
+
+- Schema: `references/content-schema.md`
+- Sharing modes: `references/sharing-modes.md`
+- Research contract: `references/web-access-research-contract.md`
+- Source priority: `references/source-priority.md`
+- Review checklist: `references/research-checklists.md`
+
 ## Output Layout
 
 - Reusable destination knowledge is written under `travel-data/places/`.
