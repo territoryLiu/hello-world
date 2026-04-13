@@ -1,0 +1,23 @@
+{
+  "title": "五一延吉长白山",
+  "departure_city": "南京",
+  "destinations": [
+    "延吉",
+    "长白山"
+  ],
+  "date_range": {
+    "start": "2026-04-30",
+    "end": "2026-05-05"
+  },
+  "travelers": {
+    "count": 4,
+    "adults": 3,
+    "children": 1,
+    "age_notes": "1 位 7 岁儿童，2 位 60+ 长辈"
+  },
+  "budget": {
+    "mode": "per_person",
+    "min": 3000,
+    "max": 5000
+  }
+}

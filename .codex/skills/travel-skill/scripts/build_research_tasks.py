@@ -4,10 +4,10 @@ import json
 
 
 SOCIAL_COMMENT_FIELDS = ["comment_highlights", "comment_capture_status", "comment_sample_size"]
-VIDEO_EVIDENCE_FIELDS = ["transcript", "timeline", "shot_candidates"]
+VIDEO_EVIDENCE_FIELDS = ["transcript_segments", "timeline", "visual_segments", "shot_candidates"]
 EXPERIENCE_FIELDS = ["recent_experience", "high_frequency_comments", "queue_pattern", "scenery_status"]
 FOOD_DETAIL_FIELDS = ["shop_name", "address", "recommended_dishes", "per_capita_range", "queue_pattern"]
-FAILURE_HANDLING_FIELDS = ["failure_reason", "user_alert_required"]
+FAILURE_HANDLING_FIELDS = ["coverage_status", "failure_reason", "user_alert_required"]
 
 
 TOPIC_SITE_RULES = {
@@ -17,16 +17,16 @@ TOPIC_SITE_RULES = {
     ],
     "clothing": [
         {"platform": "history", "site": "history", "collection_method": "search+fetch", "must_capture_fields": ["summary", "temperature_range"], "evidence_level": "secondary"},
-        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", "recent_experience", "wearing_guidance", "practical_pitfalls", *SOCIAL_COMMENT_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
-        {"platform": "social", "site": "douyin", "collection_method": "web-access", "must_capture_fields": ["summary", "recent_experience", "wearing_guidance", "practical_pitfalls", *SOCIAL_COMMENT_FIELDS, *VIDEO_EVIDENCE_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "travel-skill", "must_capture_fields": ["summary", "recent_experience", "wearing_guidance", "practical_pitfalls", *SOCIAL_COMMENT_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "social", "site": "douyin", "collection_method": "travel-skill", "must_capture_fields": ["summary", "recent_experience", "wearing_guidance", "practical_pitfalls", *SOCIAL_COMMENT_FIELDS, *VIDEO_EVIDENCE_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
     ],
     "packing": [
         {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary", "facts"], "evidence_level": "primary"},
-        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", "recent_experience", "practical_pitfalls", *SOCIAL_COMMENT_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "travel-skill", "must_capture_fields": ["summary", "recent_experience", "practical_pitfalls", *SOCIAL_COMMENT_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
     ],
     "long_distance_transport": [
         {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary", "schedule", "price_range", "latest_searchable_schedule", "fallback_strategy", "checked_date_context", "facts"], "evidence_level": "primary"},
-        {"platform": "platform", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", "recent_experience", "practical_pitfalls", *SOCIAL_COMMENT_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "platform", "site": "xiaohongshu", "collection_method": "travel-skill", "must_capture_fields": ["summary", "recent_experience", "practical_pitfalls", *SOCIAL_COMMENT_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
     ],
     "city_transport": [
         {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary", "facts"], "evidence_level": "primary"},
@@ -37,14 +37,14 @@ TOPIC_SITE_RULES = {
     ],
     "attractions": [
         {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary", "price_range", "reservation_rules", "facts"], "evidence_level": "primary"},
-        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", *EXPERIENCE_FIELDS, *SOCIAL_COMMENT_FIELDS, "shot_candidates", "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
-        {"platform": "social", "site": "douyin", "collection_method": "web-access", "must_capture_fields": ["summary", *EXPERIENCE_FIELDS, *SOCIAL_COMMENT_FIELDS, *VIDEO_EVIDENCE_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
-        {"platform": "social", "site": "bilibili", "collection_method": "web-access", "must_capture_fields": ["summary", *EXPERIENCE_FIELDS, *SOCIAL_COMMENT_FIELDS, *VIDEO_EVIDENCE_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "travel-skill", "must_capture_fields": ["summary", *EXPERIENCE_FIELDS, *SOCIAL_COMMENT_FIELDS, "shot_candidates", "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "social", "site": "douyin", "collection_method": "travel-skill", "must_capture_fields": ["summary", *EXPERIENCE_FIELDS, *SOCIAL_COMMENT_FIELDS, *VIDEO_EVIDENCE_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "social", "site": "bilibili", "collection_method": "travel-skill", "must_capture_fields": ["summary", *EXPERIENCE_FIELDS, *SOCIAL_COMMENT_FIELDS, *VIDEO_EVIDENCE_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
     ],
     "food": [
-        {"platform": "local-listing", "site": "meituan", "collection_method": "web-access", "must_capture_fields": [*FOOD_DETAIL_FIELDS, "recent_experience", "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "primary"},
-        {"platform": "local-listing", "site": "dianping", "collection_method": "web-access", "must_capture_fields": [*FOOD_DETAIL_FIELDS, "recent_experience", "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "primary"},
-        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", "recent_experience", "practical_pitfalls", *SOCIAL_COMMENT_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "local-listing", "site": "meituan", "collection_method": "travel-skill", "must_capture_fields": [*FOOD_DETAIL_FIELDS, "recent_experience", "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "primary"},
+        {"platform": "local-listing", "site": "dianping", "collection_method": "travel-skill", "must_capture_fields": [*FOOD_DETAIL_FIELDS, "recent_experience", "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "primary"},
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "travel-skill", "must_capture_fields": ["summary", "recent_experience", "practical_pitfalls", *SOCIAL_COMMENT_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
     ],
     "lodging_area": [
         {"platform": "platform", "site": "platform", "collection_method": "search+fetch", "must_capture_fields": ["summary", "facts"], "evidence_level": "primary"},
@@ -52,18 +52,18 @@ TOPIC_SITE_RULES = {
     ],
     "seasonality": [
         {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary", "facts"], "evidence_level": "primary"},
-        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", "recent_experience", "scenery_status", *SOCIAL_COMMENT_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "travel-skill", "must_capture_fields": ["summary", "recent_experience", "scenery_status", *SOCIAL_COMMENT_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
     ],
     "risks": [
-        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["summary", "recent_experience", "practical_pitfalls", "queue_pattern", "high_frequency_comments", *SOCIAL_COMMENT_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "primary"},
-        {"platform": "social", "site": "douyin", "collection_method": "web-access", "must_capture_fields": ["summary", "recent_experience", "practical_pitfalls", "queue_pattern", "scenery_status", "high_frequency_comments", *SOCIAL_COMMENT_FIELDS, *VIDEO_EVIDENCE_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
-        {"platform": "social", "site": "bilibili", "collection_method": "web-access", "must_capture_fields": ["summary", "recent_experience", "practical_pitfalls", "queue_pattern", "scenery_status", "high_frequency_comments", *SOCIAL_COMMENT_FIELDS, *VIDEO_EVIDENCE_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "travel-skill", "must_capture_fields": ["summary", "recent_experience", "practical_pitfalls", "queue_pattern", "high_frequency_comments", *SOCIAL_COMMENT_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "primary"},
+        {"platform": "social", "site": "douyin", "collection_method": "travel-skill", "must_capture_fields": ["summary", "recent_experience", "practical_pitfalls", "queue_pattern", "scenery_status", "high_frequency_comments", *SOCIAL_COMMENT_FIELDS, *VIDEO_EVIDENCE_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "social", "site": "bilibili", "collection_method": "travel-skill", "must_capture_fields": ["summary", "recent_experience", "practical_pitfalls", "queue_pattern", "scenery_status", "high_frequency_comments", *SOCIAL_COMMENT_FIELDS, *VIDEO_EVIDENCE_FIELDS, "facts", *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
     ],
     "sources": [
         {"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["url", "checked_at"], "evidence_level": "primary"},
-        {"platform": "social", "site": "xiaohongshu", "collection_method": "web-access", "must_capture_fields": ["url", "summary", *SOCIAL_COMMENT_FIELDS, *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
-        {"platform": "social", "site": "douyin", "collection_method": "web-access", "must_capture_fields": ["url", "summary", *SOCIAL_COMMENT_FIELDS, *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
-        {"platform": "social", "site": "bilibili", "collection_method": "web-access", "must_capture_fields": ["url", "summary", *SOCIAL_COMMENT_FIELDS, *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "social", "site": "xiaohongshu", "collection_method": "travel-skill", "must_capture_fields": ["url", "summary", *SOCIAL_COMMENT_FIELDS, *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "social", "site": "douyin", "collection_method": "travel-skill", "must_capture_fields": ["url", "summary", *SOCIAL_COMMENT_FIELDS, *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
+        {"platform": "social", "site": "bilibili", "collection_method": "travel-skill", "must_capture_fields": ["url", "summary", *SOCIAL_COMMENT_FIELDS, *FAILURE_HANDLING_FIELDS], "evidence_level": "supporting"},
     ],
 }
 

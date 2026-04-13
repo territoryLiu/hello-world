@@ -29,7 +29,11 @@ class TravelSkillContractTest(unittest.TestCase):
         for needle in [
             "review-gate",
             "single-file HTML",
-            "web-access",
+            "built-in online research",
+            "video fallback",
+            "yt-dlp",
+            "ffmpeg",
+            "whisper",
             "frontend-design",
             "ui-ux-pro-max",
             "playwright-skill",
@@ -46,13 +50,14 @@ class TravelSkillContractTest(unittest.TestCase):
             "text citation only",
         ]:
             self.assertIn(needle, content)
+        self.assertNotIn("Use `web-access` for all online collection.", content)
 
     def test_openai_contract_mentions_web_access_research_run(self):
         path = SKILL_DIR / "agents" / "openai.yaml"
         content = path.read_text(encoding="utf-8") if path.exists() else ""
         for needle in [
             "Travel Skill",
-            "web-access",
+            "built-in online research",
             "build_research_tasks.py",
             "build_web_research_runs.py",
             "validate_site_coverage.py",
@@ -63,7 +68,8 @@ class TravelSkillContractTest(unittest.TestCase):
             "dianping",
             "raw JSON",
             "comment_highlights",
-            "timeline",
+            "coverage_status",
+            "video fallback",
         ]:
             self.assertIn(needle, content)
 
@@ -83,8 +89,22 @@ class TravelSkillContractTest(unittest.TestCase):
             "references/sharing-modes.md",
             "references/web-access-research-contract.md",
             "references/source-priority.md",
+            "references/video-research-contract.md",
+            "references/cdp-api.md",
         ]:
             self.assertIn(needle, content)
+
+    def test_required_reference_files_include_video_contract_and_cdp_docs(self):
+        required = [
+            SKILL_DIR / "references" / "video-research-contract.md",
+            SKILL_DIR / "references" / "cdp-api.md",
+            SKILL_DIR / "references" / "site-patterns" / "xiaohongshu.com.md",
+            SKILL_DIR / "scripts" / "check-web-deps.mjs",
+            SKILL_DIR / "scripts" / "cdp-proxy.mjs",
+            SKILL_DIR / "scripts" / "match-site.mjs",
+        ]
+        missing = [str(path.relative_to(ROOT)) for path in required if not path.exists()]
+        self.assertEqual(missing, [])
 
     def test_reference_documents_include_required_keywords(self):
         checks = {
@@ -118,11 +138,25 @@ class TravelSkillContractTest(unittest.TestCase):
             "site-matrix.md": ["# Site Matrix", "xiaohongshu", "douyin", "bilibili", "meituan", "dianping"],
             "web-access-research-contract.md": [
                 "# Web Access Research Contract",
-                "web-access",
+                "built-in online research",
                 "site_query",
                 "collection_method",
                 "comment_highlights",
-                "timeline",
+                "coverage_status",
+            ],
+            "video-research-contract.md": [
+                "# Video Research Contract",
+                "collector_mode",
+                "coverage_status",
+                "failure_reason",
+                "transcript_segments",
+                "visual_segments",
+            ],
+            "cdp-api.md": [
+                "CDP",
+                "/targets",
+                "/new",
+                "/eval",
             ],
         }
         for filename, needles in checks.items():

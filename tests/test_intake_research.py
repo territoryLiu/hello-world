@@ -170,7 +170,7 @@ class IntakeResearchTest(unittest.TestCase):
             run_script(SKILL_DIR / "scripts" / "build_web_research_runs.py", "--input", tasks, "--output", runs)
             payload = json.loads(runs.read_text(encoding="utf-8"))
 
-        self.assertEqual(payload["runner"], "web-access")
+        self.assertEqual(payload["runner"], "travel-skill")
         self.assertIn("runs", payload)
         self.assertIn("site_coverage_targets", payload)
         self.assertIn("food", payload["site_coverage_targets"])
@@ -178,8 +178,10 @@ class IntakeResearchTest(unittest.TestCase):
         self.assertIn("meituan", payload["site_coverage_targets"]["food"])
         self.assertIn("dianping", payload["site_coverage_targets"]["food"])
         first_run = payload["runs"][0]
-        self.assertEqual(first_run["skill"], "web-access")
-        self.assertTrue(first_run["prompt"].startswith("Use web-access"))
+        self.assertEqual(first_run["skill"], "travel-skill")
+        self.assertTrue(first_run["prompt"].startswith("Use travel-skill built-in online research"))
+        self.assertIn("video fallback", first_run["prompt"])
+        self.assertIn("coverage_status", first_run["prompt"])
 
     def test_social_tasks_require_comment_capture_and_transport_tasks_include_latest_searchable_fallback(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -200,6 +202,9 @@ class IntakeResearchTest(unittest.TestCase):
             self.assertIn("comment_highlights", task["must_capture_fields"])
             self.assertIn("comment_capture_status", task["must_capture_fields"])
             self.assertIn("comment_sample_size", task["must_capture_fields"])
+            self.assertIn("coverage_status", task["must_capture_fields"])
+            self.assertIn("failure_reason", task["must_capture_fields"])
+            self.assertEqual(task["collection_method"], "travel-skill")
 
         transport_tasks = [task for task in payload["tasks"] if task["topic"] == "long_distance_transport"]
         self.assertTrue(transport_tasks)
@@ -221,8 +226,9 @@ class IntakeResearchTest(unittest.TestCase):
 
         douyin_run = next(run for run in payload["runs"] if run["task"]["site"] == "douyin")
         self.assertIn("comments", douyin_run["prompt"].lower())
-        self.assertIn("timeline", douyin_run["prompt"].lower())
-        self.assertIn("failed", douyin_run["prompt"].lower())
+        self.assertIn("video fallback", douyin_run["prompt"].lower())
+        self.assertIn("coverage_status", douyin_run["prompt"].lower())
+        self.assertIn("failure", douyin_run["prompt"].lower())
 
     def test_persist_research_knowledge_writes_reusable_place_buckets(self):
         raw_payload = {
