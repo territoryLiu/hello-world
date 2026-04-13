@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 import tempfile
 
-from tests.travel_skill.helpers import SKILL_DIR, run_script
+from tests.helpers import SKILL_DIR, run_script
 
 
 def test_localize_facts_normalizes_english_transport_copy():

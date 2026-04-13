@@ -4,7 +4,7 @@ import tempfile
 import unittest
 import zipfile
 
-from tests.travel_skill.helpers import ROOT, SKILL_DIR, run_script
+from tests.helpers import ROOT, SKILL_DIR, run_script
 
 
 class RenderPackageTest(unittest.TestCase):

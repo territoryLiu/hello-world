@@ -4,7 +4,7 @@ import sys
 import tempfile
 import unittest
 
-from tests.travel_skill.helpers import SKILL_DIR
+from tests.helpers import SKILL_DIR
 
 
 def load_module(module_name: str):
@@ -70,6 +70,23 @@ class TravelConfigCentralizationTest(unittest.TestCase):
         self.assertEqual(config.PUBLISH_ARTIFACTS["sources_html"], "notes/sources.html")
         self.assertIs(portal.PUBLISH_ARTIFACTS, config.PUBLISH_ARTIFACTS)
         self.assertIs(packager.PUBLISH_ARTIFACTS, config.PUBLISH_ARTIFACTS)
+
+    def test_sharing_modes_reference_uses_guides_root(self):
+        sharing_modes = (SKILL_DIR / "references" / "sharing-modes.md").read_text(encoding="utf-8")
+
+        self.assertIn("guides/<slug>/desktop/route-first/index.html", sharing_modes)
+        self.assertIn("guides/<slug>/mobile/route-first/index.html", sharing_modes)
+        self.assertNotIn("trips/<slug>/desktop", sharing_modes)
+        self.assertNotIn("trips/<slug>/mobile", sharing_modes)
+
+    def test_sharing_modes_reference_lists_publish_artifacts_from_config(self):
+        config = load_module("travel_config")
+        sharing_modes = (SKILL_DIR / "references" / "sharing-modes.md").read_text(encoding="utf-8")
+
+        self.assertIn(config.PUBLISH_ARTIFACTS["portal"], sharing_modes)
+        self.assertIn(config.PUBLISH_ARTIFACTS["recommended"], sharing_modes)
+        self.assertIn(config.PUBLISH_ARTIFACTS["share"], sharing_modes)
+        self.assertIn("package.zip", sharing_modes)
 
     def test_package_summary_text_uses_publish_artifact_config(self):
         packager = load_module("package_trip")

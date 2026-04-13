@@ -3,7 +3,7 @@ import json
 import tempfile
 import unittest
 
-from tests.travel_skill.helpers import SKILL_DIR, run_script
+from tests.helpers import SKILL_DIR, run_script
 
 
 class MediaPipelineTest(unittest.TestCase):

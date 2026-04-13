@@ -6,7 +6,7 @@ import sys
 import tempfile
 import unittest
 
-from tests.travel_skill.helpers import ROOT, SKILL_DIR, run_script
+from tests.helpers import ROOT, SKILL_DIR, run_script
 
 
 def load_verify_trip_module():

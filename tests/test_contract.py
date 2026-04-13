@@ -2,7 +2,7 @@ import importlib.util
 from pathlib import Path
 import unittest
 
-from tests.travel_skill.helpers import ROOT, SKILL_DIR
+from tests.helpers import ROOT, SKILL_DIR
 
 
 class TravelSkillContractTest(unittest.TestCase):

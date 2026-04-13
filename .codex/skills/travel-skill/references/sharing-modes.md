@@ -7,16 +7,20 @@
 
 ## Output Layout
 
-- `trips/<slug>/desktop/daily-overview/index.html`
-- `trips/<slug>/desktop/recommended/index.html`
-- `trips/<slug>/desktop/comprehensive/index.html`
-- `trips/<slug>/mobile/daily-overview/index.html`
-- `trips/<slug>/mobile/recommended/index.html`
-- `trips/<slug>/mobile/comprehensive/index.html`
-- `trips/<slug>/assets/base.css`
-- `trips/<slug>/assets/guide-content.js`
-- `trips/<slug>/assets/render-guide.js`
-- `trips/<slug>/notes/sources.md`
+- `guides/<slug>/desktop/route-first/index.html`
+- `guides/<slug>/desktop/decision-first/index.html`
+- `guides/<slug>/desktop/destination-first/index.html`
+- `guides/<slug>/desktop/transport-first/index.html`
+- `guides/<slug>/desktop/lifestyle-first/index.html`
+- `guides/<slug>/mobile/route-first/index.html`
+- `guides/<slug>/mobile/decision-first/index.html`
+- `guides/<slug>/mobile/destination-first/index.html`
+- `guides/<slug>/mobile/transport-first/index.html`
+- `guides/<slug>/mobile/lifestyle-first/index.html`
+- `guides/<slug>/assets/base.css`
+- `guides/<slug>/assets/guide-content.js`
+- `guides/<slug>/assets/render-guide.js`
+- `guides/<slug>/notes/sources.md`
 
 ## Share Deliverables
 

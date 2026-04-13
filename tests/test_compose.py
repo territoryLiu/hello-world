@@ -4,7 +4,7 @@ import json
 import tempfile
 import unittest
 
-from tests.travel_skill.helpers import ROOT, SKILL_DIR, run_script
+from tests.helpers import ROOT, SKILL_DIR, run_script
 
 
 class ComposeGuideModelTest(unittest.TestCase):
