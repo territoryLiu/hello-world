@@ -7,16 +7,8 @@
 
 ## Output Layout
 
-- `guides/<slug>/desktop/route-first/index.html`
-- `guides/<slug>/desktop/decision-first/index.html`
-- `guides/<slug>/desktop/destination-first/index.html`
-- `guides/<slug>/desktop/transport-first/index.html`
-- `guides/<slug>/desktop/lifestyle-first/index.html`
-- `guides/<slug>/mobile/route-first/index.html`
-- `guides/<slug>/mobile/decision-first/index.html`
-- `guides/<slug>/mobile/destination-first/index.html`
-- `guides/<slug>/mobile/transport-first/index.html`
-- `guides/<slug>/mobile/lifestyle-first/index.html`
+- `guides/<slug>/desktop/editorial/index.html`
+- `guides/<slug>/mobile/editorial/index.html`
 - `guides/<slug>/assets/base.css`
 - `guides/<slug>/assets/guide-content.js`
 - `guides/<slug>/assets/render-guide.js`

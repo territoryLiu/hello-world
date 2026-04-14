@@ -9,7 +9,6 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from travel_config import TEMPLATE_IDS as RENDER_TEMPLATES
 from travel_config import TEMPLATE_LABELS, TEMPLATE_SECTIONS
 
 
@@ -27,12 +26,12 @@ SECTION_META = {
     "tips": ("温馨提示", "把节奏、排队、天气和复核提醒集中呈现。"),
     "sources": ("信息来源", "保留可追溯来源，方便二次核对。"),
 }
-STYLE_THEMES = {
-    "route-first": {"font": '"Microsoft YaHei", "PingFang SC", sans-serif', "accent": "#9a4b2f", "bg": "#f4efe6", "surface": "#fffaf4", "ink": "#272117"},
-    "decision-first": {"font": '"Noto Sans SC", "Microsoft YaHei", sans-serif', "accent": "#1d1d1d", "bg": "#f6f6f3", "surface": "#ffffff", "ink": "#151515"},
-    "destination-first": {"font": '"Source Han Serif SC", "STSong", serif', "accent": "#1c6b72", "bg": "#ecf5f3", "surface": "#fbfffe", "ink": "#173033"},
-    "transport-first": {"font": '"STKaiti", "KaiTi", serif', "accent": "#7e5a2f", "bg": "#f0e5d2", "surface": "#fff8ec", "ink": "#2f2416"},
-    "lifestyle-first": {"font": '"Source Han Sans SC", "Microsoft YaHei", sans-serif', "accent": "#426b5f", "bg": "#edf3ee", "surface": "#f9fcf8", "ink": "#182620"},
+EDITORIAL_THEME = {
+    "font": '"Source Han Serif SC", "STSong", serif',
+    "accent": "#8c4b2e",
+    "bg": "#f3ede3",
+    "surface": "#fffaf4",
+    "ink": "#241d16",
 }
 
 
@@ -81,8 +80,8 @@ def _guide_content_script(payload: dict) -> str:
     return f"window.__TRAVEL_GUIDE__ = {data};\n"
 
 
-def _style_override_css(style: str, device: str) -> str:
-    theme = STYLE_THEMES.get(style, STYLE_THEMES["route-first"])
+def _style_override_css(device: str) -> str:
+    theme = EDITORIAL_THEME
     mobile_grid = "1fr" if device == "mobile" else "repeat(2, minmax(0, 1fr))"
     return f"""
     :root {{
@@ -544,7 +543,7 @@ def _render_media_block(image_plan: dict, section_id: str) -> str:
     return "".join(blocks)
 
 
-def _render_hero_media(meta: dict, image_plan: dict, style: str) -> str:
+def _render_hero_media(meta: dict, image_plan: dict, template_id: str) -> str:
     cover = image_plan.get("cover") if isinstance(image_plan, dict) and isinstance(image_plan.get("cover"), dict) else {}
     if _safe_text(cover.get("publish_state")) == "text-citation-only":
         return ""
@@ -558,7 +557,7 @@ def _render_hero_media(meta: dict, image_plan: dict, style: str) -> str:
     return (
         '<div class="hero-media">'
         f"{_render_media_image(cover)}"
-        f"<p class=\"eyebrow\">{_escape(TEMPLATE_LABELS.get(style, style))}</p>"
+        f"<p class=\"eyebrow\">{_escape(TEMPLATE_LABELS.get(template_id, template_id))}</p>"
         + "".join(f"<p>{_escape(line)}</p>" for line in detail_lines)
         + "</div>"
     )
@@ -652,7 +651,7 @@ def _sources_html(payload: dict) -> str:
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{_escape(_safe_text(meta.get('title')) or '旅行攻略')} · 来源说明</title>
     <link rel="stylesheet" href="../assets/base.css" />
-    <style>{_style_override_css('route-first', 'desktop')}</style>
+    <style>{_style_override_css('desktop')}</style>
   </head>
   <body data-page="sources" data-template="sources">
     <div class="page-shell style-reference">
@@ -692,8 +691,8 @@ def _render_section_block(payload: dict, section_id: str, image_plan: dict) -> s
     )
 
 
-def _apply_template(template_id: str, replacements: dict[str, str]) -> str:
-    template_html = _load_asset(f"template-{template_id}.html")
+def _apply_template(replacements: dict[str, str]) -> str:
+    template_html = _load_asset("template-editorial.html")
     output = template_html
     for key, value in replacements.items():
         output = output.replace(f"{{{{ {key} }}}}", value)
@@ -737,7 +736,7 @@ def _render_template_page(payload: dict, template_id: str, device: str) -> str:
         "tips": _render_section_block(payload, "tips", image_plan) if "tips" in section_ids else "",
         "sources": _render_section_block(payload, "sources", image_plan) if "sources" in section_ids else "",
     }
-    body_html = _apply_template(template_id, replacements)
+    body_html = _apply_template(replacements)
     return f"""<!doctype html>
 <html lang="zh-CN">
   <head>
@@ -745,7 +744,7 @@ def _render_template_page(payload: dict, template_id: str, device: str) -> str:
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{_escape(title)} · {_escape(TEMPLATE_LABELS.get(template_id, template_id))}</title>
     <link rel="stylesheet" href="../../assets/base.css" />
-    <style>{_style_override_css(template_id, device)}</style>
+    <style>{_style_override_css(device)}</style>
   </head>
   <body data-device="{_escape(device)}" data-template="{_escape(template_id)}" data-trip="{_escape(slug)}">
     <div class="page-shell template-{_escape(template_id)} device-{_escape(device)}">
@@ -768,7 +767,11 @@ def render_site(payload: dict, output_root: Path, style: str = "all") -> Path:
     assets_dir.mkdir(parents=True, exist_ok=True)
     notes_dir.mkdir(parents=True, exist_ok=True)
 
-    selected_templates = RENDER_TEMPLATES if not style or style in {"all", "default"} else [style]
+    normalized_style = _safe_text(style) or "all"
+    if normalized_style not in {"all", "default", "editorial"}:
+        raise ValueError(f"unsupported render style: {normalized_style}")
+
+    selected_templates = ["editorial"]
     for device in ["desktop", "mobile"]:
         for template_id in selected_templates:
             template_dir = guide_root / device / template_id

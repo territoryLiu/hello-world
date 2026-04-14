@@ -31,7 +31,7 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
     mobile_links = _template_links(guide_root, "mobile")
     share_links = [
         ("单文件分享版", PUBLISH_ARTIFACTS["share"]),
-        ("路线优先单文件", PUBLISH_ARTIFACTS["recommended"]),
+        ("主推荐分享页", PUBLISH_ARTIFACTS["recommended"]),
         ("来源说明", f"../guides/{guide_root.name}/{PUBLISH_ARTIFACTS['sources_html']}"),
     ]
     package_links = [
@@ -95,11 +95,11 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
   </head>
   <body>
     <div class="shell">
-      <section class="hero">
-        <p>旅行分享入口</p>
-        <h1>{html.escape(title)}</h1>
-        <p>这里汇总桌面端、手机端、单文件分享页、来源说明和 ZIP 交付入口。固定只发布五套模板版本。</p>
-      </section>
+        <section class="hero">
+          <p>旅行分享入口</p>
+          <h1>{html.escape(title)}</h1>
+          <p>这里汇总当前默认杂志版的桌面端、手机端、单文件分享页、来源说明和 ZIP 交付入口。</p>
+        </section>
       <div class="grid">
         <section class="group">
           <h2>桌面端</h2>
@@ -113,7 +113,7 @@ def build_portal(guide_root: Path, output_path: Path) -> Path:
         </section>
         <section class="group">
           <h2>单文件</h2>
-          <p>`{PUBLISH_ARTIFACTS["share"]}` 适合直接转发，`{PUBLISH_ARTIFACTS["recommended"]}` 保留最核心的一版。</p>
+          <p>`{PUBLISH_ARTIFACTS["share"]}` 适合直接转发，`{PUBLISH_ARTIFACTS["recommended"]}` 作为当前主推荐分享入口。</p>
           {_render_links(share_links)}
         </section>
         <section class="group" id="zip-notes">

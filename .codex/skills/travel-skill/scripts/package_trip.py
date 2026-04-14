@@ -29,7 +29,7 @@ def build_summary(guide_root: Path, portal: Path, recommended_html: Path, share_
             "",
             "share_notes:",
             f"- {PUBLISH_ARTIFACTS['share']} 是优先转发的完整单文件分享版。",
-            f"- {PUBLISH_ARTIFACTS['recommended']} 适合更轻量的路线优先阅读版本。",
+            f"- {PUBLISH_ARTIFACTS['recommended']} 是当前主推荐分享入口。",
             f"- {PUBLISH_ARTIFACTS['sources_html']} 用于按 site、topic、checked_at 和 time-sensitive 快速复核。",
             "- ZIP 适合归档和整包分发。",
         ]

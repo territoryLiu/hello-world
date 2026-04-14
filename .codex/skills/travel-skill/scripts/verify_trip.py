@@ -7,7 +7,6 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from travel_config import SORTED_TEMPLATE_IDS as EXPECTED_TEMPLATES
 from verify_render_with_playwright import verify_render as verify_render_with_playwright
 
 
@@ -30,8 +29,9 @@ def verify_trip(guide_root: Path) -> dict:
     mobile_templates = _template_dirs(guide_root, "mobile")
     content_checks = {
         "all_primary_text_in_zh": "Travel Skill" not in html_blob,
-        "desktop_templates_complete": desktop_templates == EXPECTED_TEMPLATES,
-        "mobile_templates_complete": mobile_templates == EXPECTED_TEMPLATES,
+        "desktop_template_complete": desktop_templates == ["editorial"],
+        "mobile_template_complete": mobile_templates == ["editorial"],
+        "single_template_is_editorial": desktop_templates == ["editorial"] and mobile_templates == ["editorial"],
         "share_artifacts_present": all(
             (guide_root / "notes" / name).exists()
             for name in ["sources.md", "sources.html"]
@@ -44,9 +44,6 @@ def verify_trip(guide_root: Path) -> dict:
             and "text-citation-only" not in html_blob
         ),
     }
-    content_checks["exactly_five_templates"] = (
-        content_checks["desktop_templates_complete"] and content_checks["mobile_templates_complete"]
-    )
     warnings = []
     browser_check = verify_render_with_playwright(guide_root)
     if browser_check.get("status") == "warn":
