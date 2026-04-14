@@ -19,6 +19,8 @@ Default outputs:
 - ZIP package
 - verification report
 
+Default reading experience is a single editorial-style HTML guide family with desktop and mobile variants.
+
 Default share format is `single-file HTML` plus ZIP packaging.
 
 ## Canonical References
@@ -30,6 +32,9 @@ Default share format is `single-file HTML` plus ZIP packaging.
 - CDP reference: `references/cdp-api.md`
 - Source priority: `references/source-priority.md`
 - Review checklist: `references/research-checklists.md`
+- HTML design baseline: `references/html-design-baseline.md`
+- HTML visual rules: `references/html-visual-rules.md`
+- HTML anti-patterns: `references/html-anti-patterns.md`
 
 ## Output Layout
 
@@ -42,8 +47,8 @@ Default share format is `single-file HTML` plus ZIP packaging.
 ## Required Skill Coordination
 
 - Use built-in online research for all online collection.
-- Use `frontend-design` when shaping the final reading experience.
-- Use `ui-ux-pro-max` when finalizing mobile or desktop reading structure and readability.
+- `travel-skill` itself owns the final HTML reading experience and must apply its editorial design baseline during render decisions.
+- Use `ui-ux-pro-max` only when refining structure or readability beyond the baseline.
 - Use `theme-factory` when a themed visual variant is requested.
 - Use `playwright-skill` or the repo render checker before claiming completion.
 - Use `verification-before-completion` before claiming the guide is complete.
@@ -132,16 +137,23 @@ Section order for `daily-overview`:
 
 - Desktop and mobile must contain the same facts.
 - Mobile can paginate for readability.
-- Publish exactly five guide templates: `route-first`, `decision-first`, `destination-first`, `transport-first`, `lifestyle-first`.
-- Default render behavior must emit all five templates for both desktop and mobile.
+- Default HTML output must follow the skill's editorial design baseline.
+- The published guide must preserve the section order defined in `Guide Contract`.
+- Existing fixed multi-template assets are legacy artifacts and are not the default publication target.
 - Single-file sharing is the default share target.
 - ZIP is the default archive target.
 - Never render sample-reference chips, search-query traces, or `text-citation-only` fake media blocks into publish pages.
 
+## Legacy Template Status
+
+- Assets under `assets/templates/` may remain for compatibility, but they do not define the skill's default publication style.
+- New guide work should treat them as migration-era assets unless a later implementation plan explicitly revives them.
+
 ## Verification Rules
 
-- Verification must check both desktop and mobile template completeness.
+- Verification must check both desktop and mobile guide completeness.
 - Verification must confirm `notes/sources.md` and `notes/sources.html` are present.
+- Verification must confirm the rendered guide preserves section order and does not regress into a legacy template-card layout.
 - Browser-aware verification should exist even when unit-test mode downgrades it to `warn`.
 - Do not claim completion until render, package, and verify outputs are freshly checked.
 
