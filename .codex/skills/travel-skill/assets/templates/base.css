@@ -37,6 +37,26 @@ a {
   min-width: 0;
 }
 
+.layout-editorial {
+  display: grid;
+  gap: 18px;
+}
+
+.hero-editorial,
+.editorial-lead,
+.editorial-section {
+  min-width: 0;
+}
+
+.editorial-lead .section-block,
+.editorial-section .section-block {
+  margin: 0;
+}
+
+.editorial-primary .section-block {
+  border-color: rgba(154, 75, 47, 0.18);
+}
+
 .hero-grid {
   display: grid;
   grid-template-columns: 1.35fr 0.85fr;

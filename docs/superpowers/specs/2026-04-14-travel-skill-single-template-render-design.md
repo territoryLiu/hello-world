@@ -1,7 +1,7 @@
 # travel-skill 单模板杂志式 render 重构方案
 
 日期：2026-04-14  
-状态：draft  
+状态：approved-for-implementation  
 范围：render 体系重构，保留现有输出目录结构，移除旧五模板默认架构
 
 ## 1. 背景
