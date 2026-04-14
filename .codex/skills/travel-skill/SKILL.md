@@ -44,6 +44,13 @@ Default share format is `single-file HTML` plus ZIP packaging.
 - Final guide artifacts are written under `travel-data/guides/<trip-slug>/`.
 - Video parsing is required for publishable video media. If keyframes or clickable source links are missing, the media is downgraded to `text citation only`.
 
+## Workspace Policy
+
+- When creating a travel guide with `travel-skill`, do not use repo-local `.worktrees/`.
+- Travel-guide runs are file-generation tasks that create research data and publish artifacts; they do not require an isolated worktree by default.
+- Write trip outputs directly into the current repository under `travel-data/`.
+- Only consider `.worktrees/` when maintaining or changing the skill's implementation code itself, not when generating a guide for a trip request.
+
 ## Required Skill Coordination
 
 - Use built-in online research for all online collection.
