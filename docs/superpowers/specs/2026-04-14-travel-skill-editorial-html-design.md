@@ -1,7 +1,7 @@
 # travel-skill 吸收 frontend-design 的高端旅游杂志式 HTML 设计方案
 
 日期：2026-04-14  
-状态：draft  
+状态：approved-for-implementation  
 范围：仅限 skill 设计与文档重构，不包含渲染脚本或模板代码改造
 
 ## 1. 背景
