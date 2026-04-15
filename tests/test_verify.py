@@ -29,19 +29,31 @@ class VerifyPipelineTest(unittest.TestCase):
             run_script(SKILL_DIR / "scripts" / "build_guide_model.py", "--input", fixture, "--output", model)
             run_script(SKILL_DIR / "scripts" / "fill_missing_sections.py", "--input", model, "--output", model)
             run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", model, "--output-root", output_root, "--style", "all")
-            run_script(
-                SKILL_DIR / "scripts" / "verify_trip.py",
-                "--guide-root",
-                guide_root,
-                "--output",
-                report,
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SKILL_DIR / "scripts" / "verify_trip.py"),
+                    "--guide-root",
+                    str(guide_root),
+                    "--output",
+                    str(report),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
             )
             payload = json.loads(report.read_text(encoding="utf-8"))
 
         self.assertIn("content_checks", payload)
-        self.assertTrue(payload["content_checks"]["exactly_five_templates"])
+        self.assertTrue(payload["content_checks"]["desktop_template_complete"])
+        self.assertTrue(payload["content_checks"]["mobile_template_complete"])
+        self.assertTrue(payload["content_checks"]["single_template_is_editorial"])
         self.assertTrue(payload["content_checks"]["no_sample_reference_in_publish"])
         self.assertTrue(payload["content_checks"]["no_fake_media_blocks"])
+        self.assertTrue(payload["content_checks"]["research_report_present"])
+        self.assertTrue(payload["content_checks"]["coverage_overview_present"])
+        self.assertTrue(payload["content_checks"]["dual_time_layer_present"])
+        self.assertEqual(result.returncode, 0)
         self.assertIn(payload["status"], {"pass", "warn"})
 
     def test_verify_trip_flags_fake_media_and_legacy_outputs(self):
@@ -50,7 +62,7 @@ class VerifyPipelineTest(unittest.TestCase):
             guide_root = Path(tmp) / "guides" / "demo-trip"
             (guide_root / "desktop" / "route-first").mkdir(parents=True)
             (guide_root / "desktop" / "route-first" / "index.html").write_text(
-                "对标样本 B站搜索：长白山北坡攻略",
+                "瀵规爣鏍锋湰 sample.html B绔欐悳绱細闀跨櫧灞卞寳鍧℃敾鐣? text-citation-only",
                 encoding="utf-8",
             )
             payload = module.verify_trip(guide_root)
@@ -58,19 +70,19 @@ class VerifyPipelineTest(unittest.TestCase):
         self.assertIn("no_sample_reference_in_publish", payload["content_checks"])
         self.assertFalse(payload["content_checks"]["no_sample_reference_in_publish"])
         self.assertFalse(payload["content_checks"]["no_fake_media_blocks"])
-        self.assertFalse(payload["content_checks"]["exactly_five_templates"])
+        self.assertFalse(payload["content_checks"]["desktop_template_complete"])
+        self.assertFalse(payload["content_checks"]["single_template_is_editorial"])
 
     def test_verify_trip_fails_when_mobile_output_is_missing(self):
         module = load_verify_trip_module()
         with tempfile.TemporaryDirectory() as tmp:
             guide_root = Path(tmp) / "guides" / "demo-trip"
-            for template_id in ["decision-first", "destination-first", "lifestyle-first", "route-first", "transport-first"]:
-                (guide_root / "desktop" / template_id).mkdir(parents=True)
-                (guide_root / "desktop" / template_id / "index.html").write_text("中文页面", encoding="utf-8")
+            (guide_root / "desktop" / "editorial").mkdir(parents=True)
+            (guide_root / "desktop" / "editorial" / "index.html").write_text("涓枃椤甸潰", encoding="utf-8")
             payload = module.verify_trip(guide_root)
 
         self.assertEqual(payload["status"], "fail")
-        self.assertFalse(payload["content_checks"]["mobile_templates_complete"])
+        self.assertFalse(payload["content_checks"]["mobile_template_complete"])
 
     def test_verify_trip_returns_nonzero_when_required_artifacts_are_missing(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -92,7 +104,7 @@ class VerifyPipelineTest(unittest.TestCase):
             payload = json.loads(report.read_text(encoding="utf-8"))
 
         self.assertNotEqual(result.returncode, 0)
-        self.assertFalse(payload["content_checks"]["exactly_five_templates"])
+        self.assertFalse(payload["content_checks"]["single_template_is_editorial"])
 
 
 if __name__ == "__main__":

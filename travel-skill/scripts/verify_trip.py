@@ -7,6 +7,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+from travel_config import SORTED_TEMPLATE_IDS as EXPECTED_TEMPLATES
 from verify_render_with_playwright import verify_render as verify_render_with_playwright
 
 
@@ -34,9 +35,9 @@ def verify_trip(guide_root: Path) -> dict:
         "gaps_section_present": "缺口与失败" in html_blob,
         "source_appendix_present": "来源附录" in html_blob,
         "all_primary_text_in_zh": "Travel Skill" not in html_blob,
-        "desktop_template_complete": desktop_templates == ["editorial"],
-        "mobile_template_complete": mobile_templates == ["editorial"],
-        "single_template_is_editorial": desktop_templates == ["editorial"] and mobile_templates == ["editorial"],
+        "desktop_template_complete": desktop_templates == EXPECTED_TEMPLATES,
+        "mobile_template_complete": mobile_templates == EXPECTED_TEMPLATES,
+        "single_template_is_editorial": desktop_templates == EXPECTED_TEMPLATES and mobile_templates == EXPECTED_TEMPLATES,
         "share_artifacts_present": all(
             (guide_root / "notes" / name).exists()
             for name in ["sources.md", "sources.html"]

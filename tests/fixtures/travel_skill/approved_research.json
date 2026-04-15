@@ -1,0 +1,109 @@
+{
+  "trip_slug": "wuyi-yanji-changbaishan",
+  "title": "May Day Yanji Changbaishan Guide",
+  "checked_at": "2026-04-11",
+  "departure_city": "Nanjing",
+  "destinations": [
+    "Yanji",
+    "Changbaishan"
+  ],
+  "distance_km": 1420,
+  "sample_reference": {
+    "path": "sample.html",
+    "density_mode": "match-sample"
+  },
+  "traveler_constraints": {
+    "has_children": true,
+    "has_seniors": true,
+    "requires_accessible_pace": true,
+    "avoid_long_unbroken_walks": true
+  },
+  "facts": [
+    {
+      "topic": "long_distance_transport",
+      "text": "Check high-speed rail first, then keep air-rail transfer as a backup.",
+      "source_url": "https://example.com/rail",
+      "source_title": "12306 schedule check",
+      "source_type": "official",
+      "site": "official",
+      "checked_at": "2026-04-11",
+      "schedule": "G1234 08:12-18:46",
+      "price_range": "CNY 785+",
+      "commute_duration": "8h 34m",
+      "transport_modes": [
+        "high-speed-rail",
+        "flight",
+        "taxi"
+      ],
+      "transfer_city": "Changchun",
+      "stopover_suggestion": "If using air-rail transfer, keep a half day in Changchun."
+    },
+    {
+      "topic": "weather",
+      "text": "The holiday window has large temperature swings, so layered clothing works better.",
+      "source_url": "https://example.com/weather",
+      "source_title": "Weather reference",
+      "source_type": "official",
+      "site": "official",
+      "checked_at": "2026-04-11"
+    },
+    {
+      "topic": "food",
+      "text": "A lunch pairing of cold noodles and barbecue is an easy default in Yanji.",
+      "place": "Yanji",
+      "shop_name": "Shunji Cold Noodles",
+      "address": "1 Park Road, Yanji",
+      "recommended_dishes": [
+        "cold noodles",
+        "barbecue"
+      ],
+      "flavor_style": "Korean Chinese",
+      "queue_tip": "Arrive before 11:00 for a shorter line.",
+      "backup_options": [
+        "Service Building Cold Noodles"
+      ],
+      "source_url": "https://example.com/food",
+      "source_title": "Dianping hot list",
+      "source_type": "local-listing",
+      "site": "dianping",
+      "checked_at": "2026-04-11"
+    },
+    {
+      "topic": "attractions",
+      "text": "Changbaishan North Slope is easier as a full-day plan with lighter pacing.",
+      "place": "Changbaishan",
+      "ticket_price": "225 CNY",
+      "reservation": "Book 3 days ahead",
+      "suggested_duration": "8 hours",
+      "source_url": "https://example.com/changbaishan",
+      "source_title": "Scenic area announcement",
+      "source_type": "official",
+      "site": "official",
+      "checked_at": "2026-04-11"
+    },
+    {
+      "topic": "risks",
+      "text": "Break long walks into shorter segments and keep buffer time in the afternoon.",
+      "source_url": "https://example.com/tips",
+      "source_title": "Xiaohongshu notes",
+      "source_type": "social",
+      "site": "xiaohongshu",
+      "checked_at": "2026-04-11"
+    }
+  ],
+  "image_plan": {
+    "cover": {
+      "image_hint": "morning lake fog",
+      "source_ref": "bilibili vlog",
+      "image_url": "https://cdn.example.com/cover.jpg"
+    },
+    "section_images": [
+      {
+        "section": "attractions",
+        "image_hint": "north slope boardwalk",
+        "source_ref": "bilibili vlog",
+        "image_url": "https://cdn.example.com/attraction.jpg"
+      }
+    ]
+  }
+}

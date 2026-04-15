@@ -1,0 +1,67 @@
+[
+  {
+    "place": "yanji",
+    "topic": "food",
+    "url": "https://example.com/dianping-yanji-food",
+    "platform": "dianping",
+    "site": "dianping",
+    "checked_at": "2026-04-10",
+    "title": "Dianping Yanji Food",
+    "source_type": "local-listing",
+    "facts": [
+      "Cold noodles are a reliable lunch option in Yanji."
+    ]
+  },
+  {
+    "place": "yanji",
+    "topic": "food",
+    "url": "javascript:alert(1)",
+    "platform": "xiaohongshu",
+    "site": "xiaohongshu",
+    "checked_at": "2026-04-11",
+    "title": "Xiaohongshu Queue Notes",
+    "source_type": "social",
+    "facts": [
+      "Queues become noticeably longer after 11:30."
+    ]
+  },
+  {
+    "place": "yanbian-route",
+    "topic": "long_distance_transport",
+    "url": "https://example.com/rail-plan",
+    "platform": "official",
+    "site": "official",
+    "checked_at": "2026-04-11",
+    "title": "Official Rail Plan",
+    "source_type": "official",
+    "facts": [
+      "A rail route via Changchun is currently the default plan."
+    ]
+  },
+  {
+    "place": "yanbian-route",
+    "topic": "long_distance_transport",
+    "url": "https://example.com/rail-plan",
+    "platform": "official",
+    "site": "official",
+    "checked_at": "2026-04-12",
+    "title": "Official Rail Plan",
+    "source_type": "official",
+    "facts": [
+      "The latest searchable timetable is now available for April 30."
+    ]
+  },
+  {
+    "place": "changbaishan",
+    "topic": "risks",
+    "url": "https://example.com/bilibili-risk",
+    "platform": "bilibili",
+    "site": "bilibili",
+    "checked_at": "2026-04-11",
+    "title": "Bilibili Mountain Risk Notes",
+    "source_type": "social",
+    "facts": [
+      "Mountain weather changes quickly after noon."
+    ]
+  }
+]

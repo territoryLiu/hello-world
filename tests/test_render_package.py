@@ -9,17 +9,13 @@ from tests.helpers import ROOT, SKILL_DIR, run_script, write_sample_approved_res
 
 class RenderPackageTest(unittest.TestCase):
     TEMPLATE_IDS = [
-        "decision-first",
-        "destination-first",
-        "lifestyle-first",
-        "route-first",
-        "transport-first",
+        "editorial",
     ]
 
     def _guide_root(self, output_root: Path, slug: str) -> Path:
         return output_root / "guides" / slug
 
-    def _template_html(self, guide_root: Path, template_id: str = "route-first", device: str = "desktop") -> str:
+    def _template_html(self, guide_root: Path, template_id: str = "editorial", device: str = "desktop") -> str:
         return (guide_root / device / template_id / "index.html").read_text(encoding="utf-8")
 
     def test_only_five_template_dash_first_assets_drive_rendering(self):
@@ -31,16 +27,7 @@ class RenderPackageTest(unittest.TestCase):
             if path.is_file() and path.name.startswith(("guide-template-", "desktop-index", "mobile-"))
         )
 
-        self.assertEqual(
-            active_templates,
-            [
-                "template-decision-first.html",
-                "template-destination-first.html",
-                "template-lifestyle-first.html",
-                "template-route-first.html",
-                "template-transport-first.html",
-            ],
-        )
+        self.assertEqual(active_templates, ["template-editorial.html"])
         self.assertEqual(legacy_templates, [])
 
     def test_render_trip_site_emits_exactly_five_template_variants_under_guides_root(self):
@@ -62,8 +49,8 @@ class RenderPackageTest(unittest.TestCase):
             ]
             required.extend(guide_root / "desktop" / template_id / "index.html" for template_id in self.TEMPLATE_IDS)
             required.extend(guide_root / "mobile" / template_id / "index.html" for template_id in self.TEMPLATE_IDS)
-            desktop_html = self._template_html(guide_root, "route-first", "desktop")
-            mobile_html = self._template_html(guide_root, "route-first", "mobile")
+            desktop_html = self._template_html(guide_root, "editorial", "desktop")
+            mobile_html = self._template_html(guide_root, "editorial", "mobile")
             sources_md = (guide_root / "notes" / "sources.md").read_text(encoding="utf-8")
             missing = [str(path) for path in required if not path.exists()]
             desktop_dirs = sorted(p.name for p in (guide_root / "desktop").iterdir() if p.is_dir())
@@ -73,9 +60,9 @@ class RenderPackageTest(unittest.TestCase):
         self.assertEqual(desktop_dirs, self.TEMPLATE_IDS)
         self.assertEqual(mobile_dirs, self.TEMPLATE_IDS)
         self.assertFalse((output_root / "trips").exists())
-        self.assertIn('data-template="route-first"', desktop_html)
+        self.assertIn('data-template="editorial"', desktop_html)
         self.assertIn('data-device="desktop"', desktop_html)
-        self.assertIn('data-template="route-first"', mobile_html)
+        self.assertIn('data-template="editorial"', mobile_html)
         self.assertIn('data-device="mobile"', mobile_html)
         self.assertIn("site:", sources_md)
         self.assertIn("topic:", sources_md)
@@ -190,9 +177,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "media-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "editorial")
             guide_root = self._guide_root(output_root, "media-demo")
-            html = self._template_html(guide_root, "route-first", "desktop")
+            html = self._template_html(guide_root, "editorial", "desktop")
             sources_html = (guide_root / "notes" / "sources.html").read_text(encoding="utf-8")
 
         self.assertIn("天池晨雾", html)
@@ -227,9 +214,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "editorial")
             guide_root = self._guide_root(output_root, "gate-demo")
-            html = self._template_html(guide_root, "route-first", "desktop")
+            html = self._template_html(guide_root, "editorial", "desktop")
 
         self.assertNotIn("参考画面", html)
         self.assertNotIn("B站搜索：长白山北坡攻略", html)
@@ -308,7 +295,7 @@ class RenderPackageTest(unittest.TestCase):
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
             run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root)
             guide_root = self._guide_root(output_root, "unsafe-demo")
-            html = self._template_html(guide_root, "route-first", "desktop")
+            html = self._template_html(guide_root, "editorial", "desktop")
             guide_js = (guide_root / "assets" / "guide-content.js").read_text(encoding="utf-8")
 
         self.assertNotIn("</script><script>alert(1)</script>", html)
@@ -341,9 +328,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "timeline-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "editorial")
             guide_root = self._guide_root(output_root, "timeline-demo")
-            html = self._template_html(guide_root, "route-first", "desktop")
+            html = self._template_html(guide_root, "editorial", "desktop")
 
         self.assertIn("timeline-stack", html)
         self.assertIn("timeline-card", html)
@@ -387,9 +374,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "matrix-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "editorial")
             guide_root = self._guide_root(output_root, "matrix-demo")
-            html = self._template_html(guide_root, "route-first", "desktop")
+            html = self._template_html(guide_root, "editorial", "desktop")
 
         self.assertIn("transport-matrix", html)
         self.assertIn("高铁优先", html)
@@ -442,9 +429,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "density-render-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "editorial")
             guide_root = self._guide_root(output_root, "density-render-demo")
-            html = self._template_html(guide_root, "route-first", "desktop")
+            html = self._template_html(guide_root, "editorial", "desktop")
 
         self.assertIn("transport-access-card", html)
         self.assertIn("food-group-card", html)
@@ -491,9 +478,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "inline-source-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "editorial")
             guide_root = self._guide_root(output_root, "inline-source-demo")
-            html = self._template_html(guide_root, "route-first", "desktop")
+            html = self._template_html(guide_root, "editorial", "desktop")
 
         self.assertIn("card-source-meta", html)
         self.assertIn("景区公告", html)
@@ -538,9 +525,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "card-media-render-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "editorial")
             guide_root = self._guide_root(output_root, "card-media-render-demo")
-            html = self._template_html(guide_root, "route-first", "desktop")
+            html = self._template_html(guide_root, "editorial", "desktop")
 
         self.assertIn("card-inline-media", html)
         self.assertIn("北坡栈道", html)
@@ -581,9 +568,9 @@ class RenderPackageTest(unittest.TestCase):
             input_path = Path(tmp) / "comment-render-model.json"
             output_root = Path(tmp) / "out"
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "route-first")
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root, "--style", "editorial")
             guide_root = self._guide_root(output_root, "comment-render-demo")
-            html = self._template_html(guide_root, "route-first", "desktop")
+            html = self._template_html(guide_root, "editorial", "desktop")
 
         self.assertIn("card-comment-strip", html)
         self.assertIn("card-comment-list", html)
@@ -635,7 +622,7 @@ class RenderPackageTest(unittest.TestCase):
             input_path.write_text(json.dumps(model_payload, ensure_ascii=False, indent=2), encoding="utf-8")
             run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", input_path, "--output-root", output_root)
             html = (
-                output_root / "guides" / "sample-leak-demo" / "desktop" / "route-first" / "index.html"
+                output_root / "guides" / "sample-leak-demo" / "desktop" / "editorial" / "index.html"
             ).read_text(encoding="utf-8")
 
         self.assertNotIn("对标样本", html)
@@ -679,7 +666,7 @@ class RenderPackageTest(unittest.TestCase):
                 "--guide-root",
                 guide_root,
                 "--template",
-                "route-first",
+                "editorial",
                 "--output",
                 dist / "recommended.html",
             )
@@ -688,7 +675,7 @@ class RenderPackageTest(unittest.TestCase):
                 "--guide-root",
                 guide_root,
                 "--template",
-                "decision-first",
+                "editorial",
                 "--output",
                 dist / "share.html",
             )
@@ -743,12 +730,12 @@ class RenderPackageTest(unittest.TestCase):
                 "--guide-root",
                 guide_root,
                 "--template",
-                "lifestyle-first",
+                "editorial",
                 "--output",
-                dist / "lifestyle-first.html",
+                dist / "editorial.html",
             )
             portal_html = (dist / "portal.html").read_text(encoding="utf-8")
-            lifestyle_html = (dist / "lifestyle-first.html").read_text(encoding="utf-8")
+            lifestyle_html = (dist / "editorial.html").read_text(encoding="utf-8")
             for template_id in self.TEMPLATE_IDS:
                 self.assertTrue((guide_root / "desktop" / template_id / "index.html").exists())
                 self.assertTrue((guide_root / "mobile" / template_id / "index.html").exists())
