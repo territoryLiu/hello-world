@@ -5,7 +5,7 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parents[1] / "scripts"
 REPO_ROOT = Path(__file__).resolve().parents[2]
-VIDEO_ROOT = REPO_ROOT / "video"
+TESTDATA_ROOT = REPO_ROOT / "travel-skill" / "testdata"
 TEST_TMP_ROOT = REPO_ROOT / ".tmp-tests"
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
@@ -28,8 +28,8 @@ class VideoPipelineTest(unittest.TestCase):
         self.assertEqual(stages, ["download", "extract_audio", "keyframes", "transcribe"])
 
     def test_fallback_plan_uses_shared_model_cache(self):
-        plan_a = build_fallback_plan("https://example.com/video", VIDEO_ROOT / "assets-a")
-        plan_b = build_fallback_plan("https://example.com/video", VIDEO_ROOT / "assets-b")
+        plan_a = build_fallback_plan("https://example.com/video", TESTDATA_ROOT / "assets-a")
+        plan_b = build_fallback_plan("https://example.com/video", TESTDATA_ROOT / "assets-b")
         self.assertEqual(plan_a["artifacts"]["model_dir"], plan_b["artifacts"]["model_dir"])
 
     def test_video_record_tracks_time_layer_and_missing_fields(self):
@@ -48,7 +48,7 @@ class VideoPipelineTest(unittest.TestCase):
         self.assertEqual(item["collector_mode"], "video-fallback")
 
     def test_build_status_executes_local_video_pipeline(self):
-        local_video = VIDEO_ROOT / "travel-skill-smoke-input.mp4"
+        local_video = TESTDATA_ROOT / "travel-skill-smoke-input.mp4"
         self.assertTrue(local_video.exists())
         asset_root = TEST_TMP_ROOT / "video-test"
         if asset_root.exists():
@@ -79,7 +79,7 @@ class VideoPipelineTest(unittest.TestCase):
             self.assertIn("ffmpeg", item["failure_detail"])
 
     def test_build_status_transcribes_local_video_when_enabled(self):
-        local_video = VIDEO_ROOT / "travel-skill-smoke-input.mp4"
+        local_video = TESTDATA_ROOT / "travel-skill-smoke-input.mp4"
         self.assertTrue(local_video.exists())
         asset_root = TEST_TMP_ROOT / "video-test-transcribe"
         if asset_root.exists():
