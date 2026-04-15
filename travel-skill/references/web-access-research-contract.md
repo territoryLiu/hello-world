@@ -1,6 +1,8 @@
 # Web Access Research Contract
 
-All online collection must run through travel-skill built-in online research.
+All online collection must run through the standalone `web-access` skill.
+
+Do not rely on any repo-local copy under `.codex/skills/travel/web-access`; `travel-skill` must delegate network collection to the canonical standalone `web-access` skill so later upgrades apply automatically.
 
 ## Required task fields
 
@@ -27,6 +29,6 @@ All online collection must run through travel-skill built-in online research.
 
 Start each concrete site task with:
 
-`Use travel-skill built-in online research to collect travel evidence for this task.`
+`Use the standalone web-access skill to collect travel evidence for this task.`
 
 The run must keep `site_query`, preserve raw links, and record `coverage_status` plus `failure_reason` whenever collection is incomplete.

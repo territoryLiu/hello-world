@@ -53,7 +53,8 @@ Default share format is `single-file HTML` plus ZIP packaging.
 
 ## Required Skill Coordination
 
-- Use built-in online research for all online collection.
+- Use the separately installed `web-access` skill for all online collection.
+- Do not rely on any repo-local `web-access` copy under `.codex/skills/travel/`; `travel-skill` must delegate online work to the canonical standalone `web-access` skill so that later upgrades apply automatically.
 - `travel-skill` itself owns the final HTML reading experience and must apply its editorial design baseline during render decisions.
 - Use `ui-ux-pro-max` only when refining structure or readability beyond the baseline.
 - Use `theme-factory` when a themed visual variant is requested.
@@ -108,9 +109,9 @@ Section order for `daily-overview`:
 
 - Prefer official and platform-first sources for transport, weather, tickets, reservation rules, opening status, and notices.
 - Use social and local-life platforms to enrich experience details, food choices, queue patterns, photo spots, and practical tips.
-- `research-run` must use built-in online research with concrete site coverage, not abstract `social` only.
+- `research-run` must use the standalone `web-access` skill with concrete site coverage, not abstract `social` only.
 - Required social and local-life sites include `xiaohongshu`, `douyin`, `bilibili`, `meituan`, and `dianping` when the topic matrix calls for them.
-- For `xiaohongshu`, `douyin`, `bilibili`, `meituan`, and `dianping`, the site is not considered covered unless the built-in online research flow actually reached the page and persisted the required fields for that task.
+- For `xiaohongshu`, `douyin`, `bilibili`, `meituan`, and `dianping`, the site is not considered covered unless the `web-access` flow actually reached the page and persisted the required fields for that task.
 - Required social evidence must explicitly cover recent destination experience, practical pitfalls, and current wearing guidance when those topics are in scope.
 - For destination experience tasks, capture recent experience, high-frequency comments, queue pattern, and scenery status.
 - For `xiaohongshu`, `douyin`, and `bilibili`, capture page body plus comment highlights, comment status, and sample size.
@@ -118,7 +119,7 @@ Section order for `daily-overview`:
 - For `meituan` and `dianping`, capture concrete shop names, addresses, recommended dishes, per-capita range, and queue pattern. For this trip type, the published guide should not claim a venue-level recommendation unless those fields were actually collected.
 - Use page extraction first. Trigger video fallback when the page body, transcript, or visual evidence is insufficient.
 - Video fallback may use `yt-dlp`, `ffmpeg`, `whisper`, and Codex analysis.
-- If built-in online research cannot reach a required site, the page blocks login, content extraction fails, or the returned evidence is incomplete, tell the user immediately that information collection has a problem before continuing with the next research step.
+- If `web-access` cannot reach a required site, the page blocks login, content extraction fails, or the returned evidence is incomplete, tell the user immediately that information collection has a problem before continuing with the next research step.
 - If a required field cannot be collected, mark it as `coverage_status=failed` or `coverage_status=partial` and record the failure reason instead of pretending the site was covered.
 - A `coverage note` or placeholder failure record is not valid site coverage. It is only a failure log.
 - Keep `checked_at` on time-sensitive facts.

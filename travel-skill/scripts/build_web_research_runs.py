@@ -44,8 +44,9 @@ def build_runs(payload: dict) -> dict:
                 "skill": "travel-skill",
                 "task": task,
                 "prompt": (
-                    "Use travel-skill built-in online research to collect travel evidence for this task. "
+                    "Use the standalone web-access skill to collect travel evidence for this task. "
                     f"Search site={task.get('site')} with query={task.get('site_query')}. "
+                    "Do not use any repo-local copy under .codex/skills/travel/web-access. "
                     "Use page extraction first and trigger video fallback when the page is insufficient. "
                     f"{_capture_contract(task)}"
                 ),
