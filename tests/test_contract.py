@@ -183,7 +183,7 @@ class TravelSkillContractTest(unittest.TestCase):
 
 class PathContractTest(unittest.TestCase):
     def test_travel_paths_exposes_dual_track_roots(self):
-        module_path = ROOT / ".codex" / "skills" / "travel-skill" / "scripts" / "travel_paths.py"
+        module_path = SKILL_DIR / "scripts" / "travel_paths.py"
         spec = importlib.util.spec_from_file_location("travel_paths", module_path)
         module = importlib.util.module_from_spec(spec)
         assert spec.loader is not None

@@ -2,15 +2,24 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import os
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL_DIR = ROOT / ".codex" / "skills" / "travel-skill"
+HOST_ROOT = ROOT.parents[1] if ROOT.parent.name == ".worktrees" else ROOT
+TEST_TMP_ROOT = HOST_ROOT / ".tmp-tests"
+SKILL_DIR = ROOT / "travel-skill"
+if not SKILL_DIR.exists():
+    SKILL_DIR = ROOT / ".codex" / "skills" / "travel-skill"
 PYTHON = sys.executable
 
 
 def run_script(*parts):
     cmd = [PYTHON, *(str(part) for part in parts)]
-    return subprocess.run(cmd, check=True, capture_output=True, text=True)
+    env = os.environ.copy()
+    env["TMPDIR"] = str(TEST_TMP_ROOT)
+    env["TMP"] = str(TEST_TMP_ROOT)
+    env["TEMP"] = str(TEST_TMP_ROOT)
+    return subprocess.run(cmd, check=True, capture_output=True, text=True, cwd=str(ROOT), env=env)
 
 
 def write_sample_approved_research(path: Path) -> Path:

@@ -143,7 +143,7 @@ class IntakeResearchTest(unittest.TestCase):
             payload = json.loads(tasks.read_text(encoding="utf-8"))
 
         self.assertEqual(payload["trip_slug"], "五一延吉长白山")
-        self.assertEqual(payload["research_dimensions"], ["place", "topic", "platform", "site"])
+        self.assertEqual(payload["research_dimensions"], ["place", "topic", "platform", "site", "time_layer"])
         task_sites = {(item["place"], item["topic"], item["site"]) for item in payload["tasks"]}
         self.assertIn(("延吉", "food", "meituan"), task_sites)
         self.assertIn(("延吉", "food", "dianping"), task_sites)

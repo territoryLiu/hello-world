@@ -74,8 +74,8 @@ class TravelConfigCentralizationTest(unittest.TestCase):
     def test_sharing_modes_reference_uses_guides_root(self):
         sharing_modes = (SKILL_DIR / "references" / "sharing-modes.md").read_text(encoding="utf-8")
 
-        self.assertIn("guides/<slug>/desktop/route-first/index.html", sharing_modes)
-        self.assertIn("guides/<slug>/mobile/route-first/index.html", sharing_modes)
+        self.assertIn("guides/<slug>/desktop/editorial/index.html", sharing_modes)
+        self.assertIn("guides/<slug>/mobile/editorial/index.html", sharing_modes)
         self.assertNotIn("trips/<slug>/desktop", sharing_modes)
         self.assertNotIn("trips/<slug>/mobile", sharing_modes)
 

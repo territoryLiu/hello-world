@@ -56,6 +56,7 @@ Default share format is `single-file HTML` plus ZIP packaging.
 - Use the separately installed `web-access` skill for all online collection.
 - Do not rely on any repo-local `web-access` copy under `.codex/skills/travel/`; `travel-skill` must delegate online work to the canonical standalone `web-access` skill so that later upgrades apply automatically.
 - `travel-skill` itself owns the final HTML reading experience and must apply its editorial design baseline during render decisions.
+- Use `frontend-design` when a new guide presentation or substantial visual redesign is explicitly requested.
 - Use `ui-ux-pro-max` only when refining structure or readability beyond the baseline.
 - Use `theme-factory` when a themed visual variant is requested.
 - Use `playwright-skill` or the repo render checker before claiming completion.

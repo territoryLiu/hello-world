@@ -3,7 +3,9 @@ import unittest
 from pathlib import Path
 
 
-SCRIPT_DIR = Path(r"C:\Users\Lenovo\.codex\skills\travel-skill\scripts")
+SCRIPT_DIR = Path(__file__).resolve().parents[1] / "scripts"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+TEST_TMP_ROOT = REPO_ROOT / ".tmp-tests"
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
@@ -27,7 +29,12 @@ class PersistResearchKnowledgeTest(unittest.TestCase):
         media_payload = {"items": [{"place": "hangzhou", "kind": "keyframe", "path": "frame-001.jpg"}]}
         coverage_payload = {"trip_slug": "hangzhou", "by_topic": {"attractions": {"coverage_status": "complete"}}}
 
-        output_root = Path(r"d:\vscode\video\travel-skill-test-output")
+        output_root = TEST_TMP_ROOT / "persist-research-knowledge"
+        if output_root.exists():
+            import shutil
+            shutil.rmtree(output_root)
+        output_root.mkdir(parents=True, exist_ok=True)
+
         persist(raw_payload, approved_payload, media_payload, coverage_payload, output_root)
         place_root = output_root / "places" / "hangzhou"
         self.assertTrue((place_root / "knowledge" / "recent.json").exists())

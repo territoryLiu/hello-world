@@ -9,7 +9,11 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from travel_config import TEMPLATE_LABELS, TEMPLATE_SECTIONS
+from travel_config import TEMPLATE_IDS, TEMPLATE_LABELS, TEMPLATE_SECTIONS
+
+
+RENDER_TEMPLATES = TEMPLATE_IDS
+DAILY_OVERVIEW_SECTIONS = ["days", "wearing", "transport", "alerts"]
 
 
 SECTION_META = {
@@ -700,6 +704,15 @@ def _apply_template(replacements: dict[str, str]) -> str:
 
 
 def _render_research_report(report: dict) -> str:
+    theme_blocks = [block for block in _safe_list(report.get("theme_blocks")) if isinstance(block, dict)]
+    if not theme_blocks:
+        theme_blocks = [
+            {
+                "title": "dual time layer",
+                "recent": ["latest status pending"],
+                "historical": ["historical experience pending"],
+            }
+        ]
     coverage_cards = "".join(
         f"<li><strong>{_escape(item.get('site'))}</strong> · {_escape(item.get('coverage_status'))}</li>"
         for item in _safe_list(report.get("coverage_overview"))
@@ -718,8 +731,7 @@ def _render_research_report(report: dict) -> str:
             f"<article class='card'><h3>去年同期经验</h3><ul class='card-points'>{''.join(f'<li>{_escape(point)}</li>' for point in _safe_list(block.get('historical')))}</ul></article>"
             "</div></section>"
         )
-        for block in _safe_list(report.get("theme_blocks"))
-        if isinstance(block, dict)
+        for block in theme_blocks
     )
     evidence_cards = "".join(
         (
@@ -815,8 +827,7 @@ def _render_template_page(payload: dict, template_id: str, device: str) -> str:
         "hero": hero_inner,
         "daily_overview": "".join(
             _render_section_block(payload, section_id, image_plan)
-            for section_id in ["days", "wearing", "transport", "alerts"]
-            if section_id in section_ids
+            for section_id in DAILY_OVERVIEW_SECTIONS
         ),
         "recommended_route": _render_section_block(payload, "recommended_route", image_plan) if "recommended_route" in section_ids else "",
         "route_options": _render_section_block(payload, "route_options", image_plan) if "route_options" in section_ids else "",
@@ -875,9 +886,9 @@ def render_site(payload: dict, output_root: Path, style: str = "all") -> Path:
     assets_dir.joinpath("base.css").write_text(_load_asset("base.css"), encoding="utf-8")
     assets_dir.joinpath("render-guide.js").write_text(_load_asset("render-guide.js"), encoding="utf-8")
     assets_dir.joinpath("guide-content.js").write_text(_guide_content_script(payload), encoding="utf-8")
+    render_trip_site(payload, guide_root)
     notes_dir.joinpath("sources.md").write_text(_sources_markdown(payload), encoding="utf-8")
     notes_dir.joinpath("sources.html").write_text(_sources_html(payload), encoding="utf-8")
-    render_trip_site(payload, guide_root)
     return guide_root
 
 
