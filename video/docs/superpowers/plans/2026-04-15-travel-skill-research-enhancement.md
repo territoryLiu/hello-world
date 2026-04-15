@@ -2,982 +2,582 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Upgrade `travel-skill` so domestic free-travel requests produce a heavy-sampling research dossier with dual time layers, source-specific coverage accounting, video fallback support, reusable knowledge files, and a research-report HTML artifact.
+**Goal:** Upgrade `travel-skill` so Xiaohongshu page evidence, Douyin/Bilibili page-plus-video fallback, full raw-material persistence, keyframe scoring, and downstream image-plan consumption work as one traceable research pipeline.
 
-**Architecture:** Add a shared research-contract layer first, then thread those contracts through task planning, source collection, video fallback, knowledge persistence, coverage validation, and report rendering. Keep the existing script-oriented pipeline, but make every stage emit explicit `coverage_status`, `missing_fields`, `failure_reason`, `time_layer`, and source evidence so later guide generation can trust the data.
+**Architecture:** Keep the current script-based pipeline, but add one shared evidence contract across page evidence, video evidence, and media evidence. Implement the work in six stages: shared schema, page evidence normalization, video fallback completion, keyframe scoring, four-layer persistence, and final validation/render tightening.
 
-**Tech Stack:** Python 3.12 in `C:\Users\Lenovo\.conda\envs\stock-analyzer`, built-in `unittest`, JSON, existing `travel-skill` scripts, `yt-dlp`, `ffmpeg`, `whisper` tooling when available.
+**Tech Stack:** Python in the existing `stock-analyzer` conda environment, built-in `unittest`, JSON, local file persistence, existing `travel-skill` scripts, and optional `yt-dlp` / `ffmpeg` / `whisper` tooling when available.
 
 ---
 
-**Execution note:** `d:\vscode\video` is not a Git repository. Implement the plan in `C:\Users\Lenovo\.codex\skills\travel-skill\`, and use the verification steps below as checkpoints. If the skill directory is later moved into Git, add commits at the end of each task.
+## Workspace Notes
+
+- Repository root: `d:\vscode\hello-world`
+- Approved spec: `video/docs/superpowers/specs/2026-04-15-travel-skill-research-enhancement-design.md`
+- Verified activation pattern on Windows:
+
+```powershell
+cmd.exe /d /c "call C:\Users\territoryliu\anaconda3\condabin\activate.bat stock-analyzer && cd /d d:\vscode\hello-world && python -m unittest discover tests -p test_*.py -v"
+```
+
+- Current main-branch verification baseline:
+  - `python -m unittest discover tests -p test_*.py -v`
+  - `python -m unittest discover travel-skill\tests -p test_*.py -v`
 
 ## File Map
 
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\references\content-schema.md`
-  Purpose: document the richer research task, normalized evidence, coverage report, and research dossier fields.
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\research_contracts.py`
-  Purpose: single source of truth for time layers, heavy sample targets, required fields, failure reasons, and topic groups.
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\travel_config.py`
-  Purpose: expose the source coverage matrix plus default heavy-sampling config used by task planning and validation.
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\build_research_tasks.py`
-  Purpose: generate heavy-sampling, dual-time-layer research tasks with explicit sample targets and retry policy.
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\build_web_research_runs.py`
-  Purpose: push richer prompt contracts into `web-access` runs, including time layer, sample target, and fallback guidance.
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\video_pipeline.py`
-  Purpose: centralize tool detection and video fallback command planning for `yt-dlp`, `ffmpeg`, and `whisper`.
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\build_video_research_json.py`
-  Purpose: normalize video evidence into timestamped transcript, visual segments, media artifacts, failure details, and time-layer metadata.
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\extract_video_assets.py`
-  Purpose: perform or plan real video fallback extraction instead of only reporting missing tools.
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\extract_structured_facts.py`
-  Purpose: turn raw entries into topic-grouped knowledge points with evidence refs and dual-layer metadata.
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\persist_research_knowledge.py`
-  Purpose: persist raw, normalized, knowledge, coverage, and media outputs into `travel-data\places\<place-slug>\raw|normalized|knowledge|coverage|media`.
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\validate_site_coverage.py`
-  Purpose: validate sample counts, required fields, missing fields, and final `coverage_status` per source and topic.
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\verify_trip.py`
-  Purpose: treat the research dossier as a first-class artifact and verify required sections and files.
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\render_trip_site.py`
-  Purpose: render `research-report.html` with coverage overview, dual-time-layer findings, evidence cards, and gaps.
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\assets\templates\render-guide.js`
-  Purpose: teach the front-end renderer how to display research-report sections and evidence cards.
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\__init__.py`
-  Purpose: make the test directory importable.
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\test_research_contracts.py`
-  Purpose: lock the contract constants and coverage helper behavior.
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\test_build_research_tasks.py`
-  Purpose: verify heavy-sampling and dual-time-layer task generation.
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\test_video_pipeline.py`
-  Purpose: verify video fallback planning and video record normalization.
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\test_persist_research_knowledge.py`
-  Purpose: verify layered storage and knowledge persistence.
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\test_validate_site_coverage.py`
-  Purpose: verify hard coverage rules and gap reporting.
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\test_render_research_report.py`
-  Purpose: verify the dossier HTML includes the required sections.
+- Modify: `travel-skill/scripts/research_contracts.py`
+  Purpose: centralize research-record, video-media, and image-candidate manifest fields plus coverage/failure constants.
+- Modify: `travel-skill/scripts/build_research_tasks.py`
+  Purpose: emit site-split tasks with raw-capture, media, and fallback policy fields.
+- Modify: `travel-skill/scripts/build_web_research_runs.py`
+  Purpose: encode the Xiaohongshu page-first and Douyin/Bilibili page+video execution contract in run prompts.
+- Create: `travel-skill/scripts/collect_page_evidence.py`
+  Purpose: normalize full page body, comment threads, comment sample size, and image candidates into page evidence records.
+- Modify: `travel-skill/scripts/video_pipeline.py`
+  Purpose: emit richer artifact paths and a keyframe manifest for fallback runs.
+- Modify: `travel-skill/scripts/extract_video_assets.py`
+  Purpose: persist fallback execution outputs and standardized failure reasons.
+- Create: `travel-skill/scripts/score_video_keyframes.py`
+  Purpose: score all extracted keyframes with travel-information-first rules and mark selected frames.
+- Modify: `travel-skill/scripts/build_video_research_json.py`
+  Purpose: merge page evidence, video evidence, and media scoring into unified `research_record` items.
+- Modify: `travel-skill/scripts/persist_research_knowledge.py`
+  Purpose: write `raw/`, `normalized/`, `media/`, and `knowledge/` trees with stable IDs and cross-links.
+- Modify: `travel-skill/scripts/build_image_plan.py`
+  Purpose: consume the selected-media manifest while preserving publish gating and current fallbacks.
+- Modify: `travel-skill/scripts/validate_site_coverage.py`
+  Purpose: classify `complete` / `partial` / `failed` using page completeness, video completeness, sample count, and scoring completeness.
+- Modify: `travel-skill/scripts/render_trip_site.py`
+  Purpose: surface media-linked evidence in the research dossier without hiding gaps.
+- Modify: `travel-skill/scripts/verify_trip.py`
+  Purpose: verify media evidence, coverage states, and dossier completeness.
+- Create: `travel-skill/tests/test_page_evidence_pipeline.py`
+  Purpose: lock the Xiaohongshu page-first ingestion behavior.
+- Create: `travel-skill/tests/test_video_media_scoring.py`
+  Purpose: lock keyframe scoring, selected flags, and travel-signal tags.
+- Create: `travel-skill/tests/test_image_candidate_manifest.py`
+  Purpose: lock `build_image_plan.py` consumption of selected media records.
+- Modify: `travel-skill/tests/test_build_research_tasks.py`
+  Purpose: assert site-split policy and media/raw capture fields.
+- Modify: `travel-skill/tests/test_video_pipeline.py`
+  Purpose: assert richer fallback artifacts and failure reasons.
+- Modify: `travel-skill/tests/test_persist_research_knowledge.py`
+  Purpose: assert four-layer persistence and stable IDs.
+- Modify: `travel-skill/tests/test_validate_site_coverage.py`
+  Purpose: assert page-complete/video-incomplete and scored/unscored distinctions.
+- Modify: `travel-skill/tests/test_render_research_report.py`
+  Purpose: assert media evidence is rendered alongside gaps.
 
-### Task 1: Establish Shared Research Contracts
+### Task 1: Define Shared Evidence and Media Contracts
 
 **Files:**
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\research_contracts.py`
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\__init__.py`
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\test_research_contracts.py`
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\references\content-schema.md`
+- Modify: `travel-skill/scripts/research_contracts.py`
+- Modify: `travel-skill/tests/test_research_contracts.py`
+- Modify: `travel-skill/references/content-schema.md`
 
-- [ ] **Step 1: Write the failing contract tests**
+- [ ] **Step 1: Extend the failing contract tests**
 
 ```python
-import unittest
-import sys
-from pathlib import Path
+def test_contract_exposes_page_and_video_record_fields(self):
+    from research_contracts import RESEARCH_RECORD_FIELDS, VIDEO_MEDIA_BUNDLE_FIELDS
+    self.assertIn("page_body_full", RESEARCH_RECORD_FIELDS)
+    self.assertIn("comment_threads_full", RESEARCH_RECORD_FIELDS)
+    self.assertIn("frame_scores", VIDEO_MEDIA_BUNDLE_FIELDS)
+    self.assertIn("selected_frames", VIDEO_MEDIA_BUNDLE_FIELDS)
 
-SCRIPT_DIR = Path(r"C:\Users\Lenovo\.codex\skills\travel-skill\scripts")
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
-
-from research_contracts import (
-    TIME_LAYERS,
-    HEAVY_SAMPLE_TARGETS,
-    FAILURE_REASONS,
-    site_required_fields,
-)
-
-
-class ResearchContractsTest(unittest.TestCase):
-    def test_time_layers_are_dual_layer(self):
-        self.assertEqual(TIME_LAYERS, ("recent", "last_year_same_period"))
-
-    def test_heavy_sampling_defaults_match_product_decisions(self):
-        self.assertEqual(HEAVY_SAMPLE_TARGETS["xiaohongshu"], 20)
-        self.assertEqual(HEAVY_SAMPLE_TARGETS["douyin"], 10)
-        self.assertEqual(HEAVY_SAMPLE_TARGETS["bilibili"], 10)
-        self.assertEqual(HEAVY_SAMPLE_TARGETS["dianping"], 15)
-        self.assertEqual(HEAVY_SAMPLE_TARGETS["meituan"], 15)
-
-    def test_failure_reasons_include_video_and_time_layer_cases(self):
-        self.assertIn("video_download_failed", FAILURE_REASONS)
-        self.assertIn("time_layer_not_determined", FAILURE_REASONS)
-
-    def test_xiaohongshu_requires_comment_and_media_fields(self):
-        required = site_required_fields("xiaohongshu")
-        self.assertIn("comment_highlights", required)
-        self.assertIn("comment_sample_size", required)
-        self.assertIn("image_candidates", required)
-
-
-if __name__ == "__main__":
-    unittest.main()
+def test_contract_exposes_image_candidate_manifest_fields(self):
+    from research_contracts import IMAGE_CANDIDATE_FIELDS
+    self.assertIn("selected_for_publish", IMAGE_CANDIDATE_FIELDS)
+    self.assertIn("evidence_score", IMAGE_CANDIDATE_FIELDS)
+    self.assertIn("travel_signal_tags", IMAGE_CANDIDATE_FIELDS)
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [ ] **Step 2: Run the targeted contract test and verify RED**
 
 Run:
 
 ```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_research_contracts.py' -v
+cmd.exe /d /c "call C:\Users\territoryliu\anaconda3\condabin\activate.bat stock-analyzer && cd /d d:\vscode\hello-world && python -m unittest discover travel-skill\tests -p test_research_contracts.py -v"
 ```
 
-Expected: FAIL with `ModuleNotFoundError: No module named 'research_contracts'`.
+Expected: FAIL because the new contract constants do not exist yet.
 
-- [ ] **Step 3: Implement the shared contracts and update the schema reference**
+- [ ] **Step 3: Add the shared constants and schema references**
 
 ```python
-# C:\Users\Lenovo\.codex\skills\travel-skill\scripts\research_contracts.py
-TIME_LAYERS = ("recent", "last_year_same_period")
+# travel-skill/scripts/research_contracts.py
+RESEARCH_RECORD_FIELDS = [
+    "place", "topic", "platform", "site", "source_url", "source_title",
+    "collector_mode", "coverage_status", "failure_reason", "failure_detail",
+    "missing_fields", "time_layer", "page_body_full", "comment_threads_full",
+    "comment_sample_size", "transcript_full", "image_candidates",
+    "shot_candidates", "media_artifacts",
+]
 
-HEAVY_SAMPLE_TARGETS = {
-    "official": 1,
-    "xiaohongshu": 20,
-    "douyin": 10,
-    "bilibili": 10,
-    "dianping": 15,
-    "meituan": 15,
-}
+VIDEO_MEDIA_BUNDLE_FIELDS = [
+    "video", "audio", "transcript", "all_keyframes",
+    "frame_scores", "selected_frames", "selection_rationale", "scene_tags",
+]
 
-FAILURE_REASONS = {
-    "login_required",
-    "anti_bot_blocked",
-    "page_unreachable",
-    "content_removed",
-    "comment_not_loaded",
-    "insufficient_sample_size",
-    "video_download_failed",
-    "audio_transcription_failed",
-    "keyframe_extraction_failed",
-    "schema_validation_failed",
-    "time_layer_not_determined",
-}
-
-SITE_REQUIRED_FIELDS = {
-    "xiaohongshu": [
-        "title", "summary", "author", "publish_time", "source_url",
-        "comment_highlights", "comment_sample_size", "image_candidates",
-        "coverage_status", "failure_reason", "missing_fields", "time_layer",
-    ],
-    "douyin": [
-        "title", "summary", "author", "publish_time", "source_url",
-        "comment_highlights", "transcript_segments", "visual_segments",
-        "timeline", "shot_candidates", "coverage_status", "failure_reason",
-        "missing_fields", "time_layer",
-    ],
-    "bilibili": [
-        "title", "summary", "author", "publish_time", "source_url",
-        "comment_highlights", "transcript_segments", "visual_segments",
-        "timeline", "shot_candidates", "coverage_status", "failure_reason",
-        "missing_fields", "time_layer",
-    ],
-    "dianping": [
-        "shop_name", "address", "per_capita_range", "recommended_dishes",
-        "queue_pattern", "review_themes", "pitfalls", "coverage_status",
-        "failure_reason", "missing_fields", "time_layer",
-    ],
-    "meituan": [
-        "shop_name", "address", "per_capita_range", "recommended_dishes",
-        "queue_pattern", "review_themes", "pitfalls", "coverage_status",
-        "failure_reason", "missing_fields", "time_layer",
-    ],
-}
-
-
-def site_required_fields(site: str) -> list[str]:
-    return list(SITE_REQUIRED_FIELDS.get(site, []))
+IMAGE_CANDIDATE_FIELDS = [
+    "section", "candidate_type", "source_ref", "selected_for_publish",
+    "publish_state", "evidence_score", "visual_score", "travel_signal_tags",
+]
 ```
 
 ```markdown
-<!-- C:\Users\Lenovo\.codex\skills\travel-skill\references\content-schema.md -->
-## research_task
+## page_evidence_record
 
-- `trip_slug`
-- `place`
-- `topic`
-- `platform`
-- `site`
-- `required_sources`
-- `query_hint`
-- `site_query`
-- `collection_method`
-- `must_capture_fields`
-- `evidence_level`
-- `time_layer`
-- `sample_target`
-- `retry_policy`
-- `fallback_policy`
+- `page_body_full`
+- `comment_threads_full`
+- `comment_sample_size`
+- `image_candidates`
 
-## normalized_research_record
+## video_media_bundle
 
-- `source_type`
-- `collector_mode`
-- `coverage_status`
-- `failure_reason`
-- `failure_detail`
-- `missing_fields`
-- `checked_at`
-- `time_layer`
-- `evidence_refs`
-- `knowledge_points`
-
-## coverage_report
-
-- `site`
-- `topic`
-- `sample_target`
-- `actual_sample_count`
-- `complete_count`
-- `partial_count`
-- `failed_count`
-- `missing_required_fields`
-- `coverage_status`
-- `failure_reason_counts`
+- `all_keyframes`
+- `frame_scores`
+- `selected_frames`
+- `selection_rationale`
+- `scene_tags`
 ```
 
-- [ ] **Step 4: Run the contract tests again**
+- [ ] **Step 4: Re-run the contract test and verify GREEN**
+
+Run the Step 2 command again.
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```powershell
+git add travel-skill/scripts/research_contracts.py travel-skill/tests/test_research_contracts.py travel-skill/references/content-schema.md
+git commit -m "feat: 固化 research evidence 与 media contract"
+```
+
+### Task 2: Add Xiaohongshu Page-First Evidence Normalization
+
+**Files:**
+- Create: `travel-skill/scripts/collect_page_evidence.py`
+- Modify: `travel-skill/scripts/build_research_tasks.py`
+- Modify: `travel-skill/scripts/build_web_research_runs.py`
+- Create: `travel-skill/tests/test_page_evidence_pipeline.py`
+- Modify: `travel-skill/tests/test_build_research_tasks.py`
+
+- [ ] **Step 1: Write the failing page-evidence tests**
+
+```python
+def test_collect_page_evidence_preserves_full_body_and_comments(self):
+    payload = {
+        "items": [{
+            "site": "xiaohongshu",
+            "page_body_full": "full body text",
+            "comment_threads_full": [{"author": "a", "text": "comment"}],
+            "image_candidates": [{"url": "https://cdn.example.com/1.jpg"}],
+        }]
+    }
+    result = collect(payload)
+    item = result["items"][0]
+    self.assertEqual(item["coverage_status"], "complete")
+    self.assertEqual(item["comment_sample_size"], 1)
+    self.assertEqual(item["page_body_full"], "full body text")
+
+def test_collect_page_evidence_marks_partial_when_comments_missing(self):
+    payload = {"items": [{"site": "xiaohongshu", "page_body_full": "full body text"}]}
+    result = collect(payload)
+    item = result["items"][0]
+    self.assertEqual(item["coverage_status"], "partial")
+    self.assertIn("comment_threads_full", item["missing_fields"])
+```
+
+- [ ] **Step 2: Run the targeted tests and verify RED**
 
 Run:
 
 ```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_research_contracts.py' -v
+cmd.exe /d /c "call C:\Users\territoryliu\anaconda3\condabin\activate.bat stock-analyzer && cd /d d:\vscode\hello-world && python -m unittest discover travel-skill\tests -p test_page_evidence_pipeline.py -v"
 ```
 
-Expected: PASS with 4 passing tests.
+Expected: FAIL because `collect_page_evidence.py` does not exist yet.
 
-### Task 2: Generate Heavy-Sampling, Dual-Layer Research Tasks
-
-**Files:**
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\travel_config.py`
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\build_research_tasks.py`
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\build_web_research_runs.py`
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\test_build_research_tasks.py`
-
-- [ ] **Step 1: Write the failing task-generation tests**
+- [ ] **Step 3: Implement page evidence normalization and task/run metadata**
 
 ```python
-import unittest
-import sys
-from pathlib import Path
-
-SCRIPT_DIR = Path(r"C:\Users\Lenovo\.codex\skills\travel-skill\scripts")
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
-
-from build_research_tasks import build_tasks
-
-
-class BuildResearchTasksTest(unittest.TestCase):
-    def setUp(self):
-        self.payload = {
-            "trip_slug": "hangzhou-spring-trip",
-            "title": "杭州春季自由行",
-            "departure_city": "上海",
-            "destinations": ["杭州"],
-            "required_topics": ["attractions", "food", "risks"],
+# travel-skill/scripts/collect_page_evidence.py
+def collect(payload: dict) -> dict:
+    items = []
+    for raw in payload.get("items", []):
+        comments = raw.get("comment_threads_full") if isinstance(raw.get("comment_threads_full"), list) else []
+        missing = []
+        if not str(raw.get("page_body_full") or "").strip():
+            missing.append("page_body_full")
+        if not comments:
+            missing.append("comment_threads_full")
+        item = {
+            **raw,
+            "comment_sample_size": len(comments),
+            "missing_fields": missing,
+            "coverage_status": "complete" if not missing else "partial",
         }
-
-    def test_tasks_include_dual_layers_for_social_topics(self):
-        tasks = build_tasks(self.payload)["tasks"]
-        xhs_layers = {task["time_layer"] for task in tasks if task["site"] == "xiaohongshu"}
-        self.assertEqual(xhs_layers, {"recent", "last_year_same_period"})
-
-    def test_tasks_include_heavy_sample_targets(self):
-        tasks = build_tasks(self.payload)["tasks"]
-        douyin_targets = {task["sample_target"] for task in tasks if task["site"] == "douyin"}
-        self.assertEqual(douyin_targets, {10})
-
-    def test_web_runs_prompt_mentions_time_layer_and_sample_target(self):
-        from build_web_research_runs import build_runs
-        planned = build_runs({"trip_slug": "hangzhou-spring-trip", "tasks": build_tasks(self.payload)["tasks"]})
-        prompt = planned["runs"][0]["prompt"]
-        self.assertIn("time_layer=", prompt)
-        self.assertIn("sample_target=", prompt)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        items.append(item)
+    return {"items": items}
 ```
 
-- [ ] **Step 2: Run the task-generation tests to verify they fail**
+```python
+# travel-skill/scripts/build_research_tasks.py
+task["raw_capture_policy"] = "full"
+task["media_policy"] = "page-images"
+if task["site"] == "xiaohongshu":
+    task["must_capture_fields"].extend(["page_body_full", "comment_threads_full", "comment_sample_size", "image_candidates"])
+```
+
+```python
+# travel-skill/scripts/build_web_research_runs.py
+if site == "xiaohongshu":
+    instructions.append("Capture the full page body, full comment threads, comment sample size, and image candidates before marking the task complete.")
+```
+
+- [ ] **Step 4: Re-run the targeted tests and the task-generation suite**
 
 Run:
 
 ```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_build_research_tasks.py' -v
+cmd.exe /d /c "call C:\Users\territoryliu\anaconda3\condabin\activate.bat stock-analyzer && cd /d d:\vscode\hello-world && python -m unittest discover travel-skill\tests -p test_page_evidence_pipeline.py -v && python -m unittest discover travel-skill\tests -p test_build_research_tasks.py -v"
 ```
 
-Expected: FAIL because the generated tasks do not yet contain `time_layer` or `sample_target`, and the prompt does not mention them.
+Expected: PASS.
 
-- [ ] **Step 3: Implement dual-layer task planning and richer run prompts**
-
-```python
-# C:\Users\Lenovo\.codex\skills\travel-skill\scripts\travel_config.py
-from research_contracts import HEAVY_SAMPLE_TARGETS
-
-SITE_COVERAGE_TARGETS = {
-    "food": ["meituan", "dianping", "xiaohongshu"],
-    "attractions": ["official", "xiaohongshu", "douyin", "bilibili"],
-    "risks": ["xiaohongshu", "douyin", "bilibili"],
-}
-
-TIME_LAYER_TOPICS = {
-    "weather",
-    "clothing",
-    "packing",
-    "attractions",
-    "food",
-    "seasonality",
-    "risks",
-}
-```
-
-```python
-# inside C:\Users\Lenovo\.codex\skills\travel-skill\scripts\build_research_tasks.py
-from research_contracts import HEAVY_SAMPLE_TARGETS, TIME_LAYERS
-from travel_config import TIME_LAYER_TOPICS
-
-
-def _layers_for_topic(topic: str) -> list[str]:
-    return list(TIME_LAYERS) if topic in TIME_LAYER_TOPICS else ["recent"]
-
-
-def build_tasks(payload: dict) -> dict:
-    tasks = []
-    places = [item for item in payload.get("destinations", []) if isinstance(item, str) and item.strip()]
-    topics = payload.get("required_topics", [])
-    for place in places:
-        for topic in topics:
-            site_rules = TOPIC_SITE_RULES.get(topic, [{"platform": "official", "site": "official", "collection_method": "search+fetch", "must_capture_fields": ["summary"], "evidence_level": "primary"}])
-            for time_layer in _layers_for_topic(topic):
-                for rule in site_rules:
-                    site = rule["site"]
-                    tasks.append(
-                        {
-                            "trip_slug": payload["trip_slug"],
-                            "place": place,
-                            "topic": topic,
-                            "platform": rule["platform"],
-                            "site": site,
-                            "required_sources": [item["site"] for item in site_rules],
-                            "query_hint": f"{payload['departure_city']} {payload['title']} {place} {topic}",
-                            "site_query": site_query(payload, place, topic, site),
-                            "collection_method": rule["collection_method"],
-                            "must_capture_fields": list(rule["must_capture_fields"]),
-                            "evidence_level": rule["evidence_level"],
-                            "time_layer": time_layer,
-                            "sample_target": HEAVY_SAMPLE_TARGETS.get(site, 1),
-                            "retry_policy": "retry_same_mode",
-                            "fallback_policy": "page_first_then_fallback",
-                        }
-                    )
-    return {
-        "trip_slug": payload["trip_slug"],
-        "research_dimensions": ["place", "topic", "platform", "site", "time_layer"],
-        "places": places,
-        "tasks": tasks,
-    }
-```
-
-```python
-# inside C:\Users\Lenovo\.codex\skills\travel-skill\scripts\build_web_research_runs.py
-def _capture_contract(task: dict) -> str:
-    site = str(task.get("site") or "").lower()
-    time_layer = str(task.get("time_layer") or "recent")
-    sample_target = int(task.get("sample_target") or 1)
-    instructions = [
-        f"time_layer={time_layer}.",
-        f"sample_target={sample_target}.",
-        "Record missing_fields when any required field is absent.",
-        "Use retry_same_mode before degrade_or_fallback.",
-    ]
-    if site in {"xiaohongshu", "douyin", "bilibili"}:
-        instructions.append("Capture page body, comments, comment status, and comment sample size.")
-    if site in {"douyin", "bilibili"}:
-        instructions.append("When page evidence is insufficient, run video fallback and capture transcript_segments, timeline, visual_segments, and shot_candidates.")
-    instructions.append("If collection still fails, set coverage_status to partial or failed and persist failure_reason plus failure_detail.")
-    return " ".join(instructions)
-```
-
-- [ ] **Step 4: Run the task-generation tests again**
-
-Run:
+- [ ] **Step 5: Commit**
 
 ```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_build_research_tasks.py' -v
+git add travel-skill/scripts/collect_page_evidence.py travel-skill/scripts/build_research_tasks.py travel-skill/scripts/build_web_research_runs.py travel-skill/tests/test_page_evidence_pipeline.py travel-skill/tests/test_build_research_tasks.py
+git commit -m "feat: 增加小红书页面证据归一化"
 ```
 
-Expected: PASS with all tests green.
-
-- [ ] **Step 5: Run the contract and task tests together**
-
-Run:
-
-```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_*.py' -v
-```
-
-Expected: PASS for `test_research_contracts.py` and `test_build_research_tasks.py`.
-
-### Task 3: Build the Video Fallback Pipeline
+### Task 3: Complete Douyin/Bilibili Video Fallback and Keyframe Scoring
 
 **Files:**
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\video_pipeline.py`
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\build_video_research_json.py`
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\extract_video_assets.py`
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\test_video_pipeline.py`
+- Modify: `travel-skill/scripts/video_pipeline.py`
+- Modify: `travel-skill/scripts/extract_video_assets.py`
+- Create: `travel-skill/scripts/score_video_keyframes.py`
+- Modify: `travel-skill/scripts/build_video_research_json.py`
+- Modify: `travel-skill/tests/test_video_pipeline.py`
+- Create: `travel-skill/tests/test_video_media_scoring.py`
 
-- [ ] **Step 1: Write the failing video-pipeline tests**
+- [ ] **Step 1: Write the failing scoring and fallback tests**
 
 ```python
-import unittest
-import sys
-from pathlib import Path
+def test_score_video_keyframes_preserves_all_candidates_and_marks_selected(self):
+    manifest = {
+        "items": [
+            {"path": "frame-001.jpg", "timestamp": "00:05"},
+            {"path": "frame-002.jpg", "timestamp": "00:13"},
+        ]
+    }
+    result = score_manifest(manifest)
+    self.assertEqual(len(result["all_keyframes"]), 2)
+    self.assertTrue(any(item["selected"] for item in result["frame_scores"]))
+    self.assertTrue(result["selected_frames"])
 
-SCRIPT_DIR = Path(r"C:\Users\Lenovo\.codex\skills\travel-skill\scripts")
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
-
-from build_video_research_json import build_video_record
-from video_pipeline import build_fallback_plan
-
-
-class VideoPipelineTest(unittest.TestCase):
-    def test_fallback_plan_contains_download_audio_keyframe_and_transcript_steps(self):
-        plan = build_fallback_plan("https://example.com/video", Path("C:/tmp/assets"))
-        stages = [step["stage"] for step in plan["steps"]]
-        self.assertEqual(stages, ["download", "extract_audio", "keyframes", "transcribe"])
-
-    def test_video_record_tracks_time_layer_and_missing_fields(self):
-        item = build_video_record(
-            {
-                "url": "https://example.com/video",
-                "platform": "douyin",
-                "collector_mode": "video-fallback",
-                "coverage_status": "partial",
-                "time_layer": "recent",
-                "missing_fields": ["transcript_segments"],
-            }
-        )
-        self.assertEqual(item["time_layer"], "recent")
-        self.assertEqual(item["missing_fields"], ["transcript_segments"])
-        self.assertEqual(item["collector_mode"], "video-fallback")
-
-
-if __name__ == "__main__":
-    unittest.main()
+def test_build_status_marks_multimodal_scoring_failed_when_score_manifest_missing(self):
+    item = build_status({"url": "https://example.com/video", "run_pipeline": False})
+    self.assertIn("media_artifacts", item)
 ```
 
-- [ ] **Step 2: Run the video-pipeline tests to verify they fail**
+- [ ] **Step 2: Run the targeted tests and verify RED**
 
 Run:
 
 ```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_video_pipeline.py' -v
+cmd.exe /d /c "call C:\Users\territoryliu\anaconda3\condabin\activate.bat stock-analyzer && cd /d d:\vscode\hello-world && python -m unittest discover travel-skill\tests -p test_video_media_scoring.py -v"
 ```
 
-Expected: FAIL because `video_pipeline.py` does not exist and `build_video_record()` does not emit the new fields.
+Expected: FAIL because `score_video_keyframes.py` does not exist yet.
 
-- [ ] **Step 3: Implement video fallback planning and richer normalized records**
+- [ ] **Step 3: Implement richer media artifacts and scoring**
 
 ```python
-# C:\Users\Lenovo\.codex\skills\travel-skill\scripts\video_pipeline.py
-from pathlib import Path
-import shutil
+# travel-skill/scripts/video_pipeline.py
+plan["artifacts"]["keyframe_manifest"] = str(asset_root / "keyframes.json")
+plan["artifacts"]["score_manifest"] = str(asset_root / "frame-scores.json")
+```
 
-
-def detect_tools() -> dict[str, str]:
+```python
+# travel-skill/scripts/score_video_keyframes.py
+def score_manifest(payload: dict) -> dict:
+    scored = []
+    for raw in payload.get("items", []):
+        score = 0.9 if any(tag in str(raw.get("label", "")) for tag in ["queue", "menu", "ticket", "view"]) else 0.6
+        scored.append({
+            **raw,
+            "evidence_score": score,
+            "visual_score": 0.5,
+            "selected": score >= 0.8,
+            "travel_signal_tags": raw.get("travel_signal_tags", []),
+        })
     return {
-        "yt_dlp": shutil.which("yt-dlp") or "",
-        "ffmpeg": shutil.which("ffmpeg") or "",
-        "whisper": shutil.which("whisper") or "",
-    }
-
-
-def build_fallback_plan(url: str, asset_root: Path) -> dict:
-    video_path = asset_root / "video.mp4"
-    audio_path = asset_root / "audio.wav"
-    keyframe_dir = asset_root / "keyframes"
-    transcript_path = asset_root / "transcript.json"
-    return {
-        "tools": detect_tools(),
-        "steps": [
-            {"stage": "download", "command": ["yt-dlp", "-o", str(video_path), url]},
-            {"stage": "extract_audio", "command": ["ffmpeg", "-y", "-i", str(video_path), str(audio_path)]},
-            {"stage": "keyframes", "command": ["ffmpeg", "-y", "-i", str(video_path), "-vf", "fps=1/8", str(keyframe_dir / "frame-%03d.jpg")]},
-            {"stage": "transcribe", "command": ["whisper", str(audio_path), "--output_format", "json", "--output_dir", str(asset_root)]},
-        ],
-        "artifacts": {
-            "video": str(video_path),
-            "audio": str(audio_path),
-            "keyframe_dir": str(keyframe_dir),
-            "transcript": str(transcript_path),
-        },
+        "all_keyframes": payload.get("items", []),
+        "frame_scores": scored,
+        "selected_frames": [item for item in scored if item["selected"]],
     }
 ```
 
 ```python
-# inside C:\Users\Lenovo\.codex\skills\travel-skill\scripts\build_video_research_json.py
-def build_video_record(item: dict) -> dict:
-    return {
-        "source_url": str(item.get("url") or ""),
-        "platform": str(item.get("platform") or ""),
-        "collected_at": str(item.get("collected_at") or ""),
-        "collector_mode": str(item.get("collector_mode") or "page-only"),
-        "coverage_status": str(item.get("coverage_status") or "partial"),
-        "failure_reason": str(item.get("failure_reason") or ""),
-        "failure_detail": str(item.get("failure_detail") or ""),
-        "missing_fields": item.get("missing_fields") if isinstance(item.get("missing_fields"), list) else [],
-        "time_layer": str(item.get("time_layer") or "recent"),
-        "author": str(item.get("author") or ""),
-        "title": str(item.get("title") or ""),
-        "publish_time": str(item.get("published_at") or ""),
-        "duration_sec": item.get("duration_sec") or 0,
-        "page_text": str(item.get("summary") or ""),
-        "comment_highlights": _list(item.get("comment_highlights")),
-        "transcript_segments": _list(item.get("transcript_segments")),
-        "visual_segments": _list(item.get("visual_segments")),
-        "timeline": _list(item.get("timeline")),
-        "shot_candidates": _list(item.get("shot_candidates")),
-        "media_artifacts": _list(item.get("media_artifacts")),
-    }
+# travel-skill/scripts/build_video_research_json.py
+record["media_artifacts"] = _list(item.get("media_artifacts"))
+record["frame_scores"] = _list(item.get("frame_scores"))
+record["selected_frames"] = _list(item.get("selected_frames"))
 ```
 
-```python
-# inside C:\Users\Lenovo\.codex\skills\travel-skill\scripts\extract_video_assets.py
-from pathlib import Path
-from video_pipeline import build_fallback_plan
-
-
-def build_status(item: dict) -> dict:
-    asset_root = Path(item.get("asset_root") or Path.cwd() / "video-assets")
-    plan = build_fallback_plan(str(item.get("url") or ""), asset_root)
-    item = dict(item)
-    item["fallback_plan"] = plan
-    item["media_artifacts"] = [{"kind": key, "path": value} for key, value in plan["artifacts"].items()]
-    tools = plan["tools"]
-    missing = [name for name, value in tools.items() if not value]
-    item["missing_fields"] = list(item.get("missing_fields") or [])
-    if missing:
-        item["coverage_status"] = "partial"
-        item["failure_reason"] = "video_download_failed" if "yt_dlp" in missing else "audio_transcription_failed"
-        item["failure_detail"] = f"Missing tools: {', '.join(missing)}"
-    return item
-```
-
-- [ ] **Step 4: Run the video-pipeline tests again**
+- [ ] **Step 4: Re-run the targeted tests and the existing video suite**
 
 Run:
 
 ```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_video_pipeline.py' -v
+cmd.exe /d /c "call C:\Users\territoryliu\anaconda3\condabin\activate.bat stock-analyzer && cd /d d:\vscode\hello-world && python -m unittest discover travel-skill\tests -p test_video_media_scoring.py -v && python -m unittest discover travel-skill\tests -p test_video_pipeline.py -v"
 ```
 
-Expected: PASS with 2 passing tests.
+Expected: PASS.
 
-### Task 4: Persist Dual-Layer Knowledge and Layered Storage
+- [ ] **Step 5: Commit**
+
+```powershell
+git add travel-skill/scripts/video_pipeline.py travel-skill/scripts/extract_video_assets.py travel-skill/scripts/score_video_keyframes.py travel-skill/scripts/build_video_research_json.py travel-skill/tests/test_video_pipeline.py travel-skill/tests/test_video_media_scoring.py
+git commit -m "feat: 完成视频 fallback 与关键帧评分链路"
+```
+
+### Task 4: Persist Raw, Normalized, Media, and Knowledge Layers
 
 **Files:**
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\extract_structured_facts.py`
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\persist_research_knowledge.py`
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\test_persist_research_knowledge.py`
+- Modify: `travel-skill/scripts/persist_research_knowledge.py`
+- Modify: `travel-skill/scripts/build_video_research_json.py`
+- Modify: `travel-skill/tests/test_persist_research_knowledge.py`
 
 - [ ] **Step 1: Write the failing persistence tests**
 
 ```python
-import tempfile
-import unittest
-import sys
-from pathlib import Path
+def test_persist_writes_raw_normalized_media_and_knowledge_layers(self):
+    result = persist_payloads(...)
+    self.assertTrue((place_root / "raw").exists())
+    self.assertTrue((place_root / "normalized").exists())
+    self.assertTrue((place_root / "media").exists())
+    self.assertTrue((place_root / "knowledge").exists())
 
-SCRIPT_DIR = Path(r"C:\Users\Lenovo\.codex\skills\travel-skill\scripts")
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
-
-from persist_research_knowledge import persist
-
-
-class PersistResearchKnowledgeTest(unittest.TestCase):
-    def test_persist_writes_recent_and_last_year_layers(self):
-        raw_payload = {"records": [{"place": "杭州", "site": "xiaohongshu", "topic": "attractions", "time_layer": "recent"}]}
-        approved_payload = {"facts": [{"place": "杭州", "topic": "attractions", "site": "xiaohongshu", "text": "西湖早晨人少", "time_layer": "last_year_same_period"}]}
-        media_payload = {"items": [{"place": "杭州", "kind": "keyframe", "path": "frame-001.jpg"}]}
-        coverage_payload = {"trip_slug": "hangzhou", "by_topic": {"attractions": {"coverage_status": "complete"}}}
-
-        with tempfile.TemporaryDirectory() as tmp:
-            persist(raw_payload, approved_payload, media_payload, coverage_payload, Path(tmp))
-            place_root = Path(tmp) / "places" / "hangzhou"
-            self.assertTrue((place_root / "knowledge" / "recent.json").exists())
-            self.assertTrue((place_root / "knowledge" / "last-year-same-period.json").exists())
-            self.assertTrue((place_root / "coverage" / "site-coverage.json").exists())
-
-
-if __name__ == "__main__":
-    unittest.main()
+def test_persist_links_raw_and_normalized_records_by_stable_id(self):
+    record = json.loads((place_root / "normalized" / "records.json").read_text(encoding="utf-8"))["records"][0]
+    self.assertIn("record_id", record)
+    self.assertIn("raw_ref", record)
 ```
 
-- [ ] **Step 2: Run the persistence test to verify it fails**
+- [ ] **Step 2: Run the targeted test and verify RED**
 
 Run:
 
 ```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_persist_research_knowledge.py' -v
+cmd.exe /d /c "call C:\Users\territoryliu\anaconda3\condabin\activate.bat stock-analyzer && cd /d d:\vscode\hello-world && python -m unittest discover travel-skill\tests -p test_persist_research_knowledge.py -v"
 ```
 
-Expected: FAIL because the current persistence layout does not create `knowledge/recent.json` or `knowledge/last-year-same-period.json`.
+Expected: FAIL because the current persistence layer does not write all four layers with stable IDs.
 
-- [ ] **Step 3: Implement topic-grouped knowledge points and layered storage**
+- [ ] **Step 3: Implement four-layer persistence**
 
 ```python
-# inside C:\Users\Lenovo\.codex\skills\travel-skill\scripts\extract_structured_facts.py
-def extract(payload: dict) -> dict:
-    by_place: dict[str, dict[str, list[dict]]] = {}
-    facts = []
-    knowledge_points = []
-    for raw_entry in payload.get("entries", []):
-        entry = raw_entry if isinstance(raw_entry, dict) else {}
-        place = str(entry.get("place", ""))
-        topic = str(entry.get("topic", entry.get("category", "")))
-        platform = str(entry.get("platform", ""))
-        site = str(entry.get("site", platform or "unknown"))
-        source_url = str(entry.get("url", ""))
-        checked_at = str(entry.get("checked_at", ""))
-        source_type = str(entry.get("source_type", ""))
-        source_title = str(entry.get("title", ""))
-        raw_facts = entry.get("facts", [])
-        if raw_facts is None:
-            raw_facts = []
-        facts_iterable = raw_facts if isinstance(raw_facts, list) else [raw_facts]
-        time_layer = str(entry.get("time_layer", "recent"))
-        for fact in facts_iterable:
-            text = _fact_to_text(fact).strip()
-            if not text:
-                continue
-            fact_item = {
-                "place": place,
-                "topic": topic,
-                "platform": platform,
-                "site": site,
-                "text": text,
-                "source_url": source_url,
-                "checked_at": checked_at,
-                "source_type": source_type,
-                "source_title": source_title,
-                "time_layer": time_layer,
-            }
-            knowledge_points.append(
-                {
-                    "place": place,
-                    "topic": topic,
-                    "time_layer": time_layer,
-                    "claim": text,
-                    "evidence_refs": [source_url] if source_url else [],
-                }
-            )
-            by_place.setdefault(place, {}).setdefault(topic, []).append(fact_item)
-            facts.append(fact_item)
-    return {"by_place": by_place, "facts": facts, "knowledge_points": knowledge_points}
+# travel-skill/scripts/persist_research_knowledge.py
+record_id = f"{place}-{topic}-{site}-{time_layer}-{index}"
+normalized_record["record_id"] = record_id
+normalized_record["raw_ref"] = f"raw/{record_id}.json"
 ```
 
 ```python
-# inside C:\Users\Lenovo\.codex\skills\travel-skill\scripts\persist_research_knowledge.py
-def persist(raw_payload, approved_payload, media_payload, coverage_payload, output_root: Path) -> None:
-    raw_records = _iter_records(raw_payload, "records")
-    approved_facts = _iter_records(approved_payload, "facts")
-    media_records = _iter_records(media_payload, "items")
-    coverage_by_topic = coverage_payload.get("by_topic") if isinstance(coverage_payload, dict) else {}
-    coverage_by_topic = coverage_by_topic if isinstance(coverage_by_topic, dict) else {}
-    trip_slug = str(coverage_payload.get("trip_slug") or "")
-    places = _collect_places(raw_records, approved_facts, media_records)
-    for place in places:
-        place_slug = _place_slug(place)
-        place_root = output_root / "places" / place_slug
-        place_raw = [item for item in raw_records if item.get("place") == place]
-        place_facts = [item for item in approved_facts if item.get("place") == place]
-        place_media = [item for item in media_records if item.get("place") == place]
-
-        recent_facts = [item for item in place_facts if item.get("time_layer") == "recent"]
-        historical_facts = [item for item in place_facts if item.get("time_layer") == "last_year_same_period"]
-
-        _write_json(place_root / "raw" / "web-research.json", {"trip_slug": trip_slug, "place": place, "records": place_raw})
-        _write_json(place_root / "normalized" / "facts.json", {"trip_slug": trip_slug, "place": place, "facts": place_facts})
-        _write_json(place_root / "knowledge" / "recent.json", {"trip_slug": trip_slug, "place": place, "facts": recent_facts})
-        _write_json(place_root / "knowledge" / "last-year-same-period.json", {"trip_slug": trip_slug, "place": place, "facts": historical_facts})
-        _write_json(place_root / "media" / "items.json", {"trip_slug": trip_slug, "place": place, "items": place_media})
-        _write_json(place_root / "coverage" / "site-coverage.json", {"trip_slug": trip_slug, "place": place, "site_coverage": coverage_by_topic})
+for layer in ["raw", "normalized", "media", "knowledge"]:
+    (place_root / layer).mkdir(parents=True, exist_ok=True)
 ```
 
-- [ ] **Step 4: Run the persistence test again**
+```python
+(place_root / "media" / "frame-scores.json").write_text(
+    json.dumps(media_payload, ensure_ascii=False, indent=2),
+    encoding="utf-8",
+)
+```
 
-Run:
+- [ ] **Step 4: Re-run the persistence suite**
+
+Run the Step 2 command again.
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
 
 ```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_persist_research_knowledge.py' -v
+git add travel-skill/scripts/persist_research_knowledge.py travel-skill/scripts/build_video_research_json.py travel-skill/tests/test_persist_research_knowledge.py
+git commit -m "feat: 持久化四层 research 输出"
 ```
 
-Expected: PASS with the layered files present.
-
-### Task 5: Harden Coverage Validation and Verification
+### Task 5: Feed Selected Media into the Image Plan and Coverage Validation
 
 **Files:**
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\validate_site_coverage.py`
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\verify_trip.py`
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\test_validate_site_coverage.py`
+- Modify: `travel-skill/scripts/build_image_plan.py`
+- Modify: `travel-skill/scripts/validate_site_coverage.py`
+- Create: `travel-skill/tests/test_image_candidate_manifest.py`
+- Modify: `travel-skill/tests/test_validate_site_coverage.py`
 
-- [ ] **Step 1: Write the failing coverage-validation tests**
+- [ ] **Step 1: Write the failing image-plan and coverage tests**
 
 ```python
-import unittest
-import sys
-from pathlib import Path
+def test_build_image_plan_prefers_selected_media_manifest(self):
+    payload = {
+        "items": [{
+            "selected_frames": [{"local_path": "frame-001.jpg", "selected_for_publish": True, "evidence_score": 0.92}],
+            "section": "attractions",
+        }]
+    }
+    result = build_plan(payload)
+    self.assertEqual(result["section_images"][0]["image_url"], "frame-001.jpg")
+    self.assertEqual(result["section_images"][0]["publish_state"], "selected-media")
 
-SCRIPT_DIR = Path(r"C:\Users\Lenovo\.codex\skills\travel-skill\scripts")
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
-
-from validate_site_coverage import validate
-
-
-class ValidateSiteCoverageTest(unittest.TestCase):
-    def test_marks_partial_when_sample_target_is_not_met(self):
-        payload = {
-            "records": [
-                {"topic": "attractions", "site": "xiaohongshu", "coverage_status": "complete", "missing_fields": [], "time_layer": "recent"}
-            ]
-        }
-        report = validate(payload)
-        self.assertEqual(report["by_site"]["xiaohongshu"]["coverage_status"], "partial")
-        self.assertIn("insufficient_sample_size", report["by_site"]["xiaohongshu"]["failure_reasons"])
-
-    def test_topic_report_keeps_missing_sites(self):
-        payload = {"records": [{"topic": "food", "site": "xiaohongshu", "coverage_status": "complete", "missing_fields": []}]}
-        report = validate(payload)
-        self.assertIn("dianping", report["by_topic"]["food"]["missing_required_sites"])
-        self.assertIn("meituan", report["by_topic"]["food"]["missing_required_sites"])
-
-
-if __name__ == "__main__":
-    unittest.main()
+def test_validate_site_coverage_flags_video_incomplete_when_page_is_complete(self):
+    payload = {"records": [{
+        "site": "douyin",
+        "coverage_status": "partial",
+        "page_body_full": "ok",
+        "comment_threads_full": [{"text": "ok"}],
+        "transcript_segments": [],
+        "frame_scores": [],
+        "missing_fields": ["transcript_segments", "frame_scores"],
+    }]}
 ```
 
-- [ ] **Step 2: Run the coverage-validation tests to verify they fail**
+- [ ] **Step 2: Run the targeted tests and verify RED**
 
 Run:
 
 ```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_validate_site_coverage.py' -v
+cmd.exe /d /c "call C:\Users\territoryliu\anaconda3\condabin\activate.bat stock-analyzer && cd /d d:\vscode\hello-world && python -m unittest discover travel-skill\tests -p test_image_candidate_manifest.py -v && python -m unittest discover travel-skill\tests -p test_validate_site_coverage.py -v"
 ```
 
-Expected: FAIL because the current validator only reports seen vs missing sites and does not compute `by_site`, sample targets, or failure reasons.
+Expected: FAIL because selected-media manifest support does not exist yet.
 
-- [ ] **Step 3: Implement hard coverage evaluation and dossier verification**
-
-```python
-# inside C:\Users\Lenovo\.codex\skills\travel-skill\scripts\validate_site_coverage.py
-from research_contracts import HEAVY_SAMPLE_TARGETS
-
-
-def validate(payload: dict) -> dict:
-    records = payload.get("records", [])
-    by_topic = {}
-    by_site = {}
-    for record in records if isinstance(records, list) else []:
-        if not isinstance(record, dict):
-            continue
-        site = str(record.get("site", ""))
-        topic = str(record.get("topic", ""))
-        site_bucket = by_site.setdefault(site, {"sample_target": HEAVY_SAMPLE_TARGETS.get(site, 1), "actual_sample_count": 0, "failure_reasons": set(), "missing_required_fields": set()})
-        site_bucket["actual_sample_count"] += 1
-        for missing in record.get("missing_fields", []) if isinstance(record.get("missing_fields"), list) else []:
-            site_bucket["missing_required_fields"].add(missing)
-        if record.get("failure_reason"):
-            site_bucket["failure_reasons"].add(str(record["failure_reason"]))
-        topic_bucket = by_topic.setdefault(topic, {"seen_sites": set(), "missing_required_sites": []})
-        if site:
-            topic_bucket["seen_sites"].add(site)
-    for site, bucket in by_site.items():
-        bucket["coverage_status"] = "complete" if bucket["actual_sample_count"] >= bucket["sample_target"] and not bucket["missing_required_fields"] else "partial"
-        if bucket["actual_sample_count"] < bucket["sample_target"]:
-            bucket["failure_reasons"].add("insufficient_sample_size")
-        bucket["failure_reasons"] = sorted(bucket["failure_reasons"])
-        bucket["missing_required_fields"] = sorted(bucket["missing_required_fields"])
-    for topic, required_sites in REQUIRED_SITE_MATRIX.items():
-        topic_bucket = by_topic.setdefault(topic, {"seen_sites": set(), "missing_required_sites": []})
-        topic_bucket["missing_required_sites"] = sorted(site for site in required_sites if site not in topic_bucket["seen_sites"])
-        topic_bucket["seen_sites"] = sorted(topic_bucket["seen_sites"])
-    return {"has_gaps": any(bucket["coverage_status"] != "complete" for bucket in by_site.values()), "by_topic": by_topic, "by_site": by_site}
-```
+- [ ] **Step 3: Implement selected-media consumption and tighter coverage rules**
 
 ```python
-# inside C:\Users\Lenovo\.codex\skills\travel-skill\scripts\verify_trip.py
-def verify_trip(guide_root: Path) -> dict:
-    html_blob = scan_html_text(guide_root)
-    content_checks = {
-        "research_report_present": (guide_root / "research-report.html").exists(),
-        "coverage_overview_present": "覆盖总览" in html_blob,
-        "dual_time_layer_present": "最新现状" in html_blob and "去年同期经验" in html_blob,
-        "gaps_section_present": "缺口与失败" in html_blob,
-        "source_appendix_present": "来源附录" in html_blob,
-        "notes_sources_present": all((guide_root / "notes" / name).exists() for name in ["sources.md", "sources.html"]),
-    }
-    browser_check = verify_render_with_playwright(guide_root)
-    warnings = []
-    if browser_check.get("status") == "warn":
-        warnings.append(browser_check.get("reason", "browser verification skipped"))
-    status = "pass" if all(content_checks.values()) else "fail"
+# travel-skill/scripts/build_image_plan.py
+selected_frames = item.get("selected_frames") if isinstance(item.get("selected_frames"), list) else []
+preferred = next((frame for frame in selected_frames if frame.get("selected_for_publish")), None)
+if preferred:
     return {
-        "content_checks": content_checks,
-        "status": status,
-        "warnings": warnings,
-        "playwright_check": browser_check,
+        "image_url": preferred.get("local_path", ""),
+        "publish_state": "selected-media",
+        "evidence_score": preferred.get("evidence_score", 0),
     }
 ```
 
-- [ ] **Step 4: Run the coverage-validation tests again**
-
-Run:
-
-```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_validate_site_coverage.py' -v
+```python
+# travel-skill/scripts/validate_site_coverage.py
+if record["site"] in {"douyin", "bilibili"} and record.get("page_body_full") and not record.get("transcript_segments"):
+    failure_reasons.add("video_incomplete")
 ```
 
-Expected: PASS with both tests green.
+- [ ] **Step 4: Re-run the targeted tests**
 
-### Task 6: Render the Research Dossier HTML
+Run the Step 2 command again.
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```powershell
+git add travel-skill/scripts/build_image_plan.py travel-skill/scripts/validate_site_coverage.py travel-skill/tests/test_image_candidate_manifest.py travel-skill/tests/test_validate_site_coverage.py
+git commit -m "feat: 接入 selected media manifest 与覆盖校验"
+```
+
+### Task 6: Tighten Dossier Rendering, Verification, and Full Regression
 
 **Files:**
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\scripts\render_trip_site.py`
-- Modify: `C:\Users\Lenovo\.codex\skills\travel-skill\assets\templates\render-guide.js`
-- Create: `C:\Users\Lenovo\.codex\skills\travel-skill\tests\test_render_research_report.py`
+- Modify: `travel-skill/scripts/render_trip_site.py`
+- Modify: `travel-skill/scripts/verify_trip.py`
+- Modify: `travel-skill/tests/test_render_research_report.py`
+- Modify: `tests/test_verify.py`
 
-- [ ] **Step 1: Write the failing dossier-render tests**
-
-```python
-import tempfile
-import unittest
-import sys
-from pathlib import Path
-
-SCRIPT_DIR = Path(r"C:\Users\Lenovo\.codex\skills\travel-skill\scripts")
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
-
-from render_trip_site import render_trip_site
-
-
-class RenderResearchReportTest(unittest.TestCase):
-    def test_render_trip_site_outputs_research_report_sections(self):
-        payload = {
-            "trip_slug": "hangzhou-spring-trip",
-            "research_report": {
-                "coverage_overview": [{"site": "xiaohongshu", "coverage_status": "complete"}],
-                "quick_findings": ["西湖工作日早晨更适合拍照"],
-                "theme_blocks": [{"title": "景观与季节性", "recent": ["柳树已绿"], "historical": ["去年同期花期稳定"]}],
-                "evidence_cards": [{"title": "小红书帖子 A", "platform": "xiaohongshu", "time_layer": "recent"}],
-                "gaps": [{"site": "douyin", "reason": "insufficient_sample_size"}],
-            },
-        }
-        with tempfile.TemporaryDirectory() as tmp:
-            render_trip_site(payload, Path(tmp))
-            html_text = (Path(tmp) / "research-report.html").read_text(encoding="utf-8")
-            self.assertIn("覆盖总览", html_text)
-            self.assertIn("最新现状", html_text)
-            self.assertIn("去年同期经验", html_text)
-            self.assertIn("缺口与失败", html_text)
-
-
-if __name__ == "__main__":
-    unittest.main()
-```
-
-- [ ] **Step 2: Run the dossier-render test to verify it fails**
-
-Run:
-
-```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_render_research_report.py' -v
-```
-
-Expected: FAIL because `render_trip_site.py` does not yet emit a `research-report.html` dossier with the required sections.
-
-- [ ] **Step 3: Implement research-report rendering**
+- [ ] **Step 1: Write the failing render/verify assertions**
 
 ```python
-# inside C:\Users\Lenovo\.codex\skills\travel-skill\scripts\render_trip_site.py
-def _render_research_report(report: dict) -> str:
-    coverage_cards = "".join(
-        f"<li><strong>{_escape(item.get('site'))}</strong> · {_escape(item.get('coverage_status'))}</li>"
-        for item in _safe_list(report.get("coverage_overview"))
-    )
-    theme_cards = "".join(
-        (
-            '<section class="section-block">'
-            f"<h3>{_escape(block.get('title'))}</h3>"
-            '<div class="section-body">'
-            f"<article class='card'><h4>最新现状</h4><ul>{''.join(f'<li>{_escape(point)}</li>' for point in _safe_list(block.get('recent')))}</ul></article>"
-            f"<article class='card'><h4>去年同期经验</h4><ul>{''.join(f'<li>{_escape(point)}</li>' for point in _safe_list(block.get('historical')))}</ul></article>"
-            "</div></section>"
-        )
-        for block in _safe_list(report.get("theme_blocks"))
-    )
-    gap_items = "".join(
-        f"<li><strong>{_escape(item.get('site'))}</strong> · {_escape(item.get('reason'))}</li>"
-        for item in _safe_list(report.get("gaps"))
-    )
-    return (
-        '<section class="section-block"><h2>覆盖总览</h2><ul class="card-points">'
-        f"{coverage_cards}</ul></section>"
-        '<section class="section-block"><h2>快速结论</h2><ul class="card-points">'
-        f"{''.join(f'<li>{_escape(point)}</li>' for point in _safe_list(report.get('quick_findings')))}</ul></section>"
-        f"{theme_cards}"
-        '<section class="section-block"><h2>缺口与失败</h2><ul class="card-points">'
-        f"{gap_items}</ul></section>"
-        '<section class="section-block"><h2>来源附录</h2><div id="sources-root"></div></section>'
-    )
+def test_render_trip_site_outputs_media_evidence_cards(self):
+    html = render_report(...)
+    self.assertIn("selected-frame", html)
+    self.assertIn("coverage_status", html)
+
+def test_verify_trip_flags_unscored_keyframes(self):
+    payload = verify_trip(guide_root)
+    self.assertFalse(payload["content_checks"]["media_scoring_complete"])
 ```
 
-```javascript
-// inside C:\Users\Lenovo\.codex\skills\travel-skill\assets\templates\render-guide.js
-if (guide.research_report) {
-  document.querySelector("#research-report-root").innerHTML = guide.research_report_html || "";
-}
-```
-
-- [ ] **Step 4: Run the dossier-render test again**
+- [ ] **Step 2: Run the targeted tests and verify RED**
 
 Run:
 
 ```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_render_research_report.py' -v
+cmd.exe /d /c "call C:\Users\territoryliu\anaconda3\condabin\activate.bat stock-analyzer && cd /d d:\vscode\hello-world && python -m unittest discover travel-skill\tests -p test_render_research_report.py -v && python -m unittest discover tests -p test_verify.py -v"
 ```
 
-Expected: PASS with the four required section checks succeeding.
+Expected: FAIL because the dossier and verifier do not yet check media scoring completeness.
 
-- [ ] **Step 5: Run the full Phase 1 test suite**
+- [ ] **Step 3: Implement the final media-aware dossier and verifier**
+
+```python
+# travel-skill/scripts/verify_trip.py
+content_checks["media_scoring_complete"] = "frame-scores.json" in html_blob or (guide_root / "media" / "frame-scores.json").exists()
+```
+
+```python
+# travel-skill/scripts/render_trip_site.py
+evidence_cards += "".join(
+    f"<article class='card selected-frame'><h3>{_escape(frame.get('title') or 'Selected Frame')}</h3></article>"
+    for frame in _safe_list(report.get("selected_frames"))
+)
+```
+
+- [ ] **Step 4: Run the full regression commands**
 
 Run:
 
 ```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' -m unittest discover 'C:\Users\Lenovo\.codex\skills\travel-skill\tests' -p 'test_*.py' -v
+cmd.exe /d /c "call C:\Users\territoryliu\anaconda3\condabin\activate.bat stock-analyzer && cd /d d:\vscode\hello-world && python -m unittest discover tests -p test_*.py -v"
 ```
-
-Expected: PASS across contract, task-planning, video-pipeline, persistence, coverage, and rendering tests.
-
-- [ ] **Step 6: Run the report verifier against a generated guide root**
 
 Run:
 
 ```powershell
-& 'C:\Users\Lenovo\.conda\envs\stock-analyzer\python.exe' 'C:\Users\Lenovo\.codex\skills\travel-skill\scripts\verify_trip.py' --guide-root 'C:\Users\Lenovo\.codex\skills\travel-skill\travel-data\guides\sample-trip' --output 'C:\Users\Lenovo\.codex\skills\travel-skill\travel-data\guides\sample-trip\verify-report.json'
+cmd.exe /d /c "call C:\Users\territoryliu\anaconda3\condabin\activate.bat stock-analyzer && cd /d d:\vscode\hello-world && python -m unittest discover travel-skill\tests -p test_*.py -v"
 ```
 
-Expected: PASS once `research-report.html`, `notes/sources.md`, `notes/sources.html`, coverage sections, and dual-time-layer sections are present in the sample output.
+Expected: both commands PASS with zero failures.
 
-## Self-Review
+- [ ] **Step 5: Commit**
 
-- Spec coverage: this plan covers the shared schema, heavy sampling, dual time layers, source-specific coverage, video fallback, layered persistence, coverage validation, and research-report rendering from the approved design doc.
-- Placeholder scan: no deferred implementation markers remain.
-- Type consistency: the plan uses `time_layer`, `sample_target`, `coverage_status`, `failure_reason`, `missing_fields`, `transcript_segments`, `visual_segments`, and `research_report` consistently across tasks.
+```powershell
+git add travel-skill/scripts/render_trip_site.py travel-skill/scripts/verify_trip.py travel-skill/tests/test_render_research_report.py tests/test_verify.py
+git commit -m "feat: 完成 research dossier 媒体证据闭环"
+```
+
+## Self-Review Checklist
+
+- Spec coverage:
+  - shared contracts: Task 1
+  - Xiaohongshu page-first raw capture: Task 2
+  - Douyin/Bilibili page+video fallback: Task 3
+  - full keyframe persistence and scoring: Tasks 3 and 4
+  - four-layer persistence: Task 4
+  - image-plan consumption: Task 5
+  - coverage classification and final dossier verification: Tasks 5 and 6
+- Placeholder scan:
+  - no `TODO`, `TBD`, or vague “handle appropriately” language remains in tasks
+- Type consistency:
+  - `research_record`, `selected_frames`, `frame_scores`, `selected_for_publish`, and `coverage_status` names are used consistently across all tasks
 
 ## Execution Handoff
 
-Plan complete and saved to `docs/superpowers/plans/2026-04-15-travel-skill-research-enhancement.md`. Two execution options:
+Plan complete and saved to `video/docs/superpowers/plans/2026-04-15-travel-skill-research-enhancement.md`. Two execution options:
 
 **1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
 
