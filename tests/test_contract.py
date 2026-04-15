@@ -29,7 +29,7 @@ class TravelSkillContractTest(unittest.TestCase):
         for needle in [
             "review-gate",
             "single-file HTML",
-            "built-in online research",
+            "standalone `web-access` skill",
             "video fallback",
             "yt-dlp",
             "ffmpeg",
@@ -50,14 +50,14 @@ class TravelSkillContractTest(unittest.TestCase):
             "text citation only",
         ]:
             self.assertIn(needle, content)
-        self.assertNotIn("Use `web-access` for all online collection.", content)
+        self.assertIn("Do not rely on any repo-local `web-access` copy", content)
 
     def test_openai_contract_mentions_web_access_research_run(self):
         path = SKILL_DIR / "agents" / "openai.yaml"
         content = path.read_text(encoding="utf-8") if path.exists() else ""
         for needle in [
             "Travel Skill",
-            "built-in online research",
+            "standalone web-access skill",
             "build_research_tasks.py",
             "build_web_research_runs.py",
             "validate_site_coverage.py",
@@ -138,7 +138,7 @@ class TravelSkillContractTest(unittest.TestCase):
             "site-matrix.md": ["# Site Matrix", "xiaohongshu", "douyin", "bilibili", "meituan", "dianping"],
             "web-access-research-contract.md": [
                 "# Web Access Research Contract",
-                "built-in online research",
+                "standalone `web-access` skill",
                 "site_query",
                 "collection_method",
                 "comment_highlights",

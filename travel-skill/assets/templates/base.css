@@ -1,0 +1,273 @@
+:root {
+  --theme-bg: #f4efe6;
+  --theme-surface: #fffaf4;
+  --theme-ink: #272117;
+  --theme-ink-soft: #6e6257;
+  --theme-accent: #9a4b2f;
+  --theme-accent-soft: rgba(154, 75, 47, 0.12);
+  --theme-line: rgba(39, 33, 23, 0.1);
+  --theme-shadow: 0 18px 42px rgba(39, 33, 23, 0.1);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--theme-ink);
+  background:
+    radial-gradient(circle at top left, rgba(154, 75, 47, 0.14), transparent 20%),
+    linear-gradient(180deg, #f7f2ea 0%, var(--theme-bg) 45%, #f9f5ef 100%);
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  line-height: 1.7;
+}
+
+a {
+  color: inherit;
+}
+
+.page-shell {
+  width: min(1180px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 24px 0 40px;
+  min-width: 0;
+}
+
+.layout-editorial {
+  display: grid;
+  gap: 18px;
+}
+
+.hero-editorial,
+.editorial-lead,
+.editorial-section {
+  min-width: 0;
+}
+
+.editorial-lead .section-block,
+.editorial-section .section-block {
+  margin: 0;
+}
+
+.editorial-primary .section-block {
+  border-color: rgba(154, 75, 47, 0.18);
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 0.85fr;
+  gap: 18px;
+  min-width: 0;
+}
+
+.hero-copy,
+.hero-panel,
+.hero-mobile,
+.section-block,
+.card,
+.source-card {
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--theme-shadow);
+}
+
+.hero-copy,
+.hero-panel,
+.hero-mobile {
+  padding: 26px;
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--theme-accent);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-family: "STKaiti", "KaiTi", serif;
+}
+
+h1 {
+  font-size: clamp(34px, 5vw, 58px);
+  line-height: 1.08;
+}
+
+.layer-title,
+.hero-summary,
+.section-lead,
+.card-summary,
+.source-meta,
+.source-url,
+.empty-text {
+  color: var(--theme-ink-soft);
+}
+
+.meta-row,
+.section-nav,
+.card-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.meta-chip,
+.section-nav a,
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(39, 33, 23, 0.08);
+  text-decoration: none;
+}
+
+.hero-panel {
+  background: linear-gradient(180deg, rgba(44, 35, 29, 0.98), rgba(31, 25, 21, 0.98));
+  color: #f5ede4;
+}
+
+.hero-panel p {
+  color: rgba(245, 237, 228, 0.82);
+}
+
+.content-shell {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+  min-width: 0;
+}
+
+.section-nav {
+  position: sticky;
+  top: 12px;
+  z-index: 4;
+  padding: 12px;
+  background: rgba(255, 250, 244, 0.88);
+  backdrop-filter: blur(14px);
+}
+
+.section-block {
+  padding: 20px;
+  scroll-margin-top: 80px;
+  min-width: 0;
+}
+
+.mobile-page {
+  position: relative;
+}
+
+.section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  min-width: 0;
+}
+
+.section-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+
+.card,
+.source-card {
+  padding: 18px;
+  min-width: 0;
+}
+
+.card-header,
+.source-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.card-points {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card-points li {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: #f8f2ea;
+}
+
+.card-placeholder {
+  border-style: dashed;
+  background: linear-gradient(180deg, rgba(255, 247, 237, 0.98), rgba(250, 240, 227, 0.94));
+}
+
+.is-placeholder {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--theme-accent-soft);
+  color: var(--theme-accent);
+  font-size: 12px;
+}
+
+.source-url {
+  word-break: break-all;
+}
+
+h1,
+h2,
+h3,
+.layer-title,
+.hero-summary,
+.section-lead,
+.card-summary,
+.source-meta {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .hero-grid,
+  .section-body {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-grid > *,
+  .section-body > * {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-shell {
+    width: min(100%, calc(100% - 18px));
+  }
+
+  .section-nav {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .section-nav a {
+    white-space: nowrap;
+  }
+
+  .mobile-shell .section-body {
+    grid-template-columns: 1fr;
+  }
+}

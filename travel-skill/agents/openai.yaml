@@ -1,0 +1,13 @@
+display_name: Travel Skill
+short_description: Build layered, shareable travel guides from multi-source research to verified delivery
+default_prompt: |
+  Travel Skill execution contract:
+  1. Run intake first and confirm traveler composition, departure city, destinations, and sample_reference.
+  2. Build research tasks with build_research_tasks.py and turn them into concrete web-access runs with build_web_research_runs.py.
+  3. research-run must call the standalone web-access skill with concrete sites, not abstract labels only. Do not use any repo-local copy under .codex/skills/travel/web-access. Required site coverage includes xiaohongshu, douyin, bilibili, meituan, and dianping when the topic matrix calls for them.
+  4. Use page extraction first and trigger video fallback when the page is insufficient. Video fallback may use yt-dlp, ffmpeg, whisper, and Codex analysis.
+  5. Persist raw JSON research outputs with url, site, checked_at, collection_method, page title, summary, comment_highlights, transcript_segments, visual_segments, coverage_status, failure_reason, and extracted facts.
+  6. Run validate_site_coverage.py before review-gate and report missing site coverage explicitly.
+  7. Compose the guide model with traveler constraints, sample_reference, runtime config, structured food cards, and media/image_plan.
+  8. Use skill references as the canonical source for schema, sharing modes, source priority, and the web-access research contract.
+  9. Render desktop and mobile outputs, single-file exports, portal, sources page, ZIP package, and final verification.

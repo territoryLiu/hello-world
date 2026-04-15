@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>hangzhou-spring-trip · 研究底稿</title>
+    <style>
+    :root {
+      --theme-bg: #f3ede3;
+      --theme-surface: #fffaf4;
+      --theme-ink: #241d16;
+      --theme-accent: #8c4b2e;
+      --theme-accent-soft: #8c4b2e1f;
+      --theme-line: #241d161a;
+      --theme-shadow: 0 18px 42px #241d1624;
+    }
+    body {
+      font-family: "Source Han Serif SC", "STSong", serif;
+    }
+    .page-shell {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+    .hero,
+    .hero-media,
+    .section-block,
+    .card,
+    .source-card {
+      background: var(--theme-surface);
+      border: 1px solid var(--theme-line);
+      border-radius: 28px;
+      box-shadow: var(--theme-shadow);
+    }
+    .hero,
+    .hero-media,
+    .section-block {
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+    .hero-summary,
+    .section-lead,
+    .card-summary,
+    .source-meta,
+    .source-url,
+    .empty-text {
+      color: color-mix(in srgb, var(--theme-ink) 68%, white);
+    }
+    .content-shell {
+      display: grid;
+      gap: 18px;
+    }
+    .section-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px;
+      position: sticky;
+      top: 12px;
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(12px);
+      border-radius: 18px;
+      border: 1px solid var(--theme-line);
+    }
+    .section-nav a,
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      text-decoration: none;
+      border: 1px solid var(--theme-line);
+      background: rgba(255, 255, 255, 0.74);
+      color: inherit;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .section-head {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .section-body {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .card,
+    .source-card {
+      padding: 18px;
+    }
+    .timeline-stack {
+      display: grid;
+      gap: 18px;
+      position: relative;
+      padding-left: 22px;
+    }
+    .timeline-stack::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--theme-line);
+    }
+    .timeline-card {
+      position: relative;
+      padding: 18px 18px 18px 22px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid var(--theme-line);
+      box-shadow: var(--theme-shadow);
+    }
+    .timeline-card::before {
+      content: "";
+      position: absolute;
+      left: -20px;
+      top: 24px;
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--theme-accent);
+      border: 3px solid var(--theme-surface);
+      box-shadow: 0 0 0 1px var(--theme-line);
+    }
+    .card-points {
+      list-style: none;
+      padding: 0;
+      margin: 14px 0 0;
+      display: grid;
+      gap: 10px;
+    }
+    .card-points li {
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.7);
+    }
+    .transport-matrix {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .transport-row {
+      display: grid;
+      gap: 6px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid var(--theme-line);
+    }
+    .transport-row strong {
+      color: var(--theme-accent);
+    }
+    .transport-meta {
+      margin: 0;
+      font-size: 14px;
+      color: color-mix(in srgb, var(--theme-ink) 76%, white);
+    }
+    .transport-access-card,
+    .food-group-card {
+      position: relative;
+      overflow: hidden;
+      border-width: 1px;
+    }
+    .transport-access-card {
+      background: linear-gradient(180deg, rgba(154, 75, 47, 0.09), rgba(255, 255, 255, 0.9));
+    }
+    .food-group-card {
+      background: linear-gradient(180deg, rgba(154, 75, 47, 0.06), rgba(255, 250, 244, 0.98));
+    }
+    .transport-access-card::before,
+    .food-group-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--theme-accent);
+    }
+    .card-source-meta {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--theme-line);
+      display: grid;
+      gap: 6px;
+    }
+    .card-source-line {
+      margin: 0;
+      font-size: 13px;
+      color: color-mix(in srgb, var(--theme-ink) 70%, white);
+      word-break: break-all;
+    }
+    .card-inline-media {
+      margin-top: 14px;
+      display: grid;
+      gap: 8px;
+    }
+    .card-comment-strip {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: var(--theme-accent-soft);
+      border: 1px solid var(--theme-line);
+      display: grid;
+      gap: 10px;
+    }
+    .card-comment-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 8px;
+    }
+    .card-comment-list li {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.76);
+    }
+    .card-inline-media .media-label {
+      margin: 0;
+    }
+    .media-note {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid var(--theme-line);
+      margin-bottom: 12px;
+    }
+    .media-figure {
+      margin: 0 0 12px;
+    }
+    .media-image {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 18px;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      border: 1px solid var(--theme-line);
+      box-shadow: var(--theme-shadow);
+    }
+    .media-label,
+    .eyebrow {
+      margin: 0 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 12px;
+      color: var(--theme-accent);
+    }
+    h1, h2, h3, h4 {
+      margin: 0;
+    }
+    h1 {
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1.08;
+    }
+    a {
+      color: inherit;
+    }
+    .source-url {
+      word-break: break-all;
+    }
+    @media (max-width: 900px) {
+      .section-body {
+        grid-template-columns: 1fr;
+      }
+    }
+    </style>
+  </head>
+  <body data-page="research-report">
+    <div class="page-shell">
+      <header class="hero">
+        <p class="eyebrow">研究底稿</p>
+        <h1>hangzhou-spring-trip</h1>
+        <p class="hero-summary">按覆盖、双时间层、证据卡和缺口组织的研究报告。</p>
+      </header>
+      <main class="content-shell"><section class="section-block"><div class="section-head"><h2>覆盖总览</h2></div><ul class="card-points"><li><strong>xiaohongshu</strong> · complete</li></ul></section><section class="section-block"><div class="section-head"><h2>快速结论</h2></div><ul class="card-points"><li>西湖工作日早晨更适合拍照</li></ul></section><section class="section-block"><div class='section-head'><h2>景观与季节性</h2></div><div class="section-body"><article class='card'><h3>最新现状</h3><ul class='card-points'><li>柳树已绿</li></ul></article><article class='card'><h3>去年同期经验</h3><ul class='card-points'><li>去年同期花期稳定</li></ul></article></div></section><section class="section-block"><div class="section-head"><h2>证据卡片</h2></div><div class="section-body"><article class="card"><p class='eyebrow'>xiaohongshu · recent</p><h3>小红书帖子 A</h3><p class='card-summary'></p></article></div></section><section class="section-block"><div class="section-head"><h2>缺口与失败</h2></div><ul class="card-points"><li><strong>douyin</strong> · insufficient_sample_size</li></ul></section><section class="section-block"><div class="section-head"><h2>来源附录</h2></div><div id="sources-root"></div></section></main>
+    </div>
+  </body>
+</html>

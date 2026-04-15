@@ -1,0 +1,11 @@
+{
+  "items": [
+    {
+      "kind": "keyframe",
+      "path": "frame-001.jpg",
+      "place": "hangzhou"
+    }
+  ],
+  "place": "hangzhou",
+  "trip_slug": "hangzhou"
+}

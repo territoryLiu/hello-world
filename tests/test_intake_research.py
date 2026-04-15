@@ -179,7 +179,8 @@ class IntakeResearchTest(unittest.TestCase):
         self.assertIn("dianping", payload["site_coverage_targets"]["food"])
         first_run = payload["runs"][0]
         self.assertEqual(first_run["skill"], "travel-skill")
-        self.assertTrue(first_run["prompt"].startswith("Use travel-skill built-in online research"))
+        self.assertTrue(first_run["prompt"].startswith("Use the standalone web-access skill"))
+        self.assertIn(".codex/skills/travel/web-access", first_run["prompt"])
         self.assertIn("video fallback", first_run["prompt"])
         self.assertIn("coverage_status", first_run["prompt"])
 

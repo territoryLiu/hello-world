@@ -1,0 +1,12 @@
+{
+  "place": "hangzhou",
+  "records": [
+    {
+      "place": "hangzhou",
+      "site": "xiaohongshu",
+      "time_layer": "recent",
+      "topic": "attractions"
+    }
+  ],
+  "trip_slug": "hangzhou"
+}
