@@ -1,7 +1,7 @@
 # Travel-Skill Research Enhancement Design
 
 **Date:** 2026-04-15
-**Status:** Draft for review
+**Status:** Approved for planning
 **Scope:** Phase 1 research-depth enhancement for `travel-skill`
 
 ## Goal
@@ -78,6 +78,15 @@ The following decisions were confirmed during brainstorming:
   - degrade or fallback where supported
   - record and continue
 - primary first-phase output is a research dossier / research report, not a polished end-user guide
+- source execution policy is site-split:
+  - Xiaohongshu uses page-first extraction
+  - Douyin and Bilibili use page-summary plus video-fallback dual-track collection
+- raw research material should be stored in full whenever collected:
+  - full page body
+  - full comment threads when available
+  - full transcripts when available
+- media persistence should keep all keyframe candidates plus scoring and selected markers
+- keyframe ranking should prioritize travel-information value before aesthetics
 
 ## Recommended Approach
 
@@ -548,6 +557,117 @@ Recommended script focus based on the current skill layout:
 - `scripts/render_trip_site.py`
 - `scripts/verify_trip.py`
 
+## Implementation Order and Acceptance Gates
+
+Implementation should proceed in six gated stages. Each stage must leave the pipeline in a testable state before moving to the next one.
+
+### Stage 1: Unify the evidence contract
+
+Scope:
+
+- define one shared `research_record` shape for page evidence, video evidence, and media evidence
+- define one `video_media_bundle` shape for downloaded video, transcripts, keyframes, scores, and selected frames
+- define one `image_candidate_manifest` shape that downstream rendering can consume without reading raw research directories
+
+Acceptance gate:
+
+- contract tests pass
+- existing research-task tests still pass
+- `build_image_plan.py` can still consume pre-existing `image_candidates` / `shot_candidates` without regression
+
+### Stage 2: Strengthen page evidence ingestion
+
+Scope:
+
+- add a dedicated page-evidence normalization step
+- make Xiaohongshu page-first extraction require body, comments, comment sample size, and image candidates
+- persist full raw page text and comments in `raw/`
+
+Acceptance gate:
+
+- records missing page body or comments degrade to `partial`
+- full raw page payload and normalized JSON are both written
+- site coverage validation distinguishes field-complete vs field-incomplete Xiaohongshu results
+
+### Stage 3: Complete the video fallback chain
+
+Scope:
+
+- keep Douyin / Bilibili on page-summary plus video-fallback dual track
+- execute `yt-dlp -> ffmpeg -> whisper` when page evidence is insufficient
+- persist downloaded video, audio, transcript JSON, and extracted keyframe set
+
+Acceptance gate:
+
+- missing `yt-dlp`, `ffmpeg`, or `whisper` yields explicit standardized failure reasons
+- successful local fallback produces artifacts under `media/`
+- normalized video records include transcript segments, timeline, and media artifact references
+
+### Stage 4: Add keyframe scoring and selection
+
+Scope:
+
+- score all keyframes with travel-information-first criteria
+- persist all frame candidates, scores, selected flags, rationale, and travel-signal tags
+- expose both evidence-oriented frames and illustration candidates
+
+Acceptance gate:
+
+- the scoring manifest contains all frames, not only selected ones
+- selected frames are explicitly marked and traceable to source video timestamps
+- `build_image_plan.py` can consume selected media records with `selected_for_publish`, `evidence_score`, and `publish_state`
+
+### Stage 5: Persist four-layer research outputs
+
+Scope:
+
+- write `raw/`, `normalized/`, `media/`, and `knowledge/` outputs per place
+- keep page evidence, video evidence, and media scoring traceable by `place`, `topic`, `site`, and `time_layer`
+- merge reusable facts and evidence cards without discarding raw material
+
+Acceptance gate:
+
+- one run produces all four layers for a sample place
+- raw and normalized records remain linked by stable IDs
+- downstream guide and review-packet scripts can read the persisted outputs without schema drift
+
+### Stage 6: Tighten validation and report rendering
+
+Scope:
+
+- make `validate_site_coverage.py` aware of page completeness, video completeness, sample targets, and media scoring completeness
+- make `verify_trip.py` and research-report rendering treat media evidence as first-class
+- surface complete / partial / failed status per source in the research dossier
+
+Acceptance gate:
+
+- validation can distinguish:
+  - page complete but video incomplete
+  - comments present but sample size insufficient
+  - keyframes extracted but not scored
+  - raw evidence saved but normalization incomplete
+- research-report HTML exposes coverage, evidence cards, gaps, and source appendix without dropping media-linked evidence
+- full top-level tests and `travel-skill/tests` both pass on the main branch
+
+## Acceptance Criteria Summary
+
+This phase is considered complete only when all of the following are true:
+
+1. Xiaohongshu can persist full page body, comments, comment sample size, and image candidates into raw plus normalized outputs.
+2. Douyin and Bilibili can persist page-summary evidence and can fall back to `yt-dlp`, `ffmpeg`, and `whisper` when page evidence is insufficient.
+3. Video fallback artifacts include:
+   - video
+   - audio
+   - transcript output
+   - full keyframe set
+   - scoring manifest
+   - selected-frame manifest
+4. Keyframe scoring is travel-information-first and preserves all candidates with explicit selected markers.
+5. The persistence layer writes `raw/`, `normalized/`, `media/`, and `knowledge/` trees with stable traceability.
+6. `build_image_plan.py` can consume the selected media manifest without losing current publish gating.
+7. Coverage validation can reliably classify `complete`, `partial`, and `failed` using both page and video completeness.
+8. The research dossier and verification chain can surface source gaps and media evidence without pretending incomplete sources are fully covered.
+
 ## Risks and Constraints
 
 - Xiaohongshu, Douyin, Dianping, and Meituan are anti-bot-sensitive and may require login-state-dependent browser access
@@ -567,6 +687,9 @@ These are expected future improvements, not blockers for Phase 1:
 
 ## Environment Notes
 
-- Current workspace is not a Git repository, so this spec cannot be committed here unless moved into a repo first.
-- The user indicated `C:\Users\Lenovo\.conda\envs\stock-analyzer` can be used for Python execution.
-- Earlier local checks showed that `yt-dlp`, `whisper`, and `ffmpeg` are not yet available in the current environment/PATH and will need setup during implementation.
+- Current implementation repository is `d:\vscode\hello-world`, and this spec lives inside that Git repository.
+- Verified Python execution path for this work is the `stock-analyzer` conda environment, activated on Windows via `cmd.exe /d /c "call ...\\activate.bat stock-analyzer && ..."`.
+- Main-branch verification currently passes for:
+  - `python -m unittest discover tests -p test_*.py -v`
+  - `python -m unittest discover travel-skill\tests -p test_*.py -v`
+- `yt-dlp`, `whisper`, and `ffmpeg` availability remains environment-dependent and must continue to degrade gracefully when tools are missing.
