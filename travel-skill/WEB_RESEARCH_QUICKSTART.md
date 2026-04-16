@@ -65,6 +65,24 @@ python travel-skill\scripts\web_research_cli.py materialize-results `
   --report-output web-results-materialize-report.json
 ```
 
+如果你要先给外部同学交一个 handoff 包，可以插入这一步：
+
+```powershell
+python travel-skill\scripts\web_research_cli.py prepare-handoff `
+  --runs-file runs.json `
+  --output-dir web-access-handoff `
+  --web-results-dir web-results
+```
+
+如果你拿到了对方回传的 `web-access-batch-results.json`，建议先校验再 materialize：
+
+```powershell
+python travel-skill\scripts\web_research_cli.py validate-results `
+  --runs-file runs.json `
+  --input web-access-batch-results.json `
+  --report-output web-access-batch-validate-report.json
+```
+
 第四步，执行 finalize + aggregate：
 
 ```powershell
@@ -129,7 +147,9 @@ conda run -n stock-analyzer python -m unittest tests.test_intake_research.Intake
 
 ```powershell
 python travel-skill\scripts\web_research_cli.py build-runs ...
+python travel-skill\scripts\web_research_cli.py prepare-handoff ...
 python travel-skill\scripts\web_research_cli.py export-request ...
+python travel-skill\scripts\web_research_cli.py validate-results ...
 python travel-skill\scripts\web_research_cli.py materialize-results ...
 python travel-skill\scripts\web_research_cli.py execute-batch ...
 ```

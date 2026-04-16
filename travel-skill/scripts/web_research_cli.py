@@ -13,7 +13,9 @@ from build_web_research_runs import build_runs
 from execute_web_research_batch import execute_batch
 from materialize_web_access_batch_results import materialize
 from normalize_request import normalize
+from prepare_web_access_handoff import prepare_handoff
 from run_web_access_batch_smoke import run_smoke
+from validate_web_access_batch_results import validate_batch_results
 
 
 def _load_json(path: Path):
@@ -51,6 +53,25 @@ def _cmd_export_request(args) -> None:
 def _cmd_materialize_results(args) -> None:
     payload = _load_json(Path(args.input))
     report = materialize(payload if isinstance(payload, dict) else {}, Path(args.web_results_dir))
+    _write_json(Path(args.report_output), report)
+
+
+def _cmd_prepare_handoff(args) -> None:
+    runs_payload = _load_json(Path(args.runs_file))
+    prepare_handoff(
+        runs_payload if isinstance(runs_payload, dict) else {},
+        Path(args.output_dir),
+        Path(args.web_results_dir),
+    )
+
+
+def _cmd_validate_results(args) -> None:
+    runs_payload = _load_json(Path(args.runs_file))
+    batch_results_payload = _load_json(Path(args.input))
+    report = validate_batch_results(
+        runs_payload if isinstance(runs_payload, dict) else {},
+        batch_results_payload if isinstance(batch_results_payload, dict) else {},
+    )
     _write_json(Path(args.report_output), report)
 
 
@@ -96,6 +117,18 @@ def main() -> None:
     materialize_parser.add_argument("--web-results-dir", required=True)
     materialize_parser.add_argument("--report-output", required=True)
     materialize_parser.set_defaults(func=_cmd_materialize_results)
+
+    prepare_handoff_parser = subparsers.add_parser("prepare-handoff")
+    prepare_handoff_parser.add_argument("--runs-file", required=True)
+    prepare_handoff_parser.add_argument("--output-dir", required=True)
+    prepare_handoff_parser.add_argument("--web-results-dir", required=True)
+    prepare_handoff_parser.set_defaults(func=_cmd_prepare_handoff)
+
+    validate_parser = subparsers.add_parser("validate-results")
+    validate_parser.add_argument("--runs-file", required=True)
+    validate_parser.add_argument("--input", required=True)
+    validate_parser.add_argument("--report-output", required=True)
+    validate_parser.set_defaults(func=_cmd_validate_results)
 
     execute_parser = subparsers.add_parser("execute-batch")
     execute_parser.add_argument("--runs-file", required=True)

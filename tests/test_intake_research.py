@@ -895,6 +895,101 @@ class IntakeResearchTest(unittest.TestCase):
         self.assertEqual(execution_report["finalized_runs"], 2)
         self.assertEqual(batch_payload["trip_slug"], "hangzhou-trip")
 
+    def test_prepare_web_access_handoff_writes_request_packets_summary_and_readme(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            runs_path = tmp_path / "runs.json"
+            handoff_dir = tmp_path / "handoff"
+            runs_payload = {
+                "trip_slug": "hangzhou-trip",
+                "batch_id": "hangzhou-trip-web-research",
+                "runs": [
+                    {
+                        "run_id": "hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent",
+                        "batch_id": "hangzhou-trip-web-research",
+                        "prompt": "Use the standalone web-access skill to collect travel evidence for this task.",
+                        "task": {"site": "xiaohongshu", "topic": "attractions"},
+                    }
+                ],
+            }
+            runs_path.write_text(json.dumps(runs_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+            run_script(
+                SKILL_DIR / "scripts" / "prepare_web_access_handoff.py",
+                "--runs-file",
+                runs_path,
+                "--output-dir",
+                handoff_dir,
+                "--web-results-dir",
+                tmp_path / "web-results",
+            )
+
+            request_payload = json.loads((handoff_dir / "web-access-batch.json").read_text(encoding="utf-8"))
+            expected_payload = json.loads(
+                (handoff_dir / "web-access-expected-results.json").read_text(encoding="utf-8")
+            )
+            readme = (handoff_dir / "handoff-readme.md").read_text(encoding="utf-8")
+
+        self.assertEqual(request_payload["batch_id"], "hangzhou-trip-web-research")
+        self.assertEqual(len(request_payload["requests"]), 1)
+        self.assertEqual(expected_payload["expected_runs"], 1)
+        self.assertEqual(expected_payload["missing_results"], [])
+        self.assertIn("hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent", readme)
+
+    def test_validate_web_access_batch_results_reports_missing_extra_and_duplicate_runs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            runs_path = tmp_path / "runs.json"
+            batch_results = tmp_path / "web-access-batch-results.json"
+            report_output = tmp_path / "validate-report.json"
+            runs_path.write_text(
+                json.dumps(
+                    {
+                        "trip_slug": "hangzhou-trip",
+                        "batch_id": "hangzhou-trip-web-research",
+                        "runs": [
+                            {"run_id": "run-a"},
+                            {"run_id": "run-b"},
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            batch_results.write_text(
+                json.dumps(
+                    {
+                        "batch_id": "hangzhou-trip-web-research",
+                        "results": [
+                            {"run_id": "run-a", "result": {"items": []}},
+                            {"run_id": "run-a", "result": {"items": []}},
+                            {"run_id": "run-c", "result": {"items": []}},
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            run_script(
+                SKILL_DIR / "scripts" / "validate_web_access_batch_results.py",
+                "--runs-file",
+                runs_path,
+                "--input",
+                batch_results,
+                "--report-output",
+                report_output,
+            )
+
+            report_payload = json.loads(report_output.read_text(encoding="utf-8"))
+
+        self.assertFalse(report_payload["can_materialize"])
+        self.assertEqual(report_payload["missing_run_ids"], ["run-b"])
+        self.assertEqual(report_payload["extra_run_ids"], ["run-c"])
+        self.assertEqual(report_payload["duplicate_run_ids"], ["run-a"])
+
 
 if __name__ == "__main__":
     unittest.main()

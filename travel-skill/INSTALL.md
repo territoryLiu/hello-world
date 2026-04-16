@@ -178,10 +178,12 @@ python travel-skill\scripts\web_research_cli.py <subcommand> ...
 当前支持的子命令：
 
 1. `build-runs`
-2. `export-request`
-3. `materialize-results`
-4. `execute-batch`
-5. `smoke`
+2. `prepare-handoff`
+3. `export-request`
+4. `validate-results`
+5. `materialize-results`
+6. `execute-batch`
+7. `smoke`
 
 ### 步骤 1：标准化请求
 
