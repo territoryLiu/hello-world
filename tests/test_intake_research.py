@@ -844,6 +844,57 @@ class IntakeResearchTest(unittest.TestCase):
         self.assertEqual(batch_payload["trip_slug"], "hangzhou-trip")
         self.assertEqual(len(batch_payload["raw_items"]), 2)
 
+    def test_web_research_cli_build_runs_chains_normalize_tasks_and_runs(self):
+        fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "trip_request_raw.json"
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            normalized = tmp_path / "normalized.json"
+            tasks = tmp_path / "tasks.json"
+            runs = tmp_path / "runs.json"
+            run_script(
+                SKILL_DIR / "scripts" / "web_research_cli.py",
+                "build-runs",
+                "--request",
+                fixture,
+                "--normalized-output",
+                normalized,
+                "--tasks-output",
+                tasks,
+                "--runs-output",
+                runs,
+            )
+
+            normalized_payload = json.loads(normalized.read_text(encoding="utf-8"))
+            tasks_payload = json.loads(tasks.read_text(encoding="utf-8"))
+            runs_payload = json.loads(runs.read_text(encoding="utf-8"))
+
+        self.assertTrue(normalized_payload["trip_slug"])
+        self.assertTrue(tasks_payload["tasks"])
+        self.assertTrue(runs_payload["runs"])
+        self.assertIn("batch_manifest", runs_payload)
+
+    def test_web_research_cli_smoke_subcommand_runs_fixture_chain(self):
+        fixture_root = ROOT / "tests" / "fixtures" / "travel_skill" / "web_batch_smoke"
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            output_dir = tmp_path / "smoke-output"
+            run_script(
+                SKILL_DIR / "scripts" / "web_research_cli.py",
+                "smoke",
+                "--fixtures-root",
+                fixture_root,
+                "--output-dir",
+                output_dir,
+            )
+
+            execution_report = json.loads(
+                (output_dir / "execution-report.json").read_text(encoding="utf-8")
+            )
+            batch_payload = json.loads((output_dir / "batch-bundle.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(execution_report["finalized_runs"], 2)
+        self.assertEqual(batch_payload["trip_slug"], "hangzhou-trip")
+
 
 if __name__ == "__main__":
     unittest.main()

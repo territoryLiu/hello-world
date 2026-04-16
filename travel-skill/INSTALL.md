@@ -167,12 +167,36 @@ python travel-skill\scripts\package_skill_release.py
 
 当前批量 research 的主流程已经接通。建议按下面的顺序执行。
 
+如果你不想记多条脚本命令，现在也可以统一走：
+
+```powershell
+python travel-skill\scripts\web_research_cli.py <subcommand> ...
+```
+
+当前支持的子命令：
+
+1. `build-runs`
+2. `export-request`
+3. `materialize-results`
+4. `execute-batch`
+5. `smoke`
+
 ### 步骤 1：标准化请求
 
 ```powershell
 conda activate stock-analyzer
 cd D:\vscode\hello-world
 python travel-skill\scripts\normalize_request.py --input request.json --output normalized.json
+```
+
+如果你想把 `normalize_request -> build_research_tasks -> build_web_research_runs` 一次串起来，可以直接用：
+
+```powershell
+python travel-skill\scripts\web_research_cli.py build-runs `
+  --request request.json `
+  --normalized-output normalized.json `
+  --tasks-output tasks.json `
+  --runs-output runs.json
 ```
 
 ### 步骤 2：生成 research tasks
@@ -228,6 +252,16 @@ python travel-skill\scripts\build_web_access_batch_request.py `
   --web-results-dir web-results
 ```
 
+等价统一入口：
+
+```powershell
+python travel-skill\scripts\web_research_cli.py export-request `
+  --runs-file runs.json `
+  --output web-access-batch.json `
+  --packets-dir web-access-packets `
+  --web-results-dir web-results
+```
+
 这一步会生成：
 
 1. `web-access-batch.json`
@@ -256,6 +290,15 @@ python travel-skill\scripts\materialize_web_access_batch_results.py `
   --report-output web-results-materialize-report.json
 ```
 
+等价统一入口：
+
+```powershell
+python travel-skill\scripts\web_research_cli.py materialize-results `
+  --input web-access-batch-results.json `
+  --web-results-dir web-results `
+  --report-output web-results-materialize-report.json
+```
+
 ### 步骤 7：用批处理执行器顺序 finalize 全部 run
 
 如果你已经把每个 run 的 web-access 返回结果保存成：
@@ -266,6 +309,19 @@ python travel-skill\scripts\materialize_web_access_batch_results.py `
 
 ```powershell
 python travel-skill\scripts\execute_web_research_batch.py `
+  --runs-file runs.json `
+  --web-results-dir web-results `
+  --output-root travel-data `
+  --batch-bundle-output batch-bundle.json `
+  --batch-coverage-output batch-coverage.json `
+  --review-output-dir review-packet `
+  --execution-report-output execution-report.json
+```
+
+等价统一入口：
+
+```powershell
+python travel-skill\scripts\web_research_cli.py execute-batch `
   --runs-file runs.json `
   --web-results-dir web-results `
   --output-root travel-data `
@@ -312,6 +368,14 @@ python travel-skill\scripts\aggregate_web_research_batch.py `
 
 ```powershell
 python travel-skill\scripts\run_web_access_batch_smoke.py `
+  --fixtures-root tests\fixtures\travel_skill\web_batch_smoke `
+  --output-dir .tmp-tests\web-batch-smoke
+```
+
+等价统一入口：
+
+```powershell
+python travel-skill\scripts\web_research_cli.py smoke `
   --fixtures-root tests\fixtures\travel_skill\web_batch_smoke `
   --output-dir .tmp-tests\web-batch-smoke
 ```

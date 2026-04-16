@@ -16,14 +16,9 @@ def _load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--fixtures-root", required=True)
-    parser.add_argument("--output-dir", required=True)
-    args = parser.parse_args()
-
-    fixtures_root = Path(args.fixtures_root)
-    output_dir = Path(args.output_dir)
+def run_smoke(fixtures_root: Path, output_dir: Path) -> dict:
+    fixtures_root = Path(fixtures_root)
+    output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     runs_payload = _load_json(fixtures_root / "runs.json")
@@ -68,6 +63,16 @@ def main() -> None:
         json.dumps(execution_report, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    return execution_report
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--fixtures-root", required=True)
+    parser.add_argument("--output-dir", required=True)
+    args = parser.parse_args()
+
+    run_smoke(Path(args.fixtures_root), Path(args.output_dir))
 
 
 if __name__ == "__main__":
