@@ -69,6 +69,20 @@ def validate(payload: dict) -> dict:
         topic_bucket["seen_sites"] = seen
         topic_bucket["missing_required_sites"] = missing
 
+    for topic_bucket in by_topic.values():
+        seen_sites = topic_bucket.get("seen_sites", [])
+        if isinstance(seen_sites, set):
+            topic_bucket["seen_sites"] = sorted(seen_sites)
+        elif isinstance(seen_sites, list):
+            topic_bucket["seen_sites"] = [str(site) for site in seen_sites]
+        else:
+            topic_bucket["seen_sites"] = []
+        missing_required_sites = topic_bucket.get("missing_required_sites", [])
+        if isinstance(missing_required_sites, list):
+            topic_bucket["missing_required_sites"] = [str(site) for site in missing_required_sites]
+        else:
+            topic_bucket["missing_required_sites"] = []
+
     for site, bucket in by_site.items():
         if bucket["actual_sample_count"] < bucket["sample_target"]:
             bucket["failure_reasons"].add("insufficient_sample_size")

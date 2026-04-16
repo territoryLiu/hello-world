@@ -437,6 +437,67 @@ class IntakeResearchTest(unittest.TestCase):
             self.assertTrue((place_root / "structured-facts.json").exists())
             self.assertTrue((place_root / "site-coverage.json").exists())
 
+    def test_finalize_web_research_run_merges_task_context_and_ingests(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            normalized = tmp_path / "normalized.json"
+            tasks_path = tmp_path / "tasks.json"
+            runs_path = tmp_path / "runs.json"
+            run_path = tmp_path / "run.json"
+            web_result_path = tmp_path / "web-result.json"
+            bundle_output = tmp_path / "bundle.json"
+            coverage_output = tmp_path / "coverage.json"
+            output_root = tmp_path / "travel-data"
+            fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "trip_request_raw.json"
+
+            run_script(SKILL_DIR / "scripts" / "normalize_request.py", "--input", fixture, "--output", normalized)
+            run_script(SKILL_DIR / "scripts" / "build_research_tasks.py", "--input", normalized, "--output", tasks_path)
+            run_script(SKILL_DIR / "scripts" / "build_web_research_runs.py", "--input", tasks_path, "--output", runs_path)
+
+            runs_payload = json.loads(runs_path.read_text(encoding="utf-8"))
+            xhs_run = next(run for run in runs_payload["runs"] if run["task"]["site"] == "xiaohongshu")
+            run_path.write_text(json.dumps(xhs_run, ensure_ascii=False, indent=2), encoding="utf-8")
+            web_result_path.write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "raw_url": "https://www.xiaohongshu.com/explore/1",
+                                "title": "西湖晨拍",
+                                "body": "七点前到断桥更容易拍空景。",
+                                "comments": [{"author": "A", "text": "六点半已经有人了"}],
+                                "images": [{"src": "https://cdn.example.com/xhs-1.jpg"}],
+                                "checked_at": "2026-04-16T08:00:00",
+                            }
+                        ]
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            run_script(
+                SKILL_DIR / "scripts" / "finalize_web_research_run.py",
+                "--run-file",
+                run_path,
+                "--web-result",
+                web_result_path,
+                "--bundle-output",
+                bundle_output,
+                "--coverage-output",
+                coverage_output,
+                "--output-root",
+                output_root,
+            )
+
+            bundle = json.loads(bundle_output.read_text(encoding="utf-8"))
+            record = bundle["structured"]["normalized_records"][0]
+            self.assertTrue(record["place"])
+            self.assertTrue(record["topic"])
+            self.assertEqual(record["site"], "xiaohongshu")
+            self.assertTrue((output_root / "places").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

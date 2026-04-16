@@ -46,6 +46,14 @@ class BuildResearchTasksTest(unittest.TestCase):
         self.assertIn("media_policy=video-keyframes", prompt)
         self.assertIn("normalized_schema=video-post-v1", prompt)
 
+    def test_web_runs_expose_postprocess_contract_for_ingest(self):
+        tasks = build_tasks(self.payload)["tasks"]
+        xhs_task = next(task for task in tasks if task["site"] == "xiaohongshu")
+        planned = build_runs({"trip_slug": "hangzhou-spring-trip", "tasks": [xhs_task]})
+        run = planned["runs"][0]
+        self.assertEqual(run["result_schema"], "travel-skill-web-evidence-v1")
+        self.assertIn("finalize_web_research_run.py", run["postprocess_script"])
+
     def test_xiaohongshu_tasks_capture_raw_body_comments_and_images(self):
         tasks = [
             task for task in build_tasks(self.payload)["tasks"]

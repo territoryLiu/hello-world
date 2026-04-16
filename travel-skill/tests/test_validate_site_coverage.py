@@ -75,6 +75,21 @@ class ValidateSiteCoverageTest(unittest.TestCase):
         self.assertIn("douyin", report["by_site"])
         self.assertIn("video_incomplete", report["by_site"]["douyin"]["failure_reasons"])
 
+    def test_validate_converts_non_required_topic_seen_sites_to_json_safe_list(self):
+        payload = {
+            "records": [
+                {
+                    "topic": "clothing",
+                    "site": "xiaohongshu",
+                    "coverage_status": "complete",
+                    "missing_fields": [],
+                }
+            ]
+        }
+        report = validate(payload)
+        self.assertIsInstance(report["by_topic"]["clothing"]["seen_sites"], list)
+        self.assertEqual(report["by_topic"]["clothing"]["seen_sites"], ["xiaohongshu"])
+
 
 if __name__ == "__main__":
     unittest.main()

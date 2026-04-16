@@ -56,6 +56,8 @@ def build_runs(payload: dict) -> dict:
         runs.append(
             {
                 "skill": "travel-skill",
+                "result_schema": "travel-skill-web-evidence-v1",
+                "postprocess_script": "travel-skill/scripts/finalize_web_research_run.py",
                 "task": task,
                 "prompt": (
                     "Use the standalone web-access skill to collect travel evidence for this task. "
