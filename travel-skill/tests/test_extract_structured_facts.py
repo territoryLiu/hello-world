@@ -81,6 +81,36 @@ class ExtractStructuredFactsTest(unittest.TestCase):
         self.assertEqual(dianping_record["shop_name"], "外婆家")
         self.assertIn("上菜快", dianping_record["review_themes"])
 
+    def test_extract_accepts_common_listing_alias_fields(self):
+        payload = {
+            "entries": [
+                {
+                    "place": "hangzhou",
+                    "topic": "food",
+                    "platform": "local-listing",
+                    "site": "meituan",
+                    "raw_url": "https://i.meituan.com/shop/2",
+                    "name": "绿茶",
+                    "location": "西湖区龙井路",
+                    "price": "90-110",
+                    "recommended_items": ["龙井虾仁", "叫花鸡"],
+                    "review_keywords": ["环境好", "排队久"],
+                    "review_notes": ["热门时段提前排队"],
+                }
+            ]
+        }
+
+        result = extract(payload)
+        record = result["normalized_records"][0]
+
+        self.assertEqual(record["site"], "meituan")
+        self.assertEqual(record["shop_name"], "绿茶")
+        self.assertEqual(record["address"], "西湖区龙井路")
+        self.assertEqual(record["per_capita_range"], "90-110")
+        self.assertIn("龙井虾仁", record["recommended_dishes"])
+        self.assertIn("环境好", record["review_themes"])
+        self.assertIn("热门时段提前排队", record["pitfalls"])
+
 
 if __name__ == "__main__":
     unittest.main()

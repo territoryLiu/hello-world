@@ -21,6 +21,22 @@ def _safe_list(value) -> list:
     return value if isinstance(value, list) else []
 
 
+def _pick_text(entry: dict, *keys: str) -> str:
+    for key in keys:
+        value = entry.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _pick_list(entry: dict, *keys: str) -> list:
+    for key in keys:
+        value = entry.get(key)
+        if isinstance(value, list) and value:
+            return value
+    return []
+
+
 def _schema_for_site(site: str) -> str:
     if site == "xiaohongshu":
         return "xiaohongshu-note-v1"
@@ -40,9 +56,9 @@ def _normalize_entry(entry: dict) -> dict:
         "platform": platform,
         "site": site,
         "normalized_schema": _schema_for_site(site),
-        "source_url": _safe_text(entry.get("source_url") or entry.get("url")),
-        "source_title": _safe_text(entry.get("source_title") or entry.get("title")),
-        "author": _safe_text(entry.get("author")),
+        "source_url": _pick_text(entry, "source_url", "url", "raw_url"),
+        "source_title": _pick_text(entry, "source_title", "title", "name"),
+        "author": _pick_text(entry, "author", "author_name"),
         "publish_time": _safe_text(entry.get("publish_time") or entry.get("published_at")),
         "time_layer": _safe_text(entry.get("time_layer")) or "recent",
         "coverage_status": _safe_text(entry.get("coverage_status")) or "partial",
@@ -76,13 +92,13 @@ def _normalize_entry(entry: dict) -> dict:
     elif site in {"dianping", "meituan"}:
         normalized.update(
             {
-                "shop_name": _safe_text(entry.get("shop_name")),
-                "address": _safe_text(entry.get("address")),
-                "per_capita_range": _safe_text(entry.get("per_capita_range")),
-                "recommended_dishes": _safe_list(entry.get("recommended_dishes")),
+                "shop_name": _pick_text(entry, "shop_name", "name", "title"),
+                "address": _pick_text(entry, "address", "location", "shop_address"),
+                "per_capita_range": _pick_text(entry, "per_capita_range", "price", "price_range"),
+                "recommended_dishes": _pick_list(entry, "recommended_dishes", "recommended_items", "recommendations"),
                 "queue_pattern": _safe_text(entry.get("queue_pattern")),
-                "review_themes": _safe_list(entry.get("review_themes")),
-                "pitfalls": _safe_list(entry.get("pitfalls")),
+                "review_themes": _pick_list(entry, "review_themes", "review_keywords", "review_tags"),
+                "pitfalls": _pick_list(entry, "pitfalls", "review_notes", "warnings"),
             }
         )
     else:

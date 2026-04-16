@@ -72,6 +72,32 @@ class PageEvidencePipelineTest(unittest.TestCase):
         self.assertEqual(item["source_url"], "https://www.xiaohongshu.com/explore/1")
         self.assertEqual(item["source_title"], "西湖日出")
 
+    def test_collect_page_evidence_accepts_common_web_access_alias_fields(self):
+        payload = {
+            "items": [
+                {
+                    "place": "hangzhou",
+                    "topic": "attractions",
+                    "site": "xiaohongshu",
+                    "platform": "social",
+                    "raw_url": "https://www.xiaohongshu.com/explore/2",
+                    "title": "西湖避坑",
+                    "author_name": "A",
+                    "body": "七点前上苏堤更舒服。",
+                    "comments": [{"author": "B", "text": "六点半人还不多"}],
+                    "images": [{"src": "https://cdn.example.com/2.jpg"}],
+                }
+            ]
+        }
+
+        result = collect(payload)
+        item = result["items"][0]
+
+        self.assertEqual(item["source_url"], "https://www.xiaohongshu.com/explore/2")
+        self.assertEqual(item["page_body_full"], "七点前上苏堤更舒服。")
+        self.assertEqual(len(item["comment_threads_full"]), 1)
+        self.assertEqual(item["image_candidates"][0]["url"], "https://cdn.example.com/2.jpg")
+
 
 if __name__ == "__main__":
     unittest.main()

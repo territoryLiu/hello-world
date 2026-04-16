@@ -84,6 +84,27 @@ class VideoPipelineTest(unittest.TestCase):
         self.assertEqual(item["missing_fields"], ["transcript_segments"])
         self.assertEqual(item["collector_mode"], "video-fallback")
 
+    def test_video_record_accepts_common_web_access_alias_fields(self):
+        item = build_video_record(
+            {
+                "place": "hangzhou",
+                "topic": "attractions",
+                "platform": "douyin",
+                "site": "douyin",
+                "url": "https://www.douyin.com/video/2",
+                "title": "西湖人流观察",
+                "description": "八点后游客明显变多",
+                "comments": ["七点半还可以", "最好早到"],
+                "transcript": {"segments": [{"start": 0, "end": 3, "text": "八点后游客明显变多"}]},
+                "screenshots": [{"image_url": "frame-001.jpg"}],
+            }
+        )
+
+        self.assertEqual(item["page_text"], "八点后游客明显变多")
+        self.assertEqual(len(item["comment_highlights"]), 2)
+        self.assertEqual(len(item["transcript_segments"]), 1)
+        self.assertEqual(item["shot_candidates"][0]["image_url"], "frame-001.jpg")
+
     def test_build_status_executes_local_video_pipeline(self):
         local_video = TESTDATA_ROOT / "travel-skill-smoke-input.mp4"
         self.assertTrue(local_video.exists())
