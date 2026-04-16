@@ -61,14 +61,25 @@ class VideoPipelineTest(unittest.TestCase):
     def test_video_record_tracks_time_layer_and_missing_fields(self):
         item = build_video_record(
             {
+                "place": "hangzhou",
+                "topic": "risks",
                 "url": "https://example.com/video",
                 "platform": "douyin",
+                "site": "douyin",
+                "title": "灵隐寺避坑",
+                "author": "A",
+                "summary": "八点后排队会变长",
                 "collector_mode": "video-fallback",
                 "coverage_status": "partial",
                 "time_layer": "recent",
                 "missing_fields": ["transcript_segments"],
             }
         )
+        self.assertEqual(item["place"], "hangzhou")
+        self.assertEqual(item["topic"], "risks")
+        self.assertEqual(item["site"], "douyin")
+        self.assertEqual(item["normalized_schema"], "video-post-v1")
+        self.assertEqual(item["source_title"], "灵隐寺避坑")
         self.assertEqual(item["time_layer"], "recent")
         self.assertEqual(item["missing_fields"], ["transcript_segments"])
         self.assertEqual(item["collector_mode"], "video-fallback")

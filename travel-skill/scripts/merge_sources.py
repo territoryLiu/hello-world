@@ -3,6 +3,36 @@ from pathlib import Path
 import argparse
 import json
 
+PASSTHROUGH_FIELDS = [
+    "author",
+    "publish_time",
+    "published_at",
+    "summary",
+    "page_body_full",
+    "comment_threads_full",
+    "comment_sample_size",
+    "comment_highlights",
+    "image_candidates",
+    "transcript_segments",
+    "visual_segments",
+    "timeline",
+    "shot_candidates",
+    "selected_frames",
+    "frame_scores",
+    "shop_name",
+    "address",
+    "per_capita_range",
+    "recommended_dishes",
+    "queue_pattern",
+    "review_themes",
+    "pitfalls",
+    "coverage_status",
+    "failure_reason",
+    "failure_detail",
+    "missing_fields",
+    "time_layer",
+]
+
 
 def _safe_json_key(value) -> str:
     try:
@@ -26,6 +56,22 @@ def _prefer_latest_non_empty(records: list[dict], field: str) -> str:
         if str(value or "").strip():
             return str(value)
     return ""
+
+
+def _prefer_latest_value(records: list[dict], field: str):
+    for record in records:
+        value = record.get(field)
+        if isinstance(value, list) and value:
+            return value
+        if isinstance(value, dict) and value:
+            return value
+        if isinstance(value, str) and value.strip():
+            return value
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return value
+        if value is True:
+            return value
+    return [] if field.endswith("s") else ""
 
 
 def merge(entries: list[dict]) -> dict:
@@ -68,6 +114,9 @@ def merge(entries: list[dict]) -> dict:
                 "facts": facts,
             }
         )
+        merged_entry = merged_entries[-1]
+        for field in PASSTHROUGH_FIELDS:
+            merged_entry[field] = _prefer_latest_value(records_sorted, field)
 
     ordered = sorted(merged_entries, key=lambda item: (item["topic"], item["place"], item["site"], item["url"], item["title"]))
     normalized: dict[str, dict[str, list[dict]]] = {}

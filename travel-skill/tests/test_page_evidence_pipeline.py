@@ -46,6 +46,32 @@ class PageEvidencePipelineTest(unittest.TestCase):
         self.assertEqual(item["coverage_status"], "partial")
         self.assertIn("comment_threads_full", item["missing_fields"])
 
+    def test_collect_page_evidence_adds_normalized_schema_and_source_fields(self):
+        payload = {
+            "items": [
+                {
+                    "place": "hangzhou",
+                    "topic": "attractions",
+                    "site": "xiaohongshu",
+                    "platform": "social",
+                    "url": "https://www.xiaohongshu.com/explore/1",
+                    "title": "西湖日出",
+                    "author": "A",
+                    "publish_time": "2026-04-16",
+                    "page_body_full": "六点半之前到断桥。",
+                    "comment_threads_full": [{"author": "B", "text": "五点多更空"}],
+                    "image_candidates": [{"url": "https://cdn.example.com/1.jpg"}],
+                }
+            ]
+        }
+
+        result = collect(payload)
+        item = result["items"][0]
+
+        self.assertEqual(item["normalized_schema"], "xiaohongshu-note-v1")
+        self.assertEqual(item["source_url"], "https://www.xiaohongshu.com/explore/1")
+        self.assertEqual(item["source_title"], "西湖日出")
+
 
 if __name__ == "__main__":
     unittest.main()

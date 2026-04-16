@@ -3,6 +3,15 @@ import argparse
 import json
 
 
+def _schema_for_site(site: str) -> str:
+    site_name = str(site or "").strip().lower()
+    if site_name == "xiaohongshu":
+        return "xiaohongshu-note-v1"
+    if site_name in {"dianping", "meituan"}:
+        return "local-listing-v1"
+    return "generic-page-v1"
+
+
 def collect(payload: dict) -> dict:
     items = []
     raw_items = payload.get("items") if isinstance(payload.get("items"), list) else []
@@ -16,6 +25,9 @@ def collect(payload: dict) -> dict:
         if not comments:
             missing_fields.append("comment_threads_full")
         item = dict(raw)
+        item["normalized_schema"] = _schema_for_site(item.get("site"))
+        item["source_url"] = str(item.get("source_url") or item.get("url") or "").strip()
+        item["source_title"] = str(item.get("source_title") or item.get("title") or "").strip()
         item["comment_sample_size"] = len(comments)
         item["missing_fields"] = missing_fields
         item["coverage_status"] = "complete" if not missing_fields else "partial"

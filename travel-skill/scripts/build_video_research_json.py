@@ -8,8 +8,15 @@ def _list(value):
 
 
 def build_video_record(item: dict) -> dict:
+    site = str(item.get("site") or item.get("platform") or "").strip().lower()
+    normalized_schema = "video-post-v1" if site in {"douyin", "bilibili"} else "generic-video-v1"
     return {
+        "place": str(item.get("place") or ""),
+        "topic": str(item.get("topic") or ""),
+        "site": site,
+        "normalized_schema": normalized_schema,
         "source_url": str(item.get("url") or ""),
+        "source_title": str(item.get("title") or ""),
         "platform": str(item.get("platform") or ""),
         "collected_at": str(item.get("collected_at") or ""),
         "collector_mode": str(item.get("collector_mode") or "page-only"),
