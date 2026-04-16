@@ -1,5 +1,7 @@
 # Travel Skill 安装、部署与批量运行说明
 
+快速上手命令清单见 [WEB_RESEARCH_QUICKSTART.md](d:/vscode/hello-world/travel-skill/WEB_RESEARCH_QUICKSTART.md)。
+
 本文档面向本地 Windows 环境，默认约定：
 
 - 技能目录：`C:\Users\territoryliu\.codex\skills\travel-skill`
