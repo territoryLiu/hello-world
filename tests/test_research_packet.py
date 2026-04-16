@@ -246,6 +246,79 @@ class ResearchPacketTest(unittest.TestCase):
         self.assertIn("food", coverage_payload["by_topic"])
         self.assertIn("Site Coverage", review_md)
         self.assertIn("七点前到断桥更容易拍空景。", review_md)
+    def test_aggregate_web_research_batch_accepts_full_runs_payload_with_embedded_manifest(self):
+        bundle_a = {
+            "trip_slug": "hangzhou-trip",
+            "raw_items": [
+                {
+                    "place": "hangzhou",
+                    "topic": "attractions",
+                    "site": "xiaohongshu",
+                    "platform": "social",
+                    "source_url": "https://www.xiaohongshu.com/explore/1",
+                    "url": "https://www.xiaohongshu.com/explore/1",
+                    "title": "West Lake sunrise",
+                    "page_body_full": "Arrive before 7am for lighter crowds.",
+                    "checked_at": "2026-04-16T08:00:00",
+                }
+            ],
+            "page_evidence": {"items": []},
+            "video_records": {"items": []},
+            "media_candidates": {"items": []},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            bundle_path = tmp_path / "bundle-a.json"
+            runs_payload_path = tmp_path / "runs.json"
+            batch_output = tmp_path / "batch.json"
+            coverage_output = tmp_path / "coverage.json"
+            review_dir = tmp_path / "review"
+            bundle_path.write_text(json.dumps(bundle_a, ensure_ascii=False, indent=2), encoding="utf-8")
+            runs_payload_path.write_text(
+                json.dumps(
+                    {
+                        "runner": "travel-skill",
+                        "trip_slug": "hangzhou-trip",
+                        "batch_id": "hangzhou-trip-web-research",
+                        "batch_manifest": {
+                            "trip_slug": "hangzhou-trip",
+                            "batch_id": "hangzhou-trip-web-research",
+                            "aggregator_script": "travel-skill/scripts/aggregate_web_research_batch.py",
+                            "bundle_paths": [str(bundle_path)],
+                            "runs": {
+                                "hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent": {
+                                    "bundle_path": str(bundle_path),
+                                    "coverage_path": str(tmp_path / "coverage-a.json"),
+                                    "site": "xiaohongshu",
+                                    "topic": "attractions",
+                                    "time_layer": "recent",
+                                }
+                            },
+                        },
+                        "runs": [],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            run_script(
+                SKILL_DIR / "scripts" / "aggregate_web_research_batch.py",
+                "--input",
+                runs_payload_path,
+                "--bundle-output",
+                batch_output,
+                "--coverage-output",
+                coverage_output,
+                "--review-output-dir",
+                review_dir,
+            )
+
+            batch_payload = json.loads(batch_output.read_text(encoding="utf-8"))
+
+        self.assertEqual(batch_payload["trip_slug"], "hangzhou-trip")
+        self.assertEqual(len(batch_payload["raw_items"]), 1)
 
 
 if __name__ == "__main__":

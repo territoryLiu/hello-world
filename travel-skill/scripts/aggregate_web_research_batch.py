@@ -17,6 +17,22 @@ def _load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _manifest_payload(payload: dict) -> dict:
+    if not isinstance(payload, dict):
+        return {}
+    if isinstance(payload.get("bundle_paths"), list):
+        return payload
+    embedded = payload.get("batch_manifest")
+    if isinstance(embedded, dict):
+        merged = dict(embedded)
+        if not merged.get("trip_slug") and isinstance(payload.get("trip_slug"), str):
+            merged["trip_slug"] = payload["trip_slug"]
+        if not merged.get("batch_id") and isinstance(payload.get("batch_id"), str):
+            merged["batch_id"] = payload["batch_id"]
+        return merged
+    return payload
+
+
 def _bundle_paths(manifest: dict) -> list[Path]:
     paths = manifest.get("bundle_paths")
     if not isinstance(paths, list):
@@ -105,7 +121,7 @@ def main() -> None:
     parser.add_argument("--review-output-dir", required=True)
     args = parser.parse_args()
 
-    manifest = _load_json(Path(args.input))
+    manifest = _manifest_payload(_load_json(Path(args.input)))
     batch_bundle, coverage = aggregate_manifest(manifest if isinstance(manifest, dict) else {})
 
     bundle_output = Path(args.bundle_output)
