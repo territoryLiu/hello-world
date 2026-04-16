@@ -74,6 +74,21 @@
 - `evidence_refs`
 - `knowledge_points`
 
+## page_evidence_record
+
+- `page_body_full`
+- `comment_threads_full`
+- `comment_sample_size`
+- `image_candidates`
+
+## video_media_bundle
+
+- `all_keyframes`
+- `frame_scores`
+- `selected_frames`
+- `selection_rationale`
+- `scene_tags`
+
 ## coverage_report
 
 - `site`

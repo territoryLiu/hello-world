@@ -53,6 +53,7 @@ class VerifyPipelineTest(unittest.TestCase):
         self.assertTrue(payload["content_checks"]["research_report_present"])
         self.assertTrue(payload["content_checks"]["coverage_overview_present"])
         self.assertTrue(payload["content_checks"]["dual_time_layer_present"])
+        self.assertTrue(payload["content_checks"]["media_scoring_complete"])
         self.assertEqual(result.returncode, 0)
         self.assertIn(payload["status"], {"pass", "warn"})
 
@@ -83,6 +84,24 @@ class VerifyPipelineTest(unittest.TestCase):
 
         self.assertEqual(payload["status"], "fail")
         self.assertFalse(payload["content_checks"]["mobile_template_complete"])
+
+    def test_verify_trip_flags_unscored_keyframes(self):
+        module = load_verify_trip_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = write_sample_approved_research(Path(tmp) / "approved_research.json")
+            model = Path(tmp) / "guide-content.json"
+            output_root = Path(tmp) / "out"
+            guide_root = output_root / "guides" / "wuyi-yanji-changbaishan"
+            run_script(SKILL_DIR / "scripts" / "build_guide_model.py", "--input", fixture, "--output", model)
+            run_script(SKILL_DIR / "scripts" / "fill_missing_sections.py", "--input", model, "--output", model)
+            run_script(SKILL_DIR / "scripts" / "render_trip_site.py", "--input", model, "--output-root", output_root, "--style", "all")
+            (guide_root / "media").mkdir(parents=True, exist_ok=True)
+            (guide_root / "media" / "keyframes.json").write_text('{"items": [{"path": "frame-001.jpg"}]}', encoding="utf-8")
+
+            payload = module.verify_trip(guide_root)
+
+        self.assertIn("media_scoring_complete", payload["content_checks"])
+        self.assertFalse(payload["content_checks"]["media_scoring_complete"])
 
     def test_verify_trip_returns_nonzero_when_required_artifacts_are_missing(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -763,6 +763,90 @@ def _render_research_report(report: dict) -> str:
     )
 
 
+def _render_research_report_media_aware(report: dict) -> str:
+    theme_blocks = [block for block in _safe_list(report.get("theme_blocks")) if isinstance(block, dict)]
+    if not theme_blocks:
+        theme_blocks = [
+            {
+                "title": "dual time layer",
+                "recent": ["latest status pending"],
+                "historical": ["historical experience pending"],
+            }
+        ]
+
+    coverage_cards = "".join(
+        f"<li><strong>{_escape(item.get('site'))}</strong> 路 coverage_status: {_escape(item.get('coverage_status'))}</li>"
+        for item in _safe_list(report.get("coverage_overview"))
+        if isinstance(item, dict)
+    )
+    quick_findings = "".join(f"<li>{_escape(point)}</li>" for point in _safe_list(report.get("quick_findings")))
+    theme_cards = "".join(
+        (
+            '<section class="section-block">'
+            f"<div class='section-head'><h2>{_escape(block.get('title'))}</h2></div>"
+            '<div class="section-body">'
+            f"<article class='card'><h3>最新现状</h3><ul class='card-points'>{''.join(f'<li>{_escape(point)}</li>' for point in _safe_list(block.get('recent')))}</ul></article>"
+            f"<article class='card'><h3>去年同期经验</h3><ul class='card-points'>{''.join(f'<li>{_escape(point)}</li>' for point in _safe_list(block.get('historical')))}</ul></article>"
+            "</div></section>"
+        )
+        for block in theme_blocks
+    )
+    evidence_cards = "".join(
+        (
+            '<article class="card">'
+            f"<p class='eyebrow'>{_escape(card.get('platform'))} 路 {_escape(card.get('time_layer'))}</p>"
+            f"<h3>{_escape(card.get('title'))}</h3>"
+            f"<p class='card-summary'>{_escape(card.get('summary'))}</p>"
+            + (
+                f"<p class='card-source-line'>coverage_status: {_escape(card.get('coverage_status'))}</p>"
+                if _safe_text(card.get("coverage_status"))
+                else ""
+            )
+            + "</article>"
+        )
+        for card in _safe_list(report.get("evidence_cards"))
+        if isinstance(card, dict)
+    )
+    selected_frame_cards = "".join(
+        (
+            '<article class="card selected-frame">'
+            f"<p class='eyebrow'>{_escape(frame.get('platform'))} 路 {_escape(frame.get('time_layer'))}</p>"
+            f"<h3>{_escape(frame.get('title') or 'Selected Frame')}</h3>"
+            f"{_render_media_image(frame)}"
+            f"<p class='card-summary'>{_escape(frame.get('image_hint') or frame.get('summary'))}</p>"
+            f"<p class='card-source-line'>coverage_status: {_escape(frame.get('coverage_status'))}</p>"
+            f"<p class='card-source-line'>evidence_score: {_escape(frame.get('evidence_score'))}</p>"
+            "</article>"
+        )
+        for frame in _safe_list(report.get("selected_frames"))
+        if isinstance(frame, dict)
+    )
+    gap_items = "".join(
+        f"<li><strong>{_escape(item.get('site'))}</strong> 路 {_escape(item.get('reason'))}</li>"
+        for item in _safe_list(report.get("gaps"))
+        if isinstance(item, dict)
+    )
+    media_section = (
+        '<section class="section-block"><div class="section-head"><h2>媒体证据</h2></div>'
+        f'<div class="section-body">{selected_frame_cards}</div></section>'
+        if selected_frame_cards
+        else ""
+    )
+    return (
+        '<section class="section-block"><div class="section-head"><h2>覆盖总览</h2></div>'
+        f'<ul class="card-points">{coverage_cards}</ul></section>'
+        '<section class="section-block"><div class="section-head"><h2>快速结论</h2></div>'
+        f'<ul class="card-points">{quick_findings}</ul></section>'
+        f"{theme_cards}"
+        '<section class="section-block"><div class="section-head"><h2>证据卡片</h2></div>'
+        f'<div class="section-body">{evidence_cards}</div></section>'
+        f"{media_section}"
+        '<section class="section-block"><div class="section-head"><h2>缺口与失败</h2></div>'
+        f'<ul class="card-points">{gap_items}</ul></section>'
+        '<section class="section-block"><div class="section-head"><h2>来源附录</h2></div><div id="sources-root"></div></section>'
+    )
+
+
 def render_trip_site(payload: dict, guide_root: Path) -> Path:
     guide_root.mkdir(parents=True, exist_ok=True)
     notes_dir = guide_root / "notes"
@@ -775,7 +859,7 @@ def render_trip_site(payload: dict, guide_root: Path) -> Path:
         title = _safe_text(payload.get("trip_slug")) or "旅行研究报告"
 
     report = payload.get("research_report") if isinstance(payload.get("research_report"), dict) else {}
-    body_html = _render_research_report(report)
+    body_html = _render_research_report_media_aware(report)
     html_text = f"""<!doctype html>
 <html lang="zh-CN">
   <head>

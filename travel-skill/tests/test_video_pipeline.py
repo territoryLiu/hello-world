@@ -32,6 +32,11 @@ class VideoPipelineTest(unittest.TestCase):
         plan_b = build_fallback_plan("https://example.com/video", TESTDATA_ROOT / "assets-b")
         self.assertEqual(plan_a["artifacts"]["model_dir"], plan_b["artifacts"]["model_dir"])
 
+    def test_fallback_plan_exposes_keyframe_and_score_manifests(self):
+        plan = build_fallback_plan("https://example.com/video", TESTDATA_ROOT / "assets-c")
+        self.assertIn("keyframe_manifest", plan["artifacts"])
+        self.assertIn("score_manifest", plan["artifacts"])
+
     def test_video_record_tracks_time_layer_and_missing_fields(self):
         item = build_video_record(
             {

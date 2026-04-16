@@ -42,6 +42,13 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def _stable_record_id(place_slug: str, item: dict, index: int) -> str:
+    topic = _place_slug(clean_text(item.get("topic")) or "unknown")
+    site = _place_slug(clean_text(item.get("site")) or "unknown")
+    time_layer = _place_slug(clean_text(item.get("time_layer")) or "recent")
+    return f"{place_slug}-{topic}-{site}-{time_layer}-{index:03d}"
+
+
 def clean_text(value) -> str:
     return value.strip() if isinstance(value, str) else ""
 
@@ -91,6 +98,18 @@ def persist(raw_payload, approved_payload, media_payload, coverage_payload, outp
             for item in media_records
             if item.get("place") == place or item.get("city") == place or item.get("destination") == place
         ]
+        normalized_records = []
+        for index, item in enumerate(place_raw, start=1):
+            record_id = _stable_record_id(place_slug, item, index)
+            raw_ref = f"raw/records/{record_id}.json"
+            _write_json(place_root / raw_ref, {"trip_slug": trip_slug, "place": place, "record": item})
+            normalized_records.append(
+                {
+                    **item,
+                    "record_id": record_id,
+                    "raw_ref": raw_ref,
+                }
+            )
         recent_facts = [item for item in place_facts if item.get("time_layer") == "recent"]
         historical_facts = [item for item in place_facts if item.get("time_layer") == "last_year_same_period"]
         relevant_topics = sorted(
@@ -125,6 +144,10 @@ def persist(raw_payload, approved_payload, media_payload, coverage_payload, outp
         _write_json(
             place_root / "normalized" / "facts.json",
             {"trip_slug": trip_slug, "place": place, "facts": place_facts or places_from_facts.get(place_slug, [])},
+        )
+        _write_json(
+            place_root / "normalized" / "records.json",
+            {"trip_slug": trip_slug, "place": place, "records": normalized_records},
         )
         _write_json(
             place_root / "knowledge" / "recent.json",

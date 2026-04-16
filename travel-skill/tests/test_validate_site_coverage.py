@@ -27,6 +27,24 @@ class ValidateSiteCoverageTest(unittest.TestCase):
         self.assertIn("dianping", report["by_topic"]["food"]["missing_required_sites"])
         self.assertIn("meituan", report["by_topic"]["food"]["missing_required_sites"])
 
+    def test_flags_video_incomplete_when_page_is_complete(self):
+        payload = {
+            "records": [
+                {
+                    "topic": "risks",
+                    "site": "douyin",
+                    "coverage_status": "partial",
+                    "page_body_full": "page body ok",
+                    "comment_threads_full": [{"text": "ok"}],
+                    "transcript_segments": [],
+                    "frame_scores": [],
+                    "missing_fields": ["transcript_segments", "frame_scores"],
+                }
+            ]
+        }
+        report = validate(payload)
+        self.assertIn("video_incomplete", report["by_site"]["douyin"]["failure_reasons"])
+
 
 if __name__ == "__main__":
     unittest.main()

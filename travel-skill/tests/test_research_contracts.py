@@ -10,7 +10,10 @@ if str(SCRIPT_DIR) not in sys.path:
 from research_contracts import (  # noqa: E402
     FAILURE_REASONS,
     HEAVY_SAMPLE_TARGETS,
+    IMAGE_CANDIDATE_FIELDS,
+    RESEARCH_RECORD_FIELDS,
     TIME_LAYERS,
+    VIDEO_MEDIA_BUNDLE_FIELDS,
     site_required_fields,
 )
 
@@ -35,6 +38,17 @@ class ResearchContractsTest(unittest.TestCase):
         self.assertIn("comment_highlights", required)
         self.assertIn("comment_sample_size", required)
         self.assertIn("image_candidates", required)
+
+    def test_contract_exposes_page_and_video_record_fields(self):
+        self.assertIn("page_body_full", RESEARCH_RECORD_FIELDS)
+        self.assertIn("comment_threads_full", RESEARCH_RECORD_FIELDS)
+        self.assertIn("frame_scores", VIDEO_MEDIA_BUNDLE_FIELDS)
+        self.assertIn("selected_frames", VIDEO_MEDIA_BUNDLE_FIELDS)
+
+    def test_contract_exposes_image_candidate_manifest_fields(self):
+        self.assertIn("selected_for_publish", IMAGE_CANDIDATE_FIELDS)
+        self.assertIn("evidence_score", IMAGE_CANDIDATE_FIELDS)
+        self.assertIn("travel_signal_tags", IMAGE_CANDIDATE_FIELDS)
 
 
 if __name__ == "__main__":

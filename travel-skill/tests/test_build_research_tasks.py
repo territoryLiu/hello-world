@@ -37,6 +37,19 @@ class BuildResearchTasksTest(unittest.TestCase):
         self.assertIn("time_layer=", prompt)
         self.assertIn("sample_target=", prompt)
 
+    def test_xiaohongshu_tasks_capture_raw_body_comments_and_images(self):
+        tasks = [
+            task for task in build_tasks(self.payload)["tasks"]
+            if task["site"] == "xiaohongshu"
+        ]
+        self.assertTrue(tasks)
+        for task in tasks:
+            self.assertEqual(task["raw_capture_policy"], "full")
+            self.assertEqual(task["media_policy"], "page-images")
+            self.assertIn("page_body_full", task["must_capture_fields"])
+            self.assertIn("comment_threads_full", task["must_capture_fields"])
+            self.assertIn("image_candidates", task["must_capture_fields"])
+
 
 if __name__ == "__main__":
     unittest.main()

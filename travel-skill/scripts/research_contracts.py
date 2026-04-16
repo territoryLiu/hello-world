@@ -108,6 +108,50 @@ TIME_LAYER_TOPICS = {
     "risks",
 }
 
+RESEARCH_RECORD_FIELDS = [
+    "place",
+    "topic",
+    "platform",
+    "site",
+    "source_url",
+    "source_title",
+    "collector_mode",
+    "coverage_status",
+    "failure_reason",
+    "failure_detail",
+    "missing_fields",
+    "time_layer",
+    "page_body_full",
+    "comment_threads_full",
+    "comment_sample_size",
+    "transcript_full",
+    "image_candidates",
+    "shot_candidates",
+    "media_artifacts",
+]
+
+VIDEO_MEDIA_BUNDLE_FIELDS = [
+    "video",
+    "audio",
+    "transcript",
+    "all_keyframes",
+    "frame_scores",
+    "selected_frames",
+    "selection_rationale",
+    "scene_tags",
+]
+
+IMAGE_CANDIDATE_FIELDS = [
+    "section",
+    "candidate_type",
+    "source_ref",
+    "selected_for_publish",
+    "publish_state",
+    "evidence_score",
+    "visual_score",
+    "travel_signal_tags",
+]
+
 
 def site_required_fields(site: str) -> list[str]:
     return list(SITE_REQUIRED_FIELDS.get(site, []))

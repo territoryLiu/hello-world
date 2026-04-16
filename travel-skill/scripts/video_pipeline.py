@@ -120,6 +120,8 @@ def build_fallback_plan(url: str, asset_root: Path, transcribe: bool = True) -> 
             "video": str(video_path),
             "audio": str(audio_path),
             "keyframe_dir": str(keyframe_dir),
+            "keyframe_manifest": str(asset_root / "keyframes.json"),
+            "score_manifest": str(asset_root / "frame-scores.json"),
             "transcript": str(transcript_path),
             "model_dir": str(model_dir),
         },

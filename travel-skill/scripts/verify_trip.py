@@ -24,6 +24,24 @@ def _template_dirs(root: Path, device: str) -> list[str]:
     return sorted(path.name for path in template_root.iterdir() if path.is_dir())
 
 
+def _media_scoring_complete(guide_root: Path, html_blob: str) -> bool:
+    media_root = guide_root / "media"
+    keyframe_candidates = [
+        media_root / "keyframes.json",
+        media_root / "all-keyframes.json",
+        media_root / "keyframe-manifest.json",
+    ]
+    score_candidates = [
+        media_root / "frame-scores.json",
+        media_root / "score-manifest.json",
+    ]
+    has_keyframes = any(path.exists() for path in keyframe_candidates) or "selected-frame" in html_blob
+    if not has_keyframes:
+        return True
+    has_scores = any(path.exists() for path in score_candidates) or "evidence_score:" in html_blob
+    return has_scores
+
+
 def verify_trip(guide_root: Path) -> dict:
     html_blob = scan_html_text(guide_root)
     desktop_templates = _template_dirs(guide_root, "desktop")
@@ -38,10 +56,8 @@ def verify_trip(guide_root: Path) -> dict:
         "desktop_template_complete": desktop_templates == EXPECTED_TEMPLATES,
         "mobile_template_complete": mobile_templates == EXPECTED_TEMPLATES,
         "single_template_is_editorial": desktop_templates == EXPECTED_TEMPLATES and mobile_templates == EXPECTED_TEMPLATES,
-        "share_artifacts_present": all(
-            (guide_root / "notes" / name).exists()
-            for name in ["sources.md", "sources.html"]
-        ),
+        "share_artifacts_present": all((guide_root / "notes" / name).exists() for name in ["sources.md", "sources.html"]),
+        "media_scoring_complete": _media_scoring_complete(guide_root, html_blob),
         "no_sample_reference_in_publish": "对标样本" not in html_blob and "sample.html" not in html_blob,
         "no_fake_media_blocks": (
             "B站搜索：" not in html_blob

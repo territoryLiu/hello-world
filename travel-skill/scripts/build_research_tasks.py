@@ -89,6 +89,15 @@ def build_tasks(payload: dict) -> dict:
             for time_layer in _layers_for_topic(topic):
                 for rule in site_rules:
                     site = rule["site"]
+                    must_capture_fields = list(rule["must_capture_fields"])
+                    raw_capture_policy = "summary-only"
+                    media_policy = "none"
+                    if site == "xiaohongshu":
+                        raw_capture_policy = "full"
+                        media_policy = "page-images"
+                        for field in ["page_body_full", "comment_threads_full", "image_candidates"]:
+                            if field not in must_capture_fields:
+                                must_capture_fields.append(field)
                     tasks.append(
                         {
                             "trip_slug": payload["trip_slug"],
@@ -100,12 +109,14 @@ def build_tasks(payload: dict) -> dict:
                             "query_hint": f"{payload['departure_city']} {payload['title']} {place} {topic}",
                             "site_query": site_query(payload, place, topic, site),
                             "collection_method": rule["collection_method"],
-                            "must_capture_fields": list(rule["must_capture_fields"]),
+                            "must_capture_fields": must_capture_fields,
                             "evidence_level": rule["evidence_level"],
                             "time_layer": time_layer,
                             "sample_target": HEAVY_SAMPLE_TARGETS.get(site, 1),
                             "retry_policy": "retry_same_mode",
                             "fallback_policy": "page_first_then_fallback",
+                            "raw_capture_policy": raw_capture_policy,
+                            "media_policy": media_policy,
                         }
                     )
     return {

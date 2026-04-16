@@ -17,6 +17,26 @@ def _pick_visual(item: dict) -> dict:
             "image_source_kind": "",
             "publish_state": "text-citation-only",
         }
+    selected_frames = item.get("selected_frames")
+    if isinstance(selected_frames, list):
+        preferred = next(
+            (
+                frame
+                for frame in selected_frames
+                if isinstance(frame, dict) and frame.get("selected_for_publish")
+            ),
+            None,
+        )
+        if preferred:
+            image_url = str(preferred.get("local_path") or preferred.get("image_url") or "").strip()
+            return {
+                "image_hint": str(preferred.get("label") or item.get("title") or "").strip(),
+                "source_ref": str(item.get("title") or "").strip(),
+                "image_url": image_url,
+                "image_source_kind": "selected-media",
+                "publish_state": "selected-media",
+                "evidence_score": preferred.get("evidence_score", 0),
+            }
     image_candidates = item.get("image_candidates")
     if isinstance(image_candidates, list):
         for candidate in image_candidates:
@@ -80,6 +100,7 @@ def build_plan(payload: dict) -> dict:
                 "image_url": visual["image_url"],
                 "image_source_kind": visual["image_source_kind"],
                 "publish_state": visual.get("publish_state", ""),
+                "evidence_score": visual.get("evidence_score", 0),
             }
         )
     first = next((item for item in iterable if isinstance(item, dict)), {})
@@ -95,6 +116,7 @@ def build_plan(payload: dict) -> dict:
         "image_url": cover_visual["image_url"],
         "image_source_kind": cover_visual["image_source_kind"],
         "publish_state": cover_visual.get("publish_state", ""),
+        "evidence_score": cover_visual.get("evidence_score", 0),
     }
     return {"cover": cover, "section_images": section_images}
 

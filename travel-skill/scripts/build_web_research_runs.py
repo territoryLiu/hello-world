@@ -27,6 +27,8 @@ def _capture_contract(task: dict) -> str:
     ]
     if site in {"xiaohongshu", "douyin", "bilibili"}:
         instructions.append("Read the comments section and capture comments, comment status, and sample size.")
+    if site == "xiaohongshu":
+        instructions.append("Capture the full page body, full comment threads, comment sample size, and image candidates before marking the task complete.")
     if site in {"douyin", "bilibili"}:
         instructions.append("For video pages, trigger video fallback when needed and capture transcript segments, timeline, visual segments, and screenshot candidates.")
     if task.get("topic") == "long_distance_transport" and site == "official":

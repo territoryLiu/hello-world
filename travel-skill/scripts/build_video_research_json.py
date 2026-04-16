@@ -34,6 +34,8 @@ def build_video_record(item: dict) -> dict:
         "risk_notes": _list(item.get("risk_notes")),
         "evidence_links": _list(item.get("evidence_links")),
         "media_artifacts": _list(item.get("media_artifacts")),
+        "frame_scores": _list(item.get("frame_scores")),
+        "selected_frames": _list(item.get("selected_frames")),
     }
 
 

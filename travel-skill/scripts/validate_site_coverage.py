@@ -41,6 +41,12 @@ def validate(payload: dict) -> dict:
             site_bucket["missing_required_fields"].add(str(missing))
         if record.get("failure_reason"):
             site_bucket["failure_reasons"].add(str(record["failure_reason"]))
+        if site in {"douyin", "bilibili"}:
+            has_page = bool(str(record.get("page_body_full") or "").strip())
+            transcript_segments = record.get("transcript_segments") if isinstance(record.get("transcript_segments"), list) else []
+            frame_scores = record.get("frame_scores") if isinstance(record.get("frame_scores"), list) else []
+            if has_page and (not transcript_segments or not frame_scores):
+                site_bucket["failure_reasons"].add("video_incomplete")
 
     for topic, required_sites in REQUIRED_SITE_MATRIX.items():
         topic_bucket = by_topic.setdefault(topic, {"seen_sites": set(), "missing_required_sites": []})
