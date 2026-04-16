@@ -158,6 +158,95 @@ class ResearchPacketTest(unittest.TestCase):
         self.assertEqual(image_payload["cover"]["image_url"], "https://cdn.example.com/xhs-cover.jpg")
         self.assertEqual(image_payload["section_images"][0]["image_url"], "https://cdn.example.com/xhs-cover.jpg")
 
+    def test_aggregate_web_research_batch_merges_bundles_and_generates_review_packet(self):
+        bundle_a = {
+            "trip_slug": "hangzhou-trip",
+            "raw_items": [
+                {
+                    "place": "hangzhou",
+                    "topic": "attractions",
+                    "site": "xiaohongshu",
+                    "platform": "social",
+                    "source_url": "https://www.xiaohongshu.com/explore/1",
+                    "url": "https://www.xiaohongshu.com/explore/1",
+                    "title": "西湖晨拍",
+                    "page_body_full": "七点前到断桥更容易拍空景。",
+                    "comment_threads_full": [{"author": "A", "text": "六点半已经有人了"}],
+                    "image_candidates": [{"url": "https://cdn.example.com/xhs-1.jpg"}],
+                    "checked_at": "2026-04-16T08:00:00",
+                }
+            ],
+            "page_evidence": {"items": [{"site": "xiaohongshu"}]},
+            "video_records": {"items": []},
+            "media_candidates": {"items": [{"place": "hangzhou", "platform": "xiaohongshu", "title": "西湖晨拍"}]},
+        }
+        bundle_b = {
+            "trip_slug": "hangzhou-trip",
+            "raw_items": [
+                {
+                    "place": "hangzhou",
+                    "topic": "food",
+                    "site": "meituan",
+                    "platform": "local-listing",
+                    "source_url": "https://i.meituan.com/shop/2",
+                    "url": "https://i.meituan.com/shop/2",
+                    "title": "绿茶",
+                    "shop_name": "绿茶",
+                    "address": "西湖区龙井路",
+                    "recommended_dishes": ["龙井虾仁"],
+                    "checked_at": "2026-04-16T10:00:00",
+                }
+            ],
+            "page_evidence": {"items": []},
+            "video_records": {"items": []},
+            "media_candidates": {"items": [{"place": "hangzhou", "platform": "meituan", "title": "绿茶"}]},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            bundle_a_path = tmp_path / "bundle-a.json"
+            bundle_b_path = tmp_path / "bundle-b.json"
+            manifest_path = tmp_path / "manifest.json"
+            batch_output = tmp_path / "batch.json"
+            coverage_output = tmp_path / "coverage.json"
+            review_dir = tmp_path / "review"
+            bundle_a_path.write_text(json.dumps(bundle_a, ensure_ascii=False, indent=2), encoding="utf-8")
+            bundle_b_path.write_text(json.dumps(bundle_b, ensure_ascii=False, indent=2), encoding="utf-8")
+            manifest_path.write_text(
+                json.dumps(
+                    {
+                        "trip_slug": "hangzhou-trip",
+                        "bundle_paths": [str(bundle_a_path), str(bundle_b_path)],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            run_script(
+                SKILL_DIR / "scripts" / "aggregate_web_research_batch.py",
+                "--input",
+                manifest_path,
+                "--bundle-output",
+                batch_output,
+                "--coverage-output",
+                coverage_output,
+                "--review-output-dir",
+                review_dir,
+            )
+
+            batch_payload = json.loads(batch_output.read_text(encoding="utf-8"))
+            coverage_payload = json.loads(coverage_output.read_text(encoding="utf-8"))
+            review_md = (review_dir / "research-packet.md").read_text(encoding="utf-8")
+
+        self.assertEqual(batch_payload["trip_slug"], "hangzhou-trip")
+        self.assertEqual(len(batch_payload["raw_items"]), 2)
+        self.assertEqual(len(batch_payload["merged"]["entries"]), 2)
+        self.assertIn("hangzhou", batch_payload["structured"]["by_place"])
+        self.assertIn("food", coverage_payload["by_topic"])
+        self.assertIn("Site Coverage", review_md)
+        self.assertIn("七点前到断桥更容易拍空景。", review_md)
+
 
 if __name__ == "__main__":
     unittest.main()
