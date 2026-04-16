@@ -306,7 +306,25 @@ python travel-skill\scripts\aggregate_web_research_batch.py `
 - `research-packet.md`
 - `research-packet.html`
 
-## 7. 视频回退链当前能力
+## 7. 最小端到端 Smoke 命令
+
+如果你只是想验证这条文件协议链本身能走通，而不是去真实调用外部 `web-access`，可以直接跑内置 fixture：
+
+```powershell
+python travel-skill\scripts\run_web_access_batch_smoke.py `
+  --fixtures-root tests\fixtures\travel_skill\web_batch_smoke `
+  --output-dir .tmp-tests\web-batch-smoke
+```
+
+这条 smoke 会自动完成：
+
+1. 导出 `web-access-batch.json`
+2. 生成 `web-access-packets\<run_id>.json`
+3. 把示例 batch results materialize 成 `web-results\<run_id>.json`
+4. 执行 batch finalize
+5. 产出 `batch-bundle.json`、`batch-coverage.json`、`review-packet\`
+
+## 8. 视频回退链当前能力
 
 当前视频增强链已经具备：
 
@@ -327,7 +345,7 @@ python travel-skill\scripts\aggregate_web_research_batch.py `
 
 这意味着“视频下载、音频转文字、关键帧分析”现在都已经进入可运行状态；只是多模态评分仍然是可选增强，不是硬依赖。
 
-## 8. 首次安装后的最小验收
+## 9. 首次安装后的最小验收
 
 建议至少跑下面几组串行验证。Windows 下不要并发跑多个 `conda run`。
 
@@ -347,7 +365,7 @@ conda run -n stock-analyzer python -m py_compile `
   travel-skill\scripts\video_pipeline.py
 ```
 
-## 9. 常见问题
+## 10. 常见问题
 
 ### Q1. `travel-skill-model-cache` 要不要放进 `C:\Users\territoryliu\.codex\skills\travel-skill`？
 

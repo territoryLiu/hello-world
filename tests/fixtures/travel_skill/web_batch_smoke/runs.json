@@ -1,0 +1,82 @@
+{
+  "runner": "travel-skill",
+  "trip_slug": "hangzhou-trip",
+  "batch_id": "hangzhou-trip-web-research",
+  "batch_manifest": {
+    "trip_slug": "hangzhou-trip",
+    "batch_id": "hangzhou-trip-web-research",
+    "aggregator_script": "travel-skill/scripts/aggregate_web_research_batch.py",
+    "bundle_paths": [
+      "travel-data/trips/hangzhou-trip/research/web-runs/hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent/bundle.json",
+      "travel-data/trips/hangzhou-trip/research/web-runs/hangzhou-trip-002-hangzhou-food-meituan-recent/bundle.json"
+    ],
+    "runs": {
+      "hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent": {
+        "bundle_path": "travel-data/trips/hangzhou-trip/research/web-runs/hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent/bundle.json",
+        "coverage_path": "travel-data/trips/hangzhou-trip/research/web-runs/hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent/coverage.json",
+        "site": "xiaohongshu",
+        "topic": "attractions",
+        "time_layer": "recent"
+      },
+      "hangzhou-trip-002-hangzhou-food-meituan-recent": {
+        "bundle_path": "travel-data/trips/hangzhou-trip/research/web-runs/hangzhou-trip-002-hangzhou-food-meituan-recent/bundle.json",
+        "coverage_path": "travel-data/trips/hangzhou-trip/research/web-runs/hangzhou-trip-002-hangzhou-food-meituan-recent/coverage.json",
+        "site": "meituan",
+        "topic": "food",
+        "time_layer": "recent"
+      }
+    }
+  },
+  "runs": [
+    {
+      "run_id": "hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent",
+      "batch_id": "hangzhou-trip-web-research",
+      "skill": "travel-skill",
+      "result_schema": "travel-skill-web-evidence-v1",
+      "prompt": "Use the standalone web-access skill to collect travel evidence for this task. Search site=xiaohongshu with query=hangzhou attractions xiaohongshu.",
+      "expected_bundle_path": "travel-data/trips/hangzhou-trip/research/web-runs/hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent/bundle.json",
+      "expected_coverage_path": "travel-data/trips/hangzhou-trip/research/web-runs/hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent/coverage.json",
+      "task": {
+        "trip_slug": "hangzhou-trip",
+        "place": "hangzhou",
+        "topic": "attractions",
+        "platform": "social",
+        "site": "xiaohongshu",
+        "time_layer": "recent",
+        "collection_method": "travel-skill",
+        "raw_capture_policy": "full",
+        "media_policy": "page-images",
+        "normalized_schema": "xiaohongshu-note-v1",
+        "sample_target": 20,
+        "retry_policy": "retry_same_mode",
+        "fallback_policy": "page_first_then_fallback",
+        "evidence_level": "supporting"
+      }
+    },
+    {
+      "run_id": "hangzhou-trip-002-hangzhou-food-meituan-recent",
+      "batch_id": "hangzhou-trip-web-research",
+      "skill": "travel-skill",
+      "result_schema": "travel-skill-web-evidence-v1",
+      "prompt": "Use the standalone web-access skill to collect travel evidence for this task. Search site=meituan with query=hangzhou food meituan.",
+      "expected_bundle_path": "travel-data/trips/hangzhou-trip/research/web-runs/hangzhou-trip-002-hangzhou-food-meituan-recent/bundle.json",
+      "expected_coverage_path": "travel-data/trips/hangzhou-trip/research/web-runs/hangzhou-trip-002-hangzhou-food-meituan-recent/coverage.json",
+      "task": {
+        "trip_slug": "hangzhou-trip",
+        "place": "hangzhou",
+        "topic": "food",
+        "platform": "local-listing",
+        "site": "meituan",
+        "time_layer": "recent",
+        "collection_method": "travel-skill",
+        "raw_capture_policy": "listing+reviews",
+        "media_policy": "listing-evidence",
+        "normalized_schema": "local-listing-v1",
+        "sample_target": 15,
+        "retry_policy": "retry_same_mode",
+        "fallback_policy": "page_first_then_fallback",
+        "evidence_level": "primary"
+      }
+    }
+  ]
+}

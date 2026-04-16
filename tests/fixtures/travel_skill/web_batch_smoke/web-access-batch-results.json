@@ -1,0 +1,49 @@
+{
+  "batch_id": "hangzhou-trip-web-research",
+  "results": [
+    {
+      "run_id": "hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent",
+      "result": {
+        "items": [
+          {
+            "raw_url": "https://www.xiaohongshu.com/explore/1",
+            "title": "West Lake sunrise",
+            "body": "Arrive before 7am for lighter crowds.",
+            "comments": [
+              {
+                "author": "A",
+                "text": "6:30am already has people."
+              }
+            ],
+            "images": [
+              {
+                "src": "https://cdn.example.com/xhs-1.jpg"
+              }
+            ],
+            "checked_at": "2026-04-16T08:00:00"
+          }
+        ]
+      }
+    },
+    {
+      "run_id": "hangzhou-trip-002-hangzhou-food-meituan-recent",
+      "result": {
+        "items": [
+          {
+            "raw_url": "https://i.meituan.com/shop/2",
+            "name": "Green Tea",
+            "location": "West Lake Longjing Road",
+            "price": "90-110",
+            "recommended_items": [
+              "Longjing shrimp"
+            ],
+            "review_notes": [
+              "Take a queue number before noon."
+            ],
+            "checked_at": "2026-04-16T10:00:00"
+          }
+        ]
+      }
+    }
+  ]
+}
