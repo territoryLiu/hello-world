@@ -58,6 +58,22 @@
 - `bundle_paths`
 - `runs`
 
+## web_access_batch_request
+
+- `trip_slug`
+- `batch_id`
+- `requests`
+
+## web_access_batch_request_item
+
+- `run_id`
+- `batch_id`
+- `prompt`
+- `task`
+- `skill`
+- `result_schema`
+- `response_path`
+
 ## fact_item
 
 - `place`

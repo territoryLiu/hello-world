@@ -211,6 +211,113 @@ class IntakeResearchTest(unittest.TestCase):
             self.assertIn(run["expected_bundle_path"], batch_manifest["bundle_paths"])
             self.assertIn(run["run_id"], batch_manifest["runs"])
 
+    def test_build_web_access_batch_request_exports_prompt_packets_and_expected_response_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            runs_path = tmp_path / "runs.json"
+            request_output = tmp_path / "web-access-batch.json"
+            packets_dir = tmp_path / "packets"
+            runs_payload = {
+                "trip_slug": "hangzhou-trip",
+                "batch_id": "hangzhou-trip-web-research",
+                "runs": [
+                    {
+                        "run_id": "hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent",
+                        "batch_id": "hangzhou-trip-web-research",
+                        "skill": "travel-skill",
+                        "result_schema": "travel-skill-web-evidence-v1",
+                        "prompt": "Use the standalone web-access skill to collect travel evidence for this task.",
+                        "task": {
+                            "place": "hangzhou",
+                            "topic": "attractions",
+                            "site": "xiaohongshu",
+                            "time_layer": "recent",
+                        },
+                    }
+                ],
+            }
+            runs_path.write_text(json.dumps(runs_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+            run_script(
+                SKILL_DIR / "scripts" / "build_web_access_batch_request.py",
+                "--runs-file",
+                runs_path,
+                "--output",
+                request_output,
+                "--packets-dir",
+                packets_dir,
+                "--web-results-dir",
+                tmp_path / "web-results",
+            )
+
+            request_payload = json.loads(request_output.read_text(encoding="utf-8"))
+            packet_payload = json.loads(
+                (
+                    packets_dir
+                    / "hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent.json"
+                ).read_text(encoding="utf-8")
+            )
+
+        self.assertEqual(request_payload["trip_slug"], "hangzhou-trip")
+        self.assertEqual(request_payload["batch_id"], "hangzhou-trip-web-research")
+        self.assertEqual(len(request_payload["requests"]), 1)
+        self.assertTrue(request_payload["requests"][0]["response_path"].endswith(".json"))
+        self.assertIn("web-results", request_payload["requests"][0]["response_path"])
+        self.assertEqual(packet_payload["run_id"], "hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent")
+        self.assertEqual(packet_payload["task"]["site"], "xiaohongshu")
+
+    def test_materialize_web_access_batch_results_writes_run_id_named_web_results(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            batch_results = tmp_path / "batch-results.json"
+            web_results_dir = tmp_path / "web-results"
+            report_output = tmp_path / "materialize-report.json"
+            batch_results.write_text(
+                json.dumps(
+                    {
+                        "batch_id": "hangzhou-trip-web-research",
+                        "results": [
+                            {
+                                "run_id": "hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent",
+                                "result": {
+                                    "items": [
+                                        {
+                                            "raw_url": "https://www.xiaohongshu.com/explore/1",
+                                            "title": "West Lake sunrise",
+                                        }
+                                    ]
+                                },
+                            }
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            run_script(
+                SKILL_DIR / "scripts" / "materialize_web_access_batch_results.py",
+                "--input",
+                batch_results,
+                "--web-results-dir",
+                web_results_dir,
+                "--report-output",
+                report_output,
+            )
+
+            saved_result = json.loads(
+                (
+                    web_results_dir
+                    / "hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent.json"
+                ).read_text(encoding="utf-8")
+            )
+            report_payload = json.loads(report_output.read_text(encoding="utf-8"))
+
+        self.assertEqual(saved_result["items"][0]["title"], "West Lake sunrise")
+        self.assertEqual(report_payload["materialized_results"], 1)
+        self.assertEqual(report_payload["skipped_results"], [])
+
     def test_social_tasks_require_comment_capture_and_transport_tasks_include_latest_searchable_fallback(self):
         with tempfile.TemporaryDirectory() as tmp:
             normalized = Path(tmp) / "normalized.json"

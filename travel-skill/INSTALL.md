@@ -216,7 +216,47 @@ python travel-skill\scripts\finalize_web_research_run.py `
   --output-root travel-data
 ```
 
-### 步骤 5：用批处理执行器顺序 finalize 全部 run
+### 步骤 5：导出 web-access batch request
+
+如果你准备把整批 run 交给外部 `web-access` runner 执行，可以先导出标准请求包：
+
+```powershell
+python travel-skill\scripts\build_web_access_batch_request.py `
+  --runs-file runs.json `
+  --output web-access-batch.json `
+  --packets-dir web-access-packets `
+  --web-results-dir web-results
+```
+
+这一步会生成：
+
+1. `web-access-batch.json`
+2. `web-access-packets\<run_id>.json`
+
+每个请求包都会带：
+
+1. `run_id`
+2. `prompt`
+3. `task`
+4. `result_schema`
+5. 预期 `response_path`
+
+### 步骤 6：把外部 runner 返回结果落成 `web-results\<run_id>.json`
+
+如果外部 runner 返回的是一个批量结果文件，例如：
+
+- `web-access-batch-results.json`
+
+那么可以用下面的脚本把它拆分成本地执行器需要的目录结构：
+
+```powershell
+python travel-skill\scripts\materialize_web_access_batch_results.py `
+  --input web-access-batch-results.json `
+  --web-results-dir web-results `
+  --report-output web-results-materialize-report.json
+```
+
+### 步骤 7：用批处理执行器顺序 finalize 全部 run
 
 如果你已经把每个 run 的 web-access 返回结果保存成：
 
@@ -242,7 +282,7 @@ python travel-skill\scripts\execute_web_research_batch.py `
 3. 自动聚合整个 batch
 4. 生成执行报告 `execution-report.json`
 
-### 步骤 6：单独聚合整个 batch
+### 步骤 8：单独聚合整个 batch
 
 现在聚合器支持两种输入：
 
