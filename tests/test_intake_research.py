@@ -525,6 +525,189 @@ class IntakeResearchTest(unittest.TestCase):
             self.assertEqual(record["site"], "xiaohongshu")
             self.assertTrue((output_root / "places").exists())
 
+    def test_execute_web_research_batch_finalizes_runs_and_aggregates_outputs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            runs_path = tmp_path / "runs.json"
+            web_results_dir = tmp_path / "web-results"
+            output_root = tmp_path / "travel-data"
+            batch_output = tmp_path / "batch-bundle.json"
+            coverage_output = tmp_path / "batch-coverage.json"
+            report_output = tmp_path / "execution-report.json"
+            review_dir = tmp_path / "review"
+            web_results_dir.mkdir(parents=True)
+
+            run_one_id = "hangzhou-trip-001-hangzhou-attractions-xiaohongshu-recent"
+            run_two_id = "hangzhou-trip-002-hangzhou-food-meituan-recent"
+            runs_payload = {
+                "runner": "travel-skill",
+                "trip_slug": "hangzhou-trip",
+                "batch_id": "hangzhou-trip-web-research",
+                "batch_manifest": {
+                    "trip_slug": "hangzhou-trip",
+                    "batch_id": "hangzhou-trip-web-research",
+                    "aggregator_script": "travel-skill/scripts/aggregate_web_research_batch.py",
+                    "bundle_paths": [
+                        "travel-data/trips/hangzhou-trip/research/web-runs/"
+                        f"{run_one_id}/bundle.json",
+                        "travel-data/trips/hangzhou-trip/research/web-runs/"
+                        f"{run_two_id}/bundle.json",
+                    ],
+                    "runs": {
+                        run_one_id: {
+                            "bundle_path": "travel-data/trips/hangzhou-trip/research/web-runs/"
+                            f"{run_one_id}/bundle.json",
+                            "coverage_path": "travel-data/trips/hangzhou-trip/research/web-runs/"
+                            f"{run_one_id}/coverage.json",
+                            "site": "xiaohongshu",
+                            "topic": "attractions",
+                            "time_layer": "recent",
+                        },
+                        run_two_id: {
+                            "bundle_path": "travel-data/trips/hangzhou-trip/research/web-runs/"
+                            f"{run_two_id}/bundle.json",
+                            "coverage_path": "travel-data/trips/hangzhou-trip/research/web-runs/"
+                            f"{run_two_id}/coverage.json",
+                            "site": "meituan",
+                            "topic": "food",
+                            "time_layer": "recent",
+                        },
+                    },
+                },
+                "runs": [
+                    {
+                        "run_id": run_one_id,
+                        "batch_id": "hangzhou-trip-web-research",
+                        "expected_bundle_path": "travel-data/trips/hangzhou-trip/research/web-runs/"
+                        f"{run_one_id}/bundle.json",
+                        "expected_coverage_path": "travel-data/trips/hangzhou-trip/research/web-runs/"
+                        f"{run_one_id}/coverage.json",
+                        "task": {
+                            "trip_slug": "hangzhou-trip",
+                            "place": "hangzhou",
+                            "topic": "attractions",
+                            "platform": "social",
+                            "site": "xiaohongshu",
+                            "time_layer": "recent",
+                            "collection_method": "travel-skill",
+                            "raw_capture_policy": "full",
+                            "media_policy": "page-images",
+                            "normalized_schema": "xiaohongshu-note-v1",
+                            "sample_target": 20,
+                            "retry_policy": "retry_same_mode",
+                            "fallback_policy": "page_first_then_fallback",
+                            "evidence_level": "supporting",
+                        },
+                    },
+                    {
+                        "run_id": run_two_id,
+                        "batch_id": "hangzhou-trip-web-research",
+                        "expected_bundle_path": "travel-data/trips/hangzhou-trip/research/web-runs/"
+                        f"{run_two_id}/bundle.json",
+                        "expected_coverage_path": "travel-data/trips/hangzhou-trip/research/web-runs/"
+                        f"{run_two_id}/coverage.json",
+                        "task": {
+                            "trip_slug": "hangzhou-trip",
+                            "place": "hangzhou",
+                            "topic": "food",
+                            "platform": "local-listing",
+                            "site": "meituan",
+                            "time_layer": "recent",
+                            "collection_method": "travel-skill",
+                            "raw_capture_policy": "listing+reviews",
+                            "media_policy": "listing-evidence",
+                            "normalized_schema": "local-listing-v1",
+                            "sample_target": 15,
+                            "retry_policy": "retry_same_mode",
+                            "fallback_policy": "page_first_then_fallback",
+                            "evidence_level": "primary",
+                        },
+                    },
+                ],
+            }
+            runs_path.write_text(json.dumps(runs_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            (web_results_dir / f"{run_one_id}.json").write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "raw_url": "https://www.xiaohongshu.com/explore/1",
+                                "title": "West Lake sunrise",
+                                "body": "Arrive before 7am for lighter crowds.",
+                                "comments": [{"author": "A", "text": "6:30am already has people."}],
+                                "images": [{"src": "https://cdn.example.com/xhs-1.jpg"}],
+                                "checked_at": "2026-04-16T08:00:00",
+                            }
+                        ]
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            (web_results_dir / f"{run_two_id}.json").write_text(
+                json.dumps(
+                    {
+                        "items": [
+                            {
+                                "raw_url": "https://i.meituan.com/shop/2",
+                                "name": "Green Tea",
+                                "location": "West Lake Longjing Road",
+                                "price": "90-110",
+                                "recommended_items": ["Longjing shrimp"],
+                                "review_notes": ["Take a queue number before noon."],
+                                "checked_at": "2026-04-16T10:00:00",
+                            }
+                        ]
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            run_script(
+                SKILL_DIR / "scripts" / "execute_web_research_batch.py",
+                "--runs-file",
+                runs_path,
+                "--web-results-dir",
+                web_results_dir,
+                "--output-root",
+                output_root,
+                "--batch-bundle-output",
+                batch_output,
+                "--batch-coverage-output",
+                coverage_output,
+                "--review-output-dir",
+                review_dir,
+                "--execution-report-output",
+                report_output,
+            )
+
+            batch_payload = json.loads(batch_output.read_text(encoding="utf-8"))
+            coverage_payload = json.loads(coverage_output.read_text(encoding="utf-8"))
+            report_payload = json.loads(report_output.read_text(encoding="utf-8"))
+
+            run_one_bundle_exists = (
+                output_root
+                / "trips"
+                / "hangzhou-trip"
+                / "research"
+                / "web-runs"
+                / run_one_id
+                / "bundle.json"
+            ).exists()
+            review_html_exists = (review_dir / "research-packet.html").exists()
+
+        self.assertEqual(batch_payload["trip_slug"], "hangzhou-trip")
+        self.assertEqual(len(batch_payload["raw_items"]), 2)
+        self.assertIn("food", coverage_payload["by_topic"])
+        self.assertEqual(report_payload["trip_slug"], "hangzhou-trip")
+        self.assertEqual(report_payload["finalized_runs"], 2)
+        self.assertEqual(report_payload["missing_results"], [])
+        self.assertTrue(run_one_bundle_exists)
+        self.assertTrue(review_html_exists)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -216,7 +216,33 @@ python travel-skill\scripts\finalize_web_research_run.py `
   --output-root travel-data
 ```
 
-### 步骤 5：聚合整个 batch
+### 步骤 5：用批处理执行器顺序 finalize 全部 run
+
+如果你已经把每个 run 的 web-access 返回结果保存成：
+
+- `web-results\<run_id>.json`
+
+那么可以直接用一条命令完成整批 finalize + aggregate：
+
+```powershell
+python travel-skill\scripts\execute_web_research_batch.py `
+  --runs-file runs.json `
+  --web-results-dir web-results `
+  --output-root travel-data `
+  --batch-bundle-output batch-bundle.json `
+  --batch-coverage-output batch-coverage.json `
+  --review-output-dir review-packet `
+  --execution-report-output execution-report.json
+```
+
+这条命令会：
+
+1. 逐条读取 `web-results\<run_id>.json`
+2. 根据 `runs.json` 中的 `expected_bundle_path` 和 `expected_coverage_path` 落盘
+3. 自动聚合整个 batch
+4. 生成执行报告 `execution-report.json`
+
+### 步骤 6：单独聚合整个 batch
 
 现在聚合器支持两种输入：
 
