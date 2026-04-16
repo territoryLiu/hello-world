@@ -11,3 +11,5 @@ __pycache__/
 .tmp-tests/
 travel-data/
 .pytest_cache/
+travel-skill-model-cache/
+dist/

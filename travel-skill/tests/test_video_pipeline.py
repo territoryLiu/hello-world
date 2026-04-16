@@ -1,6 +1,7 @@
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPT_DIR = Path(__file__).resolve().parents[1] / "scripts"
@@ -22,6 +23,20 @@ class VideoPipelineTest(unittest.TestCase):
         if tools["ffmpeg"]:
             self.assertTrue(Path(tools["ffmpeg"]).exists())
 
+    def test_resolve_tool_paths_can_fall_back_to_imageio_ffmpeg(self):
+        fake_module = type(
+            "FakeImageioFFmpeg",
+            (),
+            {"get_ffmpeg_exe": staticmethod(lambda: str(TEST_TMP_ROOT / "fake-ffmpeg.exe"))},
+        )
+        with mock.patch("video_pipeline.shutil.which", return_value=""), mock.patch(
+            "video_pipeline.KNOWN_FFMPEG_PATHS",
+            [],
+        ), mock.patch.dict("sys.modules", {"imageio_ffmpeg": fake_module}):
+            tools = resolve_tool_paths()
+
+        self.assertEqual(tools["ffmpeg"], str(TEST_TMP_ROOT / "fake-ffmpeg.exe"))
+
     def test_fallback_plan_contains_download_audio_keyframe_and_transcript_steps(self):
         plan = build_fallback_plan("https://example.com/video", Path("assets"))
         stages = [step["stage"] for step in plan["steps"]]
@@ -31,6 +46,12 @@ class VideoPipelineTest(unittest.TestCase):
         plan_a = build_fallback_plan("https://example.com/video", TESTDATA_ROOT / "assets-a")
         plan_b = build_fallback_plan("https://example.com/video", TESTDATA_ROOT / "assets-b")
         self.assertEqual(plan_a["artifacts"]["model_dir"], plan_b["artifacts"]["model_dir"])
+
+    def test_fallback_plan_defaults_model_cache_to_codex_data_dir(self):
+        expected = str(Path.home() / ".codex" / "data" / "travel-skill-model-cache" / "whisper")
+        with mock.patch.dict("os.environ", {}, clear=False):
+            plan = build_fallback_plan("https://example.com/video", TESTDATA_ROOT / "assets-default-cache")
+        self.assertEqual(plan["artifacts"]["model_dir"], expected)
 
     def test_fallback_plan_exposes_keyframe_and_score_manifests(self):
         plan = build_fallback_plan("https://example.com/video", TESTDATA_ROOT / "assets-c")
@@ -56,22 +77,24 @@ class VideoPipelineTest(unittest.TestCase):
         local_video = TESTDATA_ROOT / "travel-skill-smoke-input.mp4"
         self.assertTrue(local_video.exists())
         asset_root = TEST_TMP_ROOT / "video-test"
+        model_dir = TEST_TMP_ROOT / "model-cache" / "whisper"
         if asset_root.exists():
             import shutil
             shutil.rmtree(asset_root)
         asset_root.mkdir(parents=True, exist_ok=True)
 
-        item = build_status(
-            {
-                "url": str(local_video),
-                "asset_root": str(asset_root),
-                "collector_mode": "video-fallback",
-                "missing_fields": [],
-                "time_layer": "recent",
-                "run_pipeline": True,
-                "transcribe": False,
-            }
-        )
+        with mock.patch.dict("os.environ", {"TRAVEL_SKILL_MODEL_DIR": str(model_dir)}, clear=False):
+            item = build_status(
+                {
+                    "url": str(local_video),
+                    "asset_root": str(asset_root),
+                    "collector_mode": "video-fallback",
+                    "missing_fields": [],
+                    "time_layer": "recent",
+                    "run_pipeline": True,
+                    "transcribe": False,
+                }
+            )
         artifacts = {entry["kind"]: entry["path"] for entry in item["media_artifacts"]}
         if resolve_tool_paths()["ffmpeg"]:
             self.assertEqual(item["coverage_status"], "complete")
@@ -87,28 +110,35 @@ class VideoPipelineTest(unittest.TestCase):
         local_video = TESTDATA_ROOT / "travel-skill-smoke-input.mp4"
         self.assertTrue(local_video.exists())
         asset_root = TEST_TMP_ROOT / "video-test-transcribe"
+        model_dir = REPO_ROOT / "travel-skill-model-cache" / "whisper"
+        model_file = model_dir / "tiny.pt"
         if asset_root.exists():
             import shutil
             shutil.rmtree(asset_root)
         asset_root.mkdir(parents=True, exist_ok=True)
 
-        item = build_status(
-            {
-                "url": str(local_video),
-                "asset_root": str(asset_root),
-                "collector_mode": "video-fallback",
-                "missing_fields": [],
-                "time_layer": "recent",
-                "run_pipeline": True,
-                "transcribe": True,
-            }
+        with mock.patch.dict("os.environ", {"TRAVEL_SKILL_MODEL_DIR": str(model_dir)}, clear=False):
+            item = build_status(
+                {
+                    "url": str(local_video),
+                    "asset_root": str(asset_root),
+                    "collector_mode": "video-fallback",
+                    "missing_fields": [],
+                    "time_layer": "recent",
+                    "run_pipeline": True,
+                    "transcribe": True,
+                }
         )
         artifacts = {entry["kind"]: entry["path"] for entry in item["media_artifacts"]}
         tools = resolve_tool_paths()
-        if tools["ffmpeg"] and tools["whisper"]:
+        if tools["ffmpeg"] and tools["whisper"] and model_file.exists():
             self.assertEqual(item["coverage_status"], "complete")
             self.assertTrue(Path(artifacts["transcript"]).exists())
+            self.assertTrue(Path(artifacts["keyframe_manifest"]).exists())
+            self.assertTrue(Path(artifacts["score_manifest"]).exists())
             self.assertEqual(item["transcript_status"], "done")
+            self.assertIsInstance(item.get("transcript_segments"), list)
+            self.assertTrue(item.get("frame_scores"))
         else:
             self.assertEqual(item["coverage_status"], "partial")
             self.assertTrue(item["failure_reason"])

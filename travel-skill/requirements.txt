@@ -1,0 +1,5 @@
+openai
+yt-dlp
+openai-whisper
+torch
+imageio-ffmpeg

@@ -8,6 +8,7 @@ import sys
 
 
 KNOWN_FFMPEG_PATHS = [
+    Path(r"C:\lane\ffmpeg-2026-04-09-git-d3d0b7a5ee-full_build\bin\ffmpeg.exe"),
     Path(r"D:\software\ffmpeg-8.0.1-essentials_build\bin\ffmpeg.exe"),
 ]
 
@@ -47,6 +48,15 @@ def resolve_tool_paths() -> dict[str, str]:
             if candidate.exists():
                 resolved[tool] = str(candidate)
                 break
+    if not resolved["ffmpeg"]:
+        try:
+            import imageio_ffmpeg
+
+            ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+            if ffmpeg_path:
+                resolved["ffmpeg"] = str(ffmpeg_path)
+        except Exception:
+            pass
     return resolved
 
 
@@ -59,7 +69,7 @@ def _shared_model_dir() -> Path:
     env_value = os.environ.get("TRAVEL_SKILL_MODEL_DIR")
     if env_value:
         return Path(env_value)
-    return Path.cwd() / "travel-skill-model-cache" / "whisper"
+    return Path.home() / ".codex" / "data" / "travel-skill-model-cache" / "whisper"
 
 
 def build_fallback_plan(url: str, asset_root: Path, transcribe: bool = True) -> dict:
