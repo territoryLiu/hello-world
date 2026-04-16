@@ -34,6 +34,9 @@
 - `sample_target`
 - `retry_policy`
 - `fallback_policy`
+- `raw_capture_policy`
+- `media_policy`
+- `normalized_schema`
 
 ## fact_item
 
@@ -64,6 +67,7 @@
 ## normalized_research_record
 
 - `source_type`
+- `normalized_schema`
 - `collector_mode`
 - `coverage_status`
 - `failure_reason`
@@ -73,6 +77,17 @@
 - `time_layer`
 - `evidence_refs`
 - `knowledge_points`
+
+## site_record_bundle
+
+- `records`
+- `source_record_id`
+
+## merged_topic_knowledge
+
+- `topics`
+- `claim`
+- `evidence_refs`
 
 ## page_evidence_record
 

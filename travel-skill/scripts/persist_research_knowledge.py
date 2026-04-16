@@ -42,6 +42,37 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def _group_record_ids(records: list[dict]) -> dict[tuple[str, str, str, str], list[str]]:
+    grouped: dict[tuple[str, str, str, str], list[str]] = {}
+    for record in records:
+        key = (
+            clean_text(record.get("place")),
+            clean_text(record.get("topic")),
+            clean_text(record.get("site")),
+            clean_text(record.get("time_layer")) or "recent",
+        )
+        grouped.setdefault(key, []).append(clean_text(record.get("record_id")))
+    return grouped
+
+
+def _attach_source_record_ids(records: list[dict], grouped_ids: dict[tuple[str, str, str, str], list[str]]) -> list[dict]:
+    counters: dict[tuple[str, str, str, str], int] = {}
+    attached = []
+    for record in records:
+        key = (
+            clean_text(record.get("place")),
+            clean_text(record.get("topic")),
+            clean_text(record.get("site")),
+            clean_text(record.get("time_layer")) or "recent",
+        )
+        index = counters.get(key, 0)
+        source_ids = grouped_ids.get(key, [])
+        source_record_id = source_ids[index] if index < len(source_ids) else ""
+        counters[key] = index + 1
+        attached.append({**record, "source_record_id": source_record_id})
+    return attached
+
+
 def _stable_record_id(place_slug: str, item: dict, index: int) -> str:
     topic = _place_slug(clean_text(item.get("topic")) or "unknown")
     site = _place_slug(clean_text(item.get("site")) or "unknown")
@@ -74,12 +105,14 @@ def split_facts(facts: list[dict]) -> tuple[dict[str, list[dict]], dict[str, lis
 def persist(raw_payload, approved_payload, media_payload, coverage_payload, output_root: Path) -> None:
     raw_records = _iter_records(raw_payload, "records")
     approved_facts = _iter_records(approved_payload, "facts")
+    normalized_site_records = _iter_records(approved_payload, "normalized_records")
+    knowledge_points = _iter_records(approved_payload, "knowledge_points")
     media_records = _iter_records(media_payload, "items")
     places_from_facts, corridors = split_facts(approved_facts)
     coverage_by_topic = coverage_payload.get("by_topic") if isinstance(coverage_payload, dict) else {}
     coverage_by_topic = coverage_by_topic if isinstance(coverage_by_topic, dict) else {}
 
-    places = _collect_places(raw_records, approved_facts, media_records)
+    places = _collect_places(raw_records, approved_facts, normalized_site_records, knowledge_points, media_records)
     trip_slug = ""
     for payload in (raw_payload, approved_payload, coverage_payload):
         if isinstance(payload, dict) and isinstance(payload.get("trip_slug"), str) and payload.get("trip_slug").strip():
@@ -110,12 +143,15 @@ def persist(raw_payload, approved_payload, media_payload, coverage_payload, outp
                     "raw_ref": raw_ref,
                 }
             )
+        place_site_records = [item for item in normalized_site_records if item.get("place") == place]
+        place_site_records = _attach_source_record_ids(place_site_records, _group_record_ids(normalized_records))
+        place_knowledge_points = [item for item in knowledge_points if item.get("place") == place]
         recent_facts = [item for item in place_facts if item.get("time_layer") == "recent"]
         historical_facts = [item for item in place_facts if item.get("time_layer") == "last_year_same_period"]
         relevant_topics = sorted(
             {
                 str(item.get("topic")).strip()
-                for item in [*place_raw, *place_facts]
+                for item in [*place_raw, *place_facts, *place_site_records, *place_knowledge_points]
                 if isinstance(item.get("topic"), str) and item.get("topic").strip()
             }
         )
@@ -150,12 +186,27 @@ def persist(raw_payload, approved_payload, media_payload, coverage_payload, outp
             {"trip_slug": trip_slug, "place": place, "records": normalized_records},
         )
         _write_json(
+            place_root / "normalized" / "site-records.json",
+            {"trip_slug": trip_slug, "place": place, "records": place_site_records},
+        )
+        _write_json(
             place_root / "knowledge" / "recent.json",
             {"trip_slug": trip_slug, "place": place, "facts": recent_facts},
         )
         _write_json(
             place_root / "knowledge" / "last-year-same-period.json",
             {"trip_slug": trip_slug, "place": place, "facts": historical_facts},
+        )
+        _write_json(
+            place_root / "knowledge" / "merged-topics.json",
+            {
+                "trip_slug": trip_slug,
+                "place": place,
+                "topics": {
+                    topic: [item for item in place_knowledge_points if item.get("topic") == topic]
+                    for topic in relevant_topics
+                },
+            },
         )
         _write_json(
             place_root / "media-raw.json",

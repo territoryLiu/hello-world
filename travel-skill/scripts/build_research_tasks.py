@@ -12,6 +12,34 @@ EXPERIENCE_FIELDS = ["recent_experience", "high_frequency_comments", "queue_patt
 FOOD_DETAIL_FIELDS = ["shop_name", "address", "recommended_dishes", "per_capita_range", "queue_pattern"]
 FAILURE_HANDLING_FIELDS = ["coverage_status", "failure_reason", "user_alert_required"]
 
+SITE_CAPTURE_POLICIES = {
+    "xiaohongshu": {
+        "raw_capture_policy": "full",
+        "media_policy": "page-images",
+        "normalized_schema": "xiaohongshu-note-v1",
+    },
+    "douyin": {
+        "raw_capture_policy": "page+video-fallback",
+        "media_policy": "video-keyframes",
+        "normalized_schema": "video-post-v1",
+    },
+    "bilibili": {
+        "raw_capture_policy": "page+video-fallback",
+        "media_policy": "video-keyframes",
+        "normalized_schema": "video-post-v1",
+    },
+    "dianping": {
+        "raw_capture_policy": "listing+reviews",
+        "media_policy": "listing-evidence",
+        "normalized_schema": "local-listing-v1",
+    },
+    "meituan": {
+        "raw_capture_policy": "listing+reviews",
+        "media_policy": "listing-evidence",
+        "normalized_schema": "local-listing-v1",
+    },
+}
+
 
 TOPIC_SITE_RULES = {
     "weather": [
@@ -79,6 +107,17 @@ def _layers_for_topic(topic: str) -> list[str]:
     return list(TIME_LAYERS) if topic in TIME_LAYER_TOPICS else ["recent"]
 
 
+def _capture_policy(site: str) -> dict[str, str]:
+    return SITE_CAPTURE_POLICIES.get(
+        site,
+        {
+            "raw_capture_policy": "summary-only",
+            "media_policy": "none",
+            "normalized_schema": "generic-source-v1",
+        },
+    )
+
+
 def build_tasks(payload: dict) -> dict:
     tasks = []
     places = [item for item in payload.get("destinations", []) if isinstance(item, str) and item.strip()]
@@ -90,11 +129,11 @@ def build_tasks(payload: dict) -> dict:
                 for rule in site_rules:
                     site = rule["site"]
                     must_capture_fields = list(rule["must_capture_fields"])
-                    raw_capture_policy = "summary-only"
-                    media_policy = "none"
+                    capture_policy = _capture_policy(site)
+                    raw_capture_policy = capture_policy["raw_capture_policy"]
+                    media_policy = capture_policy["media_policy"]
+                    normalized_schema = capture_policy["normalized_schema"]
                     if site == "xiaohongshu":
-                        raw_capture_policy = "full"
-                        media_policy = "page-images"
                         for field in ["page_body_full", "comment_threads_full", "image_candidates"]:
                             if field not in must_capture_fields:
                                 must_capture_fields.append(field)
@@ -117,6 +156,7 @@ def build_tasks(payload: dict) -> dict:
                             "fallback_policy": "page_first_then_fallback",
                             "raw_capture_policy": raw_capture_policy,
                             "media_policy": media_policy,
+                            "normalized_schema": normalized_schema,
                         }
                     )
     return {

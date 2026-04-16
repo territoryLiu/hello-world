@@ -37,6 +37,15 @@ class BuildResearchTasksTest(unittest.TestCase):
         self.assertIn("time_layer=", prompt)
         self.assertIn("sample_target=", prompt)
 
+    def test_web_runs_prompt_mentions_capture_policy_and_schema(self):
+        tasks = build_tasks(self.payload)["tasks"]
+        douyin_task = next(task for task in tasks if task["site"] == "douyin")
+        planned = build_runs({"trip_slug": "hangzhou-spring-trip", "tasks": [douyin_task]})
+        prompt = planned["runs"][0]["prompt"]
+        self.assertIn("raw_capture_policy=page+video-fallback", prompt)
+        self.assertIn("media_policy=video-keyframes", prompt)
+        self.assertIn("normalized_schema=video-post-v1", prompt)
+
     def test_xiaohongshu_tasks_capture_raw_body_comments_and_images(self):
         tasks = [
             task for task in build_tasks(self.payload)["tasks"]
@@ -49,6 +58,32 @@ class BuildResearchTasksTest(unittest.TestCase):
             self.assertIn("page_body_full", task["must_capture_fields"])
             self.assertIn("comment_threads_full", task["must_capture_fields"])
             self.assertIn("image_candidates", task["must_capture_fields"])
+
+    def test_tasks_assign_platform_specific_capture_policies(self):
+        tasks = build_tasks(self.payload)["tasks"]
+        by_site = {}
+        for task in tasks:
+            by_site.setdefault(task["site"], task)
+
+        self.assertEqual(by_site["xiaohongshu"]["normalized_schema"], "xiaohongshu-note-v1")
+        self.assertEqual(by_site["xiaohongshu"]["raw_capture_policy"], "full")
+        self.assertEqual(by_site["xiaohongshu"]["media_policy"], "page-images")
+
+        self.assertEqual(by_site["douyin"]["normalized_schema"], "video-post-v1")
+        self.assertEqual(by_site["douyin"]["raw_capture_policy"], "page+video-fallback")
+        self.assertEqual(by_site["douyin"]["media_policy"], "video-keyframes")
+
+        self.assertEqual(by_site["bilibili"]["normalized_schema"], "video-post-v1")
+        self.assertEqual(by_site["bilibili"]["raw_capture_policy"], "page+video-fallback")
+        self.assertEqual(by_site["bilibili"]["media_policy"], "video-keyframes")
+
+        self.assertEqual(by_site["dianping"]["normalized_schema"], "local-listing-v1")
+        self.assertEqual(by_site["dianping"]["raw_capture_policy"], "listing+reviews")
+        self.assertEqual(by_site["dianping"]["media_policy"], "listing-evidence")
+
+        self.assertEqual(by_site["meituan"]["normalized_schema"], "local-listing-v1")
+        self.assertEqual(by_site["meituan"]["raw_capture_policy"], "listing+reviews")
+        self.assertEqual(by_site["meituan"]["media_policy"], "listing-evidence")
 
 
 if __name__ == "__main__":

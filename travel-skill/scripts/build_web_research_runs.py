@@ -15,10 +15,16 @@ def _capture_contract(task: dict) -> str:
     method = str(task.get("collection_method") or "travel-skill")
     time_layer = str(task.get("time_layer") or "recent")
     sample_target = int(task.get("sample_target") or 1)
+    raw_capture_policy = str(task.get("raw_capture_policy") or "summary-only")
+    media_policy = str(task.get("media_policy") or "none")
+    normalized_schema = str(task.get("normalized_schema") or "generic-source-v1")
     required_fields = ", ".join(task.get("must_capture_fields", []))
     instructions = [
         f"time_layer={time_layer}.",
         f"sample_target={sample_target}.",
+        f"raw_capture_policy={raw_capture_policy}.",
+        f"media_policy={media_policy}.",
+        f"normalized_schema={normalized_schema}.",
         "Open the concrete site result instead of citing generic platform summaries.",
         "Do page extraction first, capture the page body summary, and extract structured facts.",
         f"Record fields: {required_fields}.",
