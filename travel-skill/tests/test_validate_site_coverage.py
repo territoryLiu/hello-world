@@ -45,6 +45,36 @@ class ValidateSiteCoverageTest(unittest.TestCase):
         report = validate(payload)
         self.assertIn("video_incomplete", report["by_site"]["douyin"]["failure_reasons"])
 
+    def test_validate_accepts_normalized_web_evidence_bundle(self):
+        payload = {
+            "structured": {
+                "normalized_records": [
+                    {
+                        "topic": "attractions",
+                        "site": "xiaohongshu",
+                        "coverage_status": "complete",
+                        "missing_fields": [],
+                        "time_layer": "recent",
+                    },
+                    {
+                        "topic": "risks",
+                        "site": "douyin",
+                        "coverage_status": "partial",
+                        "missing_fields": ["transcript_segments"],
+                        "page_body_full": "page body ok",
+                        "transcript_segments": [],
+                        "frame_scores": [],
+                        "time_layer": "recent",
+                    },
+                ]
+            }
+        }
+
+        report = validate(payload)
+        self.assertIn("xiaohongshu", report["by_site"])
+        self.assertIn("douyin", report["by_site"])
+        self.assertIn("video_incomplete", report["by_site"]["douyin"]["failure_reasons"])
+
 
 if __name__ == "__main__":
     unittest.main()

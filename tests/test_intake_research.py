@@ -374,5 +374,69 @@ class IntakeResearchTest(unittest.TestCase):
             self.assertTrue((trip_root / "snapshots" / "linked-corridors.json").exists())
 
 
+    def test_ingest_web_research_bundle_normalizes_validates_and_persists(self):
+        raw_web_payload = {
+            "trip_slug": "hangzhou-trip",
+            "items": [
+                {
+                    "place": "hangzhou",
+                    "topic": "attractions",
+                    "site": "xiaohongshu",
+                    "platform": "social",
+                    "raw_url": "https://www.xiaohongshu.com/explore/1",
+                    "title": "西湖晨拍",
+                    "body": "七点前到断桥更容易拍空景。",
+                    "comments": [{"author": "A", "text": "六点半已经有人了"}],
+                    "images": [{"src": "https://cdn.example.com/xhs-1.jpg"}],
+                    "checked_at": "2026-04-16T08:00:00",
+                },
+                {
+                    "place": "hangzhou",
+                    "topic": "food",
+                    "site": "meituan",
+                    "platform": "local-listing",
+                    "raw_url": "https://i.meituan.com/shop/2",
+                    "name": "绿茶",
+                    "location": "西湖区龙井路",
+                    "price": "90-110",
+                    "recommended_items": ["龙井虾仁"],
+                    "review_keywords": ["环境好"],
+                    "review_notes": ["热门时段提前取号"],
+                    "checked_at": "2026-04-16T10:00:00",
+                },
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            input_path = tmp_path / "raw-web.json"
+            bundle_output = tmp_path / "bundle.json"
+            coverage_output = tmp_path / "coverage.json"
+            output_root = tmp_path / "travel-data"
+            input_path.write_text(json.dumps(raw_web_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+            run_script(
+                SKILL_DIR / "scripts" / "ingest_web_research_bundle.py",
+                "--input",
+                input_path,
+                "--bundle-output",
+                bundle_output,
+                "--coverage-output",
+                coverage_output,
+                "--output-root",
+                output_root,
+            )
+
+            bundle = json.loads(bundle_output.read_text(encoding="utf-8"))
+            coverage = json.loads(coverage_output.read_text(encoding="utf-8"))
+            place_root = output_root / "places" / "hangzhou"
+
+            self.assertEqual(bundle["trip_slug"], "hangzhou-trip")
+            self.assertIn("structured", bundle)
+            self.assertIn("by_site", coverage)
+            self.assertTrue((place_root / "raw-web-research.json").exists())
+            self.assertTrue((place_root / "structured-facts.json").exists())
+            self.assertTrue((place_root / "site-coverage.json").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

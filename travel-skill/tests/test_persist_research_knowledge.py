@@ -201,6 +201,96 @@ class PersistResearchKnowledgeTest(unittest.TestCase):
         self.assertIn("attractions", merged_topics["topics"])
         self.assertIn("food", merged_topics["topics"])
 
+    def test_persist_accepts_normalized_web_evidence_bundle_inputs(self):
+        bundle = {
+            "trip_slug": "hangzhou-trip",
+            "raw_items": [
+                {
+                    "place": "hangzhou",
+                    "topic": "attractions",
+                    "site": "xiaohongshu",
+                    "time_layer": "recent",
+                    "source_url": "https://www.xiaohongshu.com/explore/1",
+                },
+                {
+                    "place": "hangzhou",
+                    "topic": "food",
+                    "site": "meituan",
+                    "time_layer": "recent",
+                    "source_url": "https://i.meituan.com/shop/2",
+                },
+            ],
+            "structured": {
+                "facts": [
+                    {
+                        "place": "hangzhou",
+                        "topic": "attractions",
+                        "site": "xiaohongshu",
+                        "text": "七点前到断桥更容易拍空景。",
+                        "time_layer": "recent",
+                        "source_url": "https://www.xiaohongshu.com/explore/1",
+                    }
+                ],
+                "normalized_records": [
+                    {
+                        "place": "hangzhou",
+                        "topic": "attractions",
+                        "site": "xiaohongshu",
+                        "time_layer": "recent",
+                        "normalized_schema": "xiaohongshu-note-v1",
+                        "page_body_full": "七点前到断桥更容易拍空景。",
+                    },
+                    {
+                        "place": "hangzhou",
+                        "topic": "food",
+                        "site": "meituan",
+                        "time_layer": "recent",
+                        "normalized_schema": "local-listing-v1",
+                        "shop_name": "绿茶",
+                    },
+                ],
+                "knowledge_points": [
+                    {
+                        "place": "hangzhou",
+                        "topic": "attractions",
+                        "time_layer": "recent",
+                        "claim": "七点前到断桥更容易拍空景。",
+                        "evidence_refs": ["https://www.xiaohongshu.com/explore/1"],
+                    }
+                ],
+            },
+            "media_candidates": {
+                "items": [
+                    {"place": "hangzhou", "platform": "xiaohongshu", "title": "西湖晨拍"},
+                    {"place": "hangzhou", "platform": "meituan", "title": "绿茶"},
+                ]
+            },
+        }
+        coverage_payload = {
+            "trip_slug": "hangzhou-trip",
+            "by_topic": {
+                "attractions": {"coverage_status": "complete"},
+                "food": {"coverage_status": "partial"},
+            },
+        }
+
+        output_root = TEST_TMP_ROOT / "persist-research-knowledge-bundle"
+        if output_root.exists():
+            import shutil
+            shutil.rmtree(output_root)
+        output_root.mkdir(parents=True, exist_ok=True)
+
+        persist(bundle, bundle, bundle, coverage_payload, output_root)
+        place_root = output_root / "places" / "hangzhou"
+
+        raw_payload = json.loads((place_root / "raw-web-research.json").read_text(encoding="utf-8"))
+        media_payload = json.loads((place_root / "media-raw.json").read_text(encoding="utf-8"))
+        site_records = json.loads((place_root / "normalized" / "site-records.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(len(raw_payload["records"]), 2)
+        self.assertEqual(len(media_payload["items"]), 2)
+        self.assertEqual(len(site_records["records"]), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,15 +11,29 @@ from travel_config import SITE_COVERAGE_TARGETS as REQUIRED_SITE_MATRIX
 from research_contracts import HEAVY_SAMPLE_TARGETS
 
 
-def validate(payload: dict) -> dict:
+def _resolve_records(payload: dict) -> list[dict]:
     records = payload.get("records")
-    if not isinstance(records, list):
-        records = payload.get("facts", [])
+    if isinstance(records, list):
+        return [item for item in records if isinstance(item, dict)]
+    structured = payload.get("structured")
+    if isinstance(structured, dict):
+        normalized_records = structured.get("normalized_records")
+        if isinstance(normalized_records, list):
+            return [item for item in normalized_records if isinstance(item, dict)]
+        facts = structured.get("facts")
+        if isinstance(facts, list):
+            return [item for item in facts if isinstance(item, dict)]
+    facts = payload.get("facts", [])
+    if isinstance(facts, list):
+        return [item for item in facts if isinstance(item, dict)]
+    return []
+
+
+def validate(payload: dict) -> dict:
+    records = _resolve_records(payload)
     by_topic = {}
     by_site = {}
-    for record in records if isinstance(records, list) else []:
-        if not isinstance(record, dict):
-            continue
+    for record in records:
         topic = str(record.get("topic", ""))
         site = str(record.get("site", ""))
         if not topic:

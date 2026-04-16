@@ -25,6 +25,22 @@ def _iter_records(payload, key: str) -> list[dict]:
     return []
 
 
+def _bundle_records(payload, *paths: tuple[str, ...]) -> list[dict]:
+    if not isinstance(payload, dict):
+        return []
+    for path in paths:
+        current = payload
+        valid = True
+        for key in path:
+            if not isinstance(current, dict):
+                valid = False
+                break
+            current = current.get(key)
+        if valid and isinstance(current, list):
+            return [item for item in current if isinstance(item, dict)]
+    return []
+
+
 def _collect_places(*groups: list[dict]) -> list[str]:
     places: list[str] = []
     seen = set()
@@ -103,18 +119,18 @@ def split_facts(facts: list[dict]) -> tuple[dict[str, list[dict]], dict[str, lis
 
 
 def persist(raw_payload, approved_payload, media_payload, coverage_payload, output_root: Path) -> None:
-    raw_records = _iter_records(raw_payload, "records")
-    approved_facts = _iter_records(approved_payload, "facts")
-    normalized_site_records = _iter_records(approved_payload, "normalized_records")
-    knowledge_points = _iter_records(approved_payload, "knowledge_points")
-    media_records = _iter_records(media_payload, "items")
+    raw_records = _iter_records(raw_payload, "records") or _bundle_records(raw_payload, ("raw_items",), ("merged", "entries"))
+    approved_facts = _iter_records(approved_payload, "facts") or _bundle_records(approved_payload, ("structured", "facts"))
+    normalized_site_records = _iter_records(approved_payload, "normalized_records") or _bundle_records(approved_payload, ("structured", "normalized_records"))
+    knowledge_points = _iter_records(approved_payload, "knowledge_points") or _bundle_records(approved_payload, ("structured", "knowledge_points"))
+    media_records = _iter_records(media_payload, "items") or _bundle_records(media_payload, ("media_candidates", "items"))
     places_from_facts, corridors = split_facts(approved_facts)
     coverage_by_topic = coverage_payload.get("by_topic") if isinstance(coverage_payload, dict) else {}
     coverage_by_topic = coverage_by_topic if isinstance(coverage_by_topic, dict) else {}
 
     places = _collect_places(raw_records, approved_facts, normalized_site_records, knowledge_points, media_records)
     trip_slug = ""
-    for payload in (raw_payload, approved_payload, coverage_payload):
+    for payload in (raw_payload, approved_payload, media_payload, coverage_payload):
         if isinstance(payload, dict) and isinstance(payload.get("trip_slug"), str) and payload.get("trip_slug").strip():
             trip_slug = payload["trip_slug"].strip()
             break
