@@ -54,6 +54,30 @@ class BuildResearchTasksTest(unittest.TestCase):
         self.assertEqual(run["result_schema"], "travel-skill-web-evidence-v1")
         self.assertIn("finalize_web_research_run.py", run["postprocess_script"])
 
+    def test_web_runs_emit_batch_manifest_and_expected_bundle_paths(self):
+        tasks = build_tasks(self.payload)["tasks"]
+        planned = build_runs({"trip_slug": "hangzhou-spring-trip", "tasks": tasks[:2]})
+
+        self.assertEqual(planned["batch_id"], "hangzhou-spring-trip-web-research")
+        self.assertIn("batch_manifest", planned)
+
+        batch_manifest = planned["batch_manifest"]
+        self.assertEqual(batch_manifest["batch_id"], planned["batch_id"])
+        self.assertEqual(
+            batch_manifest["aggregator_script"],
+            "travel-skill/scripts/aggregate_web_research_batch.py",
+        )
+        self.assertEqual(len(batch_manifest["bundle_paths"]), 2)
+
+        for run, bundle_path in zip(planned["runs"], batch_manifest["bundle_paths"]):
+            self.assertIn("run_id", run)
+            self.assertEqual(run["batch_id"], planned["batch_id"])
+            self.assertTrue(run["run_id"].startswith("hangzhou-spring-trip-"))
+            self.assertEqual(run["expected_bundle_path"], bundle_path)
+            self.assertIn(run["run_id"], run["expected_bundle_path"])
+            self.assertTrue(run["expected_bundle_path"].endswith("bundle.json"))
+            self.assertTrue(run["expected_coverage_path"].endswith("coverage.json"))
+
     def test_xiaohongshu_tasks_capture_raw_body_comments_and_images(self):
         tasks = [
             task for task in build_tasks(self.payload)["tasks"]

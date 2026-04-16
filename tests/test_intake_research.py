@@ -184,6 +184,33 @@ class IntakeResearchTest(unittest.TestCase):
         self.assertIn("video fallback", first_run["prompt"])
         self.assertIn("coverage_status", first_run["prompt"])
 
+    def test_build_web_research_runs_outputs_batch_manifest_consumable_by_aggregator(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            normalized = Path(tmp) / "normalized.json"
+            tasks = Path(tmp) / "tasks.json"
+            runs = Path(tmp) / "runs.json"
+            fixture = ROOT / "tests" / "fixtures" / "travel_skill" / "trip_request_raw.json"
+            run_script(SKILL_DIR / "scripts" / "normalize_request.py", "--input", fixture, "--output", normalized)
+            run_script(SKILL_DIR / "scripts" / "build_research_tasks.py", "--input", normalized, "--output", tasks)
+            run_script(SKILL_DIR / "scripts" / "build_web_research_runs.py", "--input", tasks, "--output", runs)
+            payload = json.loads(runs.read_text(encoding="utf-8"))
+
+        self.assertIn("batch_id", payload)
+        self.assertTrue(payload["batch_id"].endswith("-web-research"))
+        self.assertIn("batch_manifest", payload)
+        batch_manifest = payload["batch_manifest"]
+        self.assertEqual(batch_manifest["batch_id"], payload["batch_id"])
+        self.assertEqual(batch_manifest["trip_slug"], payload["trip_slug"])
+        self.assertEqual(
+            batch_manifest["aggregator_script"],
+            "travel-skill/scripts/aggregate_web_research_batch.py",
+        )
+        self.assertEqual(len(batch_manifest["bundle_paths"]), len(payload["runs"]))
+        for run in payload["runs"]:
+            self.assertEqual(run["batch_id"], payload["batch_id"])
+            self.assertIn(run["expected_bundle_path"], batch_manifest["bundle_paths"])
+            self.assertIn(run["run_id"], batch_manifest["runs"])
+
     def test_social_tasks_require_comment_capture_and_transport_tasks_include_latest_searchable_fallback(self):
         with tempfile.TemporaryDirectory() as tmp:
             normalized = Path(tmp) / "normalized.json"

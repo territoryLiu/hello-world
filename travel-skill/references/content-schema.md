@@ -38,6 +38,26 @@
 - `media_policy`
 - `normalized_schema`
 
+## web_research_run
+
+- `run_id`
+- `batch_id`
+- `skill`
+- `result_schema`
+- `postprocess_script`
+- `expected_bundle_path`
+- `expected_coverage_path`
+- `task`
+- `prompt`
+
+## web_research_batch_manifest
+
+- `trip_slug`
+- `batch_id`
+- `aggregator_script`
+- `bundle_paths`
+- `runs`
+
 ## fact_item
 
 - `place`
