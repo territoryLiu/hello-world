@@ -160,6 +160,10 @@ Section order for `daily-overview`:
 
 ## Verification Rules
 
+- Delivery must pass `validate_delivery_gate.py` before any guide is treated as publishable.
+- A travel guide is not publishable if it lacks a passing intake gate, CDP or web-access execution evidence, or required platform `coverage_status` records.
+- For the current delivery gate, required platform coverage defaults to `xiaohongshu`, `douyin`, and `bilibili`.
+- `coverage_status=complete|partial|failed` are all valid records; missing site records or missing `coverage_status` are not valid.
 - Verification must check both desktop and mobile guide completeness.
 - Verification must confirm `notes/sources.md` and `notes/sources.html` are present.
 - Verification must confirm the rendered guide preserves section order and does not regress into a legacy template-card layout.

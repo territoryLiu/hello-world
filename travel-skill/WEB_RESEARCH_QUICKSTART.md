@@ -159,3 +159,24 @@ python travel-skill\scripts\web_research_cli.py execute-batch ...
 ```powershell
 python travel-skill\scripts\web_research_cli.py smoke --fixtures-root tests\fixtures\travel_skill\web_batch_smoke --output-dir .tmp-tests\web-batch-smoke
 ```
+
+## 5. Delivery Gate
+
+Before publishing guide正文、导出分享页或打包 ZIP，必须先运行：
+
+```powershell
+python travel-skill\scripts\validate_delivery_gate.py `
+  --guide-root travel-data\guides\<trip-slug> `
+  --trip-root travel-data\trips\<trip-slug> `
+  --output delivery-gate-report.json
+```
+
+Pass conditions:
+- `request\gate-report.json` exists and `can_proceed=true`
+- CDP ready evidence exists, or there is an actual `web-access` execution record
+- `batch-coverage.json` / `coverage.json` contains `coverage_status` for `xiaohongshu`, `douyin`, and `bilibili`
+
+If this gate fails:
+- do not ship the guide正文
+- do not package ZIP
+- fix collection gaps first or record explicit failure reasons

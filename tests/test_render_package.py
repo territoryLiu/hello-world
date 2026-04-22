@@ -713,6 +713,44 @@ class RenderPackageTest(unittest.TestCase):
         self.assertIn("notes/sources.html", names)
         self.assertIn("trip-summary.txt", names)
 
+    def test_export_single_html_allows_js_payloads_with_unicode_escape_sequences(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            guide_root = Path(tmp) / "guide-root"
+            (guide_root / "assets").mkdir(parents=True)
+            (guide_root / "desktop" / "editorial").mkdir(parents=True)
+            (guide_root / "assets" / "base.css").write_text("body { color: #111; }\n", encoding="utf-8")
+            (guide_root / "assets" / "guide-content.js").write_text(
+                'window.guideContent = {"unsafe":"\\u003c/script\\u003e"};\n',
+                encoding="utf-8",
+            )
+            (guide_root / "assets" / "render-guide.js").write_text("window.renderGuide = function () {};\n", encoding="utf-8")
+            (guide_root / "desktop" / "editorial" / "index.html").write_text(
+                "\n".join(
+                    [
+                        "<!doctype html>",
+                        '<link rel="stylesheet" href="../../assets/base.css" />',
+                        '<script src="../../assets/guide-content.js"></script>',
+                        '<script src="../../assets/render-guide.js"></script>',
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            output_path = Path(tmp) / "single.html"
+
+            run_script(
+                SKILL_DIR / "scripts" / "export_single_html.py",
+                "--guide-root",
+                guide_root,
+                "--template",
+                "editorial",
+                "--output",
+                output_path,
+            )
+
+            html = output_path.read_text(encoding="utf-8")
+
+        self.assertIn("\\u003c/script\\u003e", html)
+
     def test_render_trip_site_can_emit_all_template_variants_and_portal_lists_them(self):
         with tempfile.TemporaryDirectory() as tmp:
             fixture = write_sample_approved_research(Path(tmp) / "approved_research.json")

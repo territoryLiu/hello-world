@@ -8,6 +8,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from travel_config import SORTED_TEMPLATE_IDS as EXPECTED_TEMPLATES
+from validate_delivery_gate import validate_delivery_gate
 from verify_render_with_playwright import verify_render as verify_render_with_playwright
 
 
@@ -46,7 +47,9 @@ def verify_trip(guide_root: Path) -> dict:
     html_blob = scan_html_text(guide_root)
     desktop_templates = _template_dirs(guide_root, "desktop")
     mobile_templates = _template_dirs(guide_root, "mobile")
+    delivery_gate = validate_delivery_gate(guide_root)
     content_checks = {
+        "delivery_gate_passed": delivery_gate["status"] == "pass",
         "research_report_present": (guide_root / "research-report.html").exists(),
         "coverage_overview_present": "覆盖总览" in html_blob,
         "dual_time_layer_present": "最新现状" in html_blob and "去年同期经验" in html_blob,
@@ -75,6 +78,7 @@ def verify_trip(guide_root: Path) -> dict:
         "content_checks": content_checks,
         "status": status,
         "warnings": warnings,
+        "delivery_gate": delivery_gate,
         "playwright_check": browser_check,
     }
 

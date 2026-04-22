@@ -13,3 +13,4 @@ travel-data/
 .pytest_cache/
 travel-skill-model-cache/
 dist/
+.tmp-guides/

@@ -8,6 +8,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from travel_config import PUBLISH_ARTIFACTS, SORTED_TEMPLATE_IDS as TEMPLATES
+from validate_delivery_gate import validate_delivery_gate
 
 
 def build_summary(guide_root: Path, portal: Path, recommended_html: Path, share_html: Path) -> str:
@@ -37,6 +38,9 @@ def build_summary(guide_root: Path, portal: Path, recommended_html: Path, share_
 
 
 def package_trip(guide_root: Path, portal: Path, recommended_html: Path, share_html: Path, output_zip: Path) -> Path:
+    delivery_gate = validate_delivery_gate(guide_root)
+    if delivery_gate["status"] != "pass":
+        raise ValueError(f"delivery gate failed: {', '.join(delivery_gate['failed_checks'])}")
     output_zip.parent.mkdir(parents=True, exist_ok=True)
     summary_path = output_zip.parent / PUBLISH_ARTIFACTS["summary"]
     summary_path.write_text(build_summary(guide_root, portal, recommended_html, share_html), encoding="utf-8")

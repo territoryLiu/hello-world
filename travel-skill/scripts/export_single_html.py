@@ -24,9 +24,9 @@ def inline_assets(guide_root: Path, template_id: str, device: str = "desktop") -
     guide_content = (guide_root / "assets" / "guide-content.js").read_text(encoding="utf-8")
     render_js = (guide_root / "assets" / "render-guide.js").read_text(encoding="utf-8")
 
-    html_text = ASSET_PATTERNS["css"].sub(f"<style>\n{css}\n</style>", html_text)
-    html_text = ASSET_PATTERNS["guide"].sub(f"<script>\n{guide_content}\n</script>", html_text)
-    html_text = ASSET_PATTERNS["render"].sub(f"<script>\n{render_js}\n</script>", html_text)
+    html_text = ASSET_PATTERNS["css"].sub(lambda _: f"<style>\n{css}\n</style>", html_text)
+    html_text = ASSET_PATTERNS["guide"].sub(lambda _: f"<script>\n{guide_content}\n</script>", html_text)
+    html_text = ASSET_PATTERNS["render"].sub(lambda _: f"<script>\n{render_js}\n</script>", html_text)
     return html_text
 
 

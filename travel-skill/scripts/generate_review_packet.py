@@ -114,6 +114,11 @@ def _coverage(payload: dict) -> dict:
     return coverage
 
 
+def _delivery_gate(payload: dict) -> dict:
+    delivery_gate = payload.get("delivery_gate")
+    return delivery_gate if isinstance(delivery_gate, dict) else {}
+
+
 def build_markdown(payload: dict) -> str:
     lines = ["# Research Review Packet", "", "## Verified", ""]
     by_place = payload.get("by_place", {})
@@ -142,6 +147,25 @@ def build_markdown(payload: dict) -> str:
         lines.append(f"  - seen: {', '.join(data['seen']) or '(none)'}")
         lines.append(f"  - missing: {', '.join(data['missing']) or '(none)'}")
     lines.append("")
+    delivery_gate = _delivery_gate(payload)
+    if delivery_gate:
+        lines.extend(["## Delivery Gate", ""])
+        lines.append(f"- status: {_escape_markdown(_safe_text(delivery_gate.get('status')) or 'unknown')}")
+        failed_checks = delivery_gate.get("failed_checks")
+        failed_values = [str(item) for item in failed_checks] if isinstance(failed_checks, list) else []
+        lines.append(f"  - failed_checks: {', '.join(failed_values) or '(none)'}")
+        checks = delivery_gate.get("checks")
+        if isinstance(checks, dict):
+            for name, item in checks.items():
+                if not isinstance(item, dict):
+                    continue
+                lines.append(f"- check: {_escape_markdown(str(name))}")
+                lines.append(f"  - passed: {_escape_markdown(str(bool(item.get('passed'))).lower())}")
+                lines.append(f"  - reason: {_escape_markdown(_safe_text(item.get('reason')) or '(none)')}")
+                source = _safe_text(item.get("source"))
+                if source:
+                    lines.append(f"  - source: {_escape_markdown(source)}")
+        lines.append("")
     lines.extend(["## Pending Confirmation", "", "- Recheck volatile transport and weather data before departure.", ""])
     return "\n".join(lines)
 
@@ -178,6 +202,34 @@ def build_html(payload: dict) -> str:
             card_lines.append("</ul>")
         card_lines.append("</section>")
         blocks.append("".join(card_lines))
+    delivery_gate_html = ""
+    delivery_gate = _delivery_gate(payload)
+    if delivery_gate:
+        failed_checks = delivery_gate.get("failed_checks")
+        failed_values = [escape(str(item)) for item in failed_checks] if isinstance(failed_checks, list) else []
+        gate_lines = [
+            "<section>",
+            "<h2>Delivery Gate</h2>",
+            f"<p>status: {escape(_safe_text(delivery_gate.get('status')) or 'unknown')}</p>",
+            f"<p>failed_checks: {', '.join(failed_values) or '(none)'}</p>",
+        ]
+        checks = delivery_gate.get("checks")
+        if isinstance(checks, dict):
+            gate_lines.append("<ul>")
+            for name, item in checks.items():
+                if not isinstance(item, dict):
+                    continue
+                gate_lines.append("<li>")
+                gate_lines.append(f"<strong>{escape(str(name))}</strong>")
+                gate_lines.append(f"<div>passed: {escape(str(bool(item.get('passed'))).lower())}</div>")
+                gate_lines.append(f"<div>reason: {escape(_safe_text(item.get('reason')) or '(none)')}</div>")
+                source = _safe_text(item.get("source"))
+                if source:
+                    gate_lines.append(f"<div>source: {escape(source)}</div>")
+                gate_lines.append("</li>")
+            gate_lines.append("</ul>")
+        gate_lines.append("</section>")
+        delivery_gate_html = "".join(gate_lines)
     return """<!doctype html>
 <html lang="zh-CN">
   <head>
@@ -189,11 +241,12 @@ def build_html(payload: dict) -> str:
     <h1>Research Review Packet</h1>
     <h2>Verified</h2>
     {verified}
+    {delivery_gate}
     <h2>Pending Confirmation</h2>
     <ul><li>Recheck volatile transport and weather data before departure.</li></ul>
   </body>
 </html>
-""".replace("{verified}", "".join(blocks))
+""".replace("{verified}", "".join(blocks)).replace("{delivery_gate}", delivery_gate_html)
 
 
 def main() -> None:
